@@ -6,7 +6,7 @@ import { Directory, Filesystem } from "@capacitor/filesystem";
 import { FileOpener } from "@capacitor-community/file-opener";
 
 // owner/repo of the public Laufwerk repository (releases carry the APK)
-export const UPDATE_REPO = "REPLACE_WITH_GITHUB_USER/laufwerk";
+export const UPDATE_REPO = "fabianmajcen/laufwerk";
 
 export const APP_VERSION = __APP_VERSION__;
 
