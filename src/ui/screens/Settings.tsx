@@ -6,6 +6,7 @@ import { bootstrapFromJson, clearTokens } from "../../lib/garmin/auth";
 import { getDisplayName } from "../../lib/garmin/client";
 import { abortSync, syncNow } from "../../lib/sync/engine";
 import { exportBackup } from "../../lib/export";
+import { APP_VERSION, isUpdaterConfigured } from "../../lib/updater";
 import { db } from "../../lib/db/schema";
 
 export function Settings({ onBack }: { onBack: () => void }) {
@@ -84,6 +85,8 @@ export function Settings({ onBack }: { onBack: () => void }) {
           />
         </div>
       </Card>
+
+      <UpdateCard />
 
       <Card kicker="Data" title="Local cache">
         <button
@@ -220,6 +223,75 @@ function ConnectionCard() {
       >
         {busy ? "Connecting…" : "Connect"}
       </button>
+    </Card>
+  );
+}
+
+function UpdateCard() {
+  const [state, setState] = useState<
+    | { phase: "idle" }
+    | { phase: "checking" }
+    | { phase: "current" }
+    | { phase: "available"; info: import("../../lib/updater").UpdateInfo }
+    | { phase: "installing" }
+    | { phase: "error"; msg: string }
+  >({ phase: "idle" });
+
+  const check = async () => {
+    setState({ phase: "checking" });
+    try {
+      const { checkForUpdate } = await import("../../lib/updater");
+      const info = await checkForUpdate();
+      setState(info ? { phase: "available", info } : { phase: "current" });
+    } catch (e) {
+      setState({ phase: "error", msg: e instanceof Error ? e.message : String(e) });
+    }
+  };
+
+  const install = async () => {
+    if (state.phase !== "available") return;
+    const info = state.info;
+    setState({ phase: "installing" });
+    try {
+      const { downloadAndInstall } = await import("../../lib/updater");
+      await downloadAndInstall(info);
+      setState({ phase: "idle" });
+    } catch (e) {
+      setState({ phase: "error", msg: e instanceof Error ? e.message : String(e) });
+    }
+  };
+
+  return (
+    <Card kicker="App" title={`Laufwerk ${APP_VERSION}`}>
+      {!isUpdaterConfigured() ? (
+        <p className="text-[12px] text-ink-3">Updates arrive here once the GitHub repository is set up.</p>
+      ) : state.phase === "available" ? (
+        <>
+          <p className="mb-2 text-[13px] text-ink-2">
+            Version {state.info.version} is available.
+            {state.info.notes ? ` ${state.info.notes.slice(0, 140)}` : ""}
+          </p>
+          <button onClick={install} className="w-full rounded-lg bg-accent py-2.5 text-[14px] font-medium text-white">
+            Download & install
+          </button>
+        </>
+      ) : (
+        <>
+          <button
+            onClick={check}
+            disabled={state.phase === "checking" || state.phase === "installing"}
+            className="w-full rounded-lg bg-page py-2 text-[13px] text-ink-2 disabled:opacity-40"
+          >
+            {state.phase === "checking"
+              ? "Checking…"
+              : state.phase === "installing"
+                ? "Downloading… the installer opens when ready"
+                : "Check for update"}
+          </button>
+          {state.phase === "current" && <p className="mt-2 text-[12px] text-status-good">You're on the latest version.</p>}
+          {state.phase === "error" && <p className="mt-2 text-[12px] text-status-warn">{state.msg}</p>}
+        </>
+      )}
     </Card>
   );
 }

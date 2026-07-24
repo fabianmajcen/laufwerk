@@ -26,3 +26,6 @@ dist-ssr
 # personal data fixtures (regenerable via npm run fixtures)
 public/fixtures/
 # android build outputs handled by android/.gitignore once added
+
+# release artifacts
+laufwerk-v*.apk
