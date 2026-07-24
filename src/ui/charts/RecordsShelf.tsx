@@ -1,19 +1,28 @@
-// W16 — personal records straight from Garmin's PR service.
+// W16 — personal records straight from Garmin's PR service. Fixed slots so
+// the page reads as a complete shelf; distances you haven't raced yet show
+// as open goals.
 import { useLiveQuery } from "dexie-react-hooks";
 import { getKv } from "../../lib/db/repo";
 import { fmtDuration } from "../../lib/format";
 import { Card } from "../components/ScreenHeader";
 
-// Garmin PR typeIds (running + steps subset)
-const PR_TYPES: Record<number, { label: string; kind: "time" | "distance" | "steps" }> = {
-  1: { label: "Fastest 1 km", kind: "time" },
-  2: { label: "Fastest 1 mile", kind: "time" },
-  3: { label: "Fastest 5 km", kind: "time" },
-  4: { label: "Fastest 10 km", kind: "time" },
-  7: { label: "Longest run", kind: "distance" },
-  12: { label: "Most steps in a day", kind: "steps" },
-  13: { label: "Most steps in a week", kind: "steps" },
-};
+interface Slot {
+  typeId: number;
+  label: string;
+  kind: "time" | "distance" | "steps";
+}
+
+// Garmin PR typeIds; fixed shelf order (1 mile omitted deliberately)
+const SLOTS: Slot[] = [
+  { typeId: 1, label: "Fastest 1 km", kind: "time" },
+  { typeId: 3, label: "Fastest 5 km", kind: "time" },
+  { typeId: 4, label: "Fastest 10 km", kind: "time" },
+  { typeId: 5, label: "Half marathon", kind: "time" },
+  { typeId: 6, label: "Marathon", kind: "time" },
+  { typeId: 7, label: "Longest run", kind: "distance" },
+  { typeId: 12, label: "Most steps · day", kind: "steps" },
+  { typeId: 13, label: "Most steps · week", kind: "steps" },
+];
 
 interface PrRow {
   typeId: number;
@@ -27,37 +36,53 @@ export function RecordsShelf() {
     [],
   );
 
-  const prs = (stored?.payload ?? [])
-    .filter((p) => PR_TYPES[p.typeId] && p.value != null && p.value > 0)
-    .sort((a, b) => a.typeId - b.typeId);
+  const byType = new Map(
+    (stored?.payload ?? [])
+      .filter((p) => p.value != null && p.value > 0)
+      .map((p) => [p.typeId, p]),
+  );
+  if (!byType.size) return null;
 
-  if (!prs.length) return null;
-
-  const fmt = (p: PrRow) => {
-    const kind = PR_TYPES[p.typeId].kind;
-    if (kind === "time") return fmtDuration(p.value as number);
-    if (kind === "distance") return `${((p.value as number) / 1000).toFixed(2)} km`;
+  const fmt = (slot: Slot, p: PrRow) => {
+    if (slot.kind === "time") return fmtDuration(p.value as number);
+    if (slot.kind === "distance") return `${((p.value as number) / 1000).toFixed(2)} km`;
     return Math.round(p.value as number).toLocaleString("en-GB");
   };
 
   return (
-    <Card kicker="Personal records" title="Your bests" footnote="Straight from Garmin's PR service — beat one and it updates on the next sync.">
+    <Card
+      kicker="Personal records"
+      title="Your bests"
+      footnote="Straight from Garmin's PR service — beat one and it updates on the next sync. Empty slots are races you haven't run yet."
+    >
       <div className="grid grid-cols-2 gap-3">
-        {prs.map((p) => (
-          <div key={p.typeId} className="rounded-xl bg-page p-3">
-            <div className="kicker">{PR_TYPES[p.typeId].label}</div>
-            <div className="tnum mt-1 text-[20px] font-semibold">{fmt(p)}</div>
-            {p.activityStartDateTimeLocal && (
-              <div className="text-[10px] text-ink-3">
-                {new Date(p.activityStartDateTimeLocal).toLocaleDateString("en-GB", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
-              </div>
-            )}
-          </div>
-        ))}
+        {SLOTS.map((slot) => {
+          const p = byType.get(slot.typeId);
+          return (
+            <div key={slot.typeId} className={`rounded-xl bg-page p-3 ${p ? "" : "opacity-60"}`}>
+              <div className="kicker">{slot.label}</div>
+              {p ? (
+                <>
+                  <div className="tnum mt-1 text-[20px] font-semibold">{fmt(slot, p)}</div>
+                  {p.activityStartDateTimeLocal && (
+                    <div className="text-[10px] text-ink-3">
+                      {new Date(p.activityStartDateTimeLocal).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="mt-1 text-[20px] font-semibold text-ink-3">—</div>
+                  <div className="text-[10px] text-ink-3">not yet run</div>
+                </>
+              )}
+            </div>
+          );
+        })}
       </div>
     </Card>
   );

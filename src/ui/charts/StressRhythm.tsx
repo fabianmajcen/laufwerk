@@ -68,9 +68,13 @@ export function StressRhythm() {
       },
       visualMap: {
         show: false,
-        min: 10,
-        max: 70,
-        inRange: { color: [mixHex(t.recencyLo, t.card, 0.75), t.recencyLo, t.recencyHi] },
+        // ECharts colors by the LAST dimension unless told otherwise — our
+        // cells are [hour, day, avg, n], so pin it to the average (dim 2)
+        dimension: 2,
+        // spread the ramp across the actual value range for contrast
+        min: Math.min(...cells.map((c) => c[2])),
+        max: Math.max(...cells.map((c) => c[2])),
+        inRange: { color: [mixHex(t.recencyLo, t.card, 0.82), t.recencyLo, t.recencyHi] },
       },
       series: [
         {
@@ -90,7 +94,7 @@ export function StressRhythm() {
     <Card
       kicker="Stress rhythm"
       title="When are you calm?"
-      footnote="Average Garmin stress by weekday and hour over the cached window (brighter = more stressed). Sleep hours are excluded by the watch."
+      footnote="Average Garmin stress by weekday and hour over the cached window — brighter = more stressed, scaled to your own range. The dark band overnight is sleep."
     >
       <EChart option={option} height={210} />
     </Card>

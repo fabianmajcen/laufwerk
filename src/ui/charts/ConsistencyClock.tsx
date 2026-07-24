@@ -38,6 +38,12 @@ export function ConsistencyClock() {
       return { n, bed, wake };
     });
 
+    // color by sleep score, normalized to THIS window's range so the
+    // differences are actually visible (scores cluster in a narrow band)
+    const scores = data.map((d) => d.n.score).filter((s): s is number => s != null);
+    const sMin = scores.length ? Math.min(...scores) : 0;
+    const sMax = scores.length ? Math.max(...scores) : 100;
+
     const meds = (xs: number[]) => {
       const s = [...xs].sort((a, b) => a - b);
       return s.length ? s[Math.floor(s.length / 2)] : null;
@@ -87,8 +93,9 @@ export function ConsistencyClock() {
             const [x, y0] = api.coord([params.dataIndex, d.bed]);
             const [, y1] = api.coord([params.dataIndex, d.wake]);
             const w = Math.min(14, api.size([1, 0])[0] * 0.55);
-            const score = d.n.score ?? 50;
-            const color = mixHex(t.recencyLo, t.recencyHi, Math.max(0, Math.min(1, (score - 40) / 55)));
+            const score = d.n.score;
+            const frac = score == null || sMax === sMin ? 0.5 : (score - sMin) / (sMax - sMin);
+            const color = mixHex(mixHex(t.recencyLo, t.card, 0.35), t.recencyHi, frac);
             return {
               type: "rect",
               shape: { x: x - w / 2, y: y0, width: w, height: Math.max(y1 - y0, 2), r: w / 2 },
@@ -127,7 +134,7 @@ export function ConsistencyClock() {
     <Card
       kicker="Rhythm"
       title="Bed & wake times"
-      footnote="Brighter bar = better sleep score. Dashed lines = your median bedtime and wake time — regularity is the biggest free lever."
+      footnote="Brighter bar = better sleep score (scaled to this window's best/worst night). Dashed lines = your median bedtime and wake time — regularity is the biggest free lever."
     >
       <EChart option={option} height={220} />
     </Card>
