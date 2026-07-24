@@ -1,0 +1,118 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Laufwerk design tokens. Dark is the default theme; .light on <html> flips.
+   Palette validated (CVD + contrast) — see plan. Metric colors stay reserved:
+   HR crimson, cadence/accent blue, pace orange, elevation copper, HRV teal.
+--------------------------------------------------------------------------- */
+:root {
+  --page: #0d0d0d;
+  --card: #1a1a19;
+  --elevated: #242423;
+  --ink: #ffffff;
+  --ink-2: #c3c2b7;
+  --ink-3: #898781;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --hairline: rgba(255, 255, 255, 0.1);
+
+  --hr: #e5484d;
+  --cadence: #3987e5;
+  --accent: #3987e5;
+  --pace: #d95926;
+  --elevation: #b5773f;
+  --hrv: #199e70;
+  --charge: #199e70;
+  --drain: #d95926;
+
+  --recency-lo: #4a3aa7;
+  --recency-hi: #a89df0;
+
+  --sleep-deep: #245cb2;
+  --sleep-light: #35a0c9;
+  --sleep-rem: #d55181;
+  --sleep-awake: #c98500;
+
+  --status-good: #0ca30c;
+  --status-warn: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+
+  --start-dot: #2ca02c;
+}
+
+:root.light {
+  --page: #f9f9f7;
+  --card: #fcfcfb;
+  --elevated: #ffffff;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --ink-3: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --hairline: rgba(11, 11, 11, 0.1);
+
+  --hr: #dc143c;
+  --cadence: #2a78d6;
+  --accent: #2a78d6;
+  --pace: #d96e0a;
+  --elevation: #9d641f;
+  --hrv: #0f8a63;
+  --charge: #0f8a63;
+  --drain: #d96e0a;
+
+  --recency-lo: #cfc7f5;
+  --recency-hi: #4a3aa7;
+
+  --sleep-deep: #1c5cab;
+  --sleep-light: #5598e7;
+  --sleep-rem: #e87ba4;
+  --sleep-awake: #eda100;
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-card: var(--card);
+  --color-elevated: var(--elevated);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-grid: var(--grid);
+  --color-axis: var(--axis);
+  --color-hairline: var(--hairline);
+  --color-hr: var(--hr);
+  --color-cadence: var(--cadence);
+  --color-accent: var(--accent);
+  --color-pace: var(--pace);
+  --color-elevation: var(--elevation);
+  --color-hrv: var(--hrv);
+  --color-charge: var(--charge);
+  --color-drain: var(--drain);
+  --color-status-good: var(--status-good);
+  --color-status-warn: var(--status-warn);
+  --color-status-serious: var(--status-serious);
+  --color-status-critical: var(--status-critical);
+  --radius-card: 16px;
+}
+
+html,
+body {
+  background: var(--page);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+/* number-heavy UI: keep digits aligned wherever we don't opt out */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* kicker label above card titles */
+.kicker {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
