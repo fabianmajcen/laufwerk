@@ -19,10 +19,9 @@ import { Constellation } from "../charts/Constellation";
 import { PacingChart } from "../charts/PacingChart";
 import { FormGrid } from "../charts/FormGrid";
 import { ZoneDiscipline } from "../charts/ZoneDiscipline";
-import { HomeSegment } from "../charts/HomeSegment";
 import { RunShape } from "../charts/RunShape";
 import { WeatherLens } from "../charts/WeatherLens";
-import { Relief3D } from "../charts/Relief3D";
+import { RouteExplorer } from "../charts/RouteExplorer";
 import { FORM_META } from "../charts/FormGrid";
 import { FormDetail } from "../screens/FormDetail";
 import { BarsIcon, PulseIcon, RouteIcon, StrideIcon, TrophyIcon } from "../components/icons";
@@ -135,10 +134,9 @@ export function RunsTab() {
   }
   if (view === "routes") {
     return (
-      <SubScreen title="Routes & segment" onBack={() => setView("main")}>
-        <HomeSegment onOpenRun={setOpenId} />
+      <SubScreen title="Routes" onBack={() => setView("main")}>
         <Constellation />
-        <Relief3D />
+        <RouteExplorer />
       </SubScreen>
     );
   }
