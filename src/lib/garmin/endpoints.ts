@@ -70,4 +70,8 @@ export const ep = {
     path: `/usersummary-service/usersummary/daily/${displayName}`,
     params: { calendarDate: date },
   }),
+
+  personalRecords: (displayName: string): Endpoint => ({
+    path: `/personalrecord-service/personalrecord/prs/${displayName}`,
+  }),
 };

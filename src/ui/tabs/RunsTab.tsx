@@ -14,6 +14,8 @@ import { FormGrid } from "../charts/FormGrid";
 import { ZoneDiscipline } from "../charts/ZoneDiscipline";
 import { HomeSegment } from "../charts/HomeSegment";
 import { RunShape } from "../charts/RunShape";
+import { WeatherLens } from "../charts/WeatherLens";
+import { Relief3D } from "../charts/Relief3D";
 import type { ActivityRow } from "../../lib/db/schema";
 
 type View = "main" | "fitness" | "volume" | "routes" | "technique";
@@ -32,6 +34,7 @@ export function RunsTab() {
         <EfficiencyMap onOpenRun={setOpenId} />
         <DecouplingBars onOpenRun={setOpenId} />
         <RunShape />
+        <WeatherLens onOpenRun={setOpenId} />
       </SubScreen>
     );
   }
@@ -47,6 +50,7 @@ export function RunsTab() {
       <SubScreen title="Routes & segment" onBack={() => setView("main")}>
         <HomeSegment onOpenRun={setOpenId} />
         <Constellation />
+        <Relief3D />
       </SubScreen>
     );
   }

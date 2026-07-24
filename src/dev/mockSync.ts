@@ -7,7 +7,7 @@ import { explodeRangePayload } from "../lib/sync/ingest";
 import type { ActivityData, ActivitySummary } from "../lib/garmin/types";
 
 const SEED_KEY = "fixtureSeedVersion";
-const SEED_VERSION = 2;
+const SEED_VERSION = 3;
 
 export async function seedFixturesIfNeeded() {
   const seeded = await db.kv.get(SEED_KEY);
@@ -44,6 +44,13 @@ export async function seedFixturesIfNeeded() {
     } catch {
       /* sample not captured */
     }
+  }
+
+  try {
+    const prs = await fetchJson("/fixtures/samples/personalRecords.json");
+    await db.kv.put({ key: "personalRecords", value: { payload: prs, fetchedAt: Date.now() } });
+  } catch {
+    /* sample not captured */
   }
 
   await db.kv.put({ key: SEED_KEY, value: SEED_VERSION });

@@ -2,7 +2,7 @@
 // zustand sync store; durable per-item ingest means an abort or app kill
 // loses nothing (the planner recomputes what's missing next run).
 import { db } from "../db/schema";
-import { bulkPutWellness, putActivityData, putWellness, setSyncState, upsertActivities } from "../db/repo";
+import { bulkPutWellness, putActivityData, putWellness, setKv, setSyncState, upsertActivities } from "../db/repo";
 import { gcGet, getDisplayName, sleep, RateLimitedError } from "../garmin/client";
 import { AuthExpiredError } from "../garmin/auth";
 import { ep } from "../garmin/endpoints";
@@ -64,6 +64,9 @@ export async function syncNow(): Promise<void> {
             await sleep(delayMs + Math.random() * 150);
           });
           total += extra;
+        } else if (item.kind === "singleton") {
+          const payload = await gcGet(ep.personalRecords(displayName)).catch(() => null);
+          if (payload != null) await setKv("personalRecords", { payload, fetchedAt: Date.now() });
         } else if (item.kind === "perDay") {
           const payload = await fetchPerDay(item.metric, item.date, displayName);
           if (payload != null) {

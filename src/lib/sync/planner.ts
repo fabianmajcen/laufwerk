@@ -14,7 +14,8 @@ export interface PlanSettings {
 export type WorkItem =
   | { kind: "activities"; label: string }
   | { kind: "perDay"; metric: WellnessMetric; date: string; label: string }
-  | { kind: "range"; metric: RangeMetric; from: string; to: string; label: string };
+  | { kind: "range"; metric: RangeMetric; from: string; to: string; label: string }
+  | { kind: "singleton"; metric: "personalRecords"; label: string };
 
 /** a (metric,date) row is final once fetched ≥ 6h after that day ended */
 export function isFinal(date: string, fetchedAt: number): boolean {
@@ -50,7 +51,10 @@ function datesBack(days: number, today: Date): string[] {
 }
 
 export async function plan(settings: PlanSettings, today = new Date()): Promise<WorkItem[]> {
-  const items: WorkItem[] = [{ kind: "activities", label: "activities list" }];
+  const items: WorkItem[] = [
+    { kind: "activities", label: "activities list" },
+    { kind: "singleton", metric: "personalRecords", label: "personal records" },
+  ];
 
   // per-day metrics: newest → oldest, skipping final rows
   for (const { metric, days } of PER_DAY) {
