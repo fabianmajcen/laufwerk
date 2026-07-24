@@ -1,7 +1,11 @@
 import { useState } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
 import { useDecouplingSeries, useRuns } from "../../lib/hooks";
+import { getKv } from "../../lib/db/repo";
 import { fmtDay, fmtDuration, fmtKm, fmtPace, parseGarminLocal, speedToPace } from "../../lib/format";
 import { weekStartOf } from "../../lib/derive/weekly";
+import { RecordsShelf } from "../charts/RecordsShelf";
+import { RecordDetail } from "../screens/RecordDetail";
 import { ScreenHeader, EmptyState, Card } from "../components/ScreenHeader";
 import { SubScreen } from "../components/SubScreen";
 import { RunDetail } from "../screens/RunDetail";
@@ -18,7 +22,7 @@ import { WeatherLens } from "../charts/WeatherLens";
 import { Relief3D } from "../charts/Relief3D";
 import type { ActivityRow } from "../../lib/db/schema";
 
-type View = "main" | "fitness" | "volume" | "routes" | "technique";
+type View = "main" | "fitness" | "volume" | "routes" | "technique" | "records" | { record: number; label: string };
 
 export function RunsTab() {
   const runs = useRuns();
@@ -60,6 +64,20 @@ export function RunsTab() {
         <PacingChart />
         <FormGrid />
         <ZoneDiscipline />
+      </SubScreen>
+    );
+  }
+  if (view === "records") {
+    return (
+      <SubScreen title="Personal records" onBack={() => setView("main")}>
+        <RecordsShelf onSelect={(typeId, label) => setView({ record: typeId, label })} />
+      </SubScreen>
+    );
+  }
+  if (typeof view === "object") {
+    return (
+      <SubScreen title={view.label} onBack={() => setView("records")}>
+        <RecordDetail typeId={view.record} />
       </SubScreen>
     );
   }
@@ -139,7 +157,35 @@ function AnalyticsHub({ runs, onOpen }: { runs: ActivityRow[]; onOpen: (v: View)
           </button>
         ))}
       </div>
+      <RecordsTile onOpen={() => onOpen("records")} />
     </Card>
+  );
+}
+
+function RecordsTile({ onOpen }: { onOpen: () => void }) {
+  const stored = useLiveQuery(
+    async () => getKv<{ payload: { typeId: number; value?: number }[] }>("personalRecords"),
+    [],
+  );
+  const best5k = stored?.payload?.find((p) => p.typeId === 3)?.value;
+
+  return (
+    <button onClick={onOpen} className="mt-3 flex w-full items-center justify-between rounded-xl bg-page p-3 text-left active:opacity-70">
+      <div>
+        <span className="kicker">Records</span>
+        <div className="mt-0.5 text-[10px] leading-tight text-ink-3">1k · 5k · longest · steps · tap any for its top 10</div>
+      </div>
+      <div className="flex items-center gap-2">
+        {best5k != null && (
+          <span className="tnum text-[20px] font-semibold">
+            5k {fmtDuration(best5k)}
+          </span>
+        )}
+        <span className="text-ink-3" aria-hidden>
+          ›
+        </span>
+      </div>
+    </button>
   );
 }
 

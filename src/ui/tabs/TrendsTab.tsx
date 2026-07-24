@@ -6,11 +6,9 @@ import { LoadTunnel } from "../charts/LoadTunnel";
 import { Vo2maxTrend } from "../charts/Vo2maxTrend";
 import { TrainingCalendar } from "../charts/TrainingCalendar";
 import { StressRhythm } from "../charts/StressRhythm";
-import { RecordsShelf } from "../charts/RecordsShelf";
-import { RecordDetail } from "../screens/RecordDetail";
 import { useLatestWellness, useRuns } from "../../lib/hooks";
 
-type View = "main" | "stress" | "records" | { record: number; label: string };
+type View = "main" | "stress";
 
 export function TrendsTab() {
   const hrv = useLatestWellness("hrv");
@@ -22,21 +20,6 @@ export function TrendsTab() {
     return (
       <SubScreen title="Stress rhythm" onBack={() => setView("main")}>
         <StressRhythm />
-      </SubScreen>
-    );
-  }
-  if (view === "records") {
-    return (
-      <SubScreen title="Personal records" onBack={() => setView("main")}>
-        <RecordsShelf onSelect={(typeId, label) => setView({ record: typeId, label })} />
-      </SubScreen>
-    );
-  }
-
-  if (typeof view === "object") {
-    return (
-      <SubScreen title={view.label} onBack={() => setView("records")}>
-        <RecordDetail typeId={view.record} />
       </SubScreen>
     );
   }
@@ -57,11 +40,6 @@ export function TrendsTab() {
               title="Stress rhythm"
               subtitle="Average stress by weekday × hour"
               onClick={() => setView("stress")}
-            />
-            <ExploreRow
-              title="Personal records"
-              subtitle="Fastest 1k / 5k / 10k · longest run · step records"
-              onClick={() => setView("records")}
             />
           </Card>
         </>
