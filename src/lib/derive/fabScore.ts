@@ -109,11 +109,11 @@ export function computeFabScore(inp: FabInputs): FabResult {
   if (verdict != null) {
     if (inp.acwr != null && inp.acwr > 1.5 && verdict === "train") {
       verdict = "easy";
-      overrides.push(`Load ramp is steep (ACWR ${inp.acwr.toFixed(2)} > 1.5) — capped at Easy.`);
+      overrides.push(`Load ramp is steep (ACWR ${inp.acwr.toFixed(2)} > 1.5), so today is capped at Easy.`);
     }
     if (inp.sleepSeconds != null && inp.sleepSeconds < 5 * 3600 && verdict === "train") {
       verdict = "easy";
-      overrides.push("Under 5 h sleep — capped at Easy.");
+      overrides.push("Under 5 h sleep, so today is capped at Easy.");
     }
     if (
       inp.hrvStatus?.toUpperCase() === "LOW" &&
@@ -122,11 +122,11 @@ export function computeFabScore(inp: FabInputs): FabResult {
       inp.rhrToday >= inp.rhr7dAvg + 5
     ) {
       verdict = "rest";
-      overrides.push("HRV status LOW and resting HR +5 bpm over your weekly average — possible illness, rest.");
+      overrides.push("HRV status LOW and resting HR +5 bpm over your weekly average: possible illness. Rest.");
     }
     if (inp.daysSinceLastRun != null && inp.daysSinceLastRun <= 1 && verdict === "train") {
       verdict = "easy";
-      overrides.push("You ran yesterday — the plan keeps at least one rest day between runs.");
+      overrides.push("You ran yesterday, and the plan keeps at least one rest day between runs.");
     }
   }
 
@@ -146,7 +146,7 @@ function composeSentence(
   overrides: string[],
   inp: FabInputs,
 ): string {
-  if (verdict == null) return "Not enough data yet — sync a few nights first.";
+  if (verdict == null) return "Not enough data yet. Sync a few nights first.";
   if (overrides.length) return overrides[0];
 
   const limiting = factors
@@ -156,9 +156,9 @@ function composeSentence(
   if (verdict === "train") {
     const gapNudge =
       inp.daysSinceLastRun != null && inp.daysSinceLastRun >= 5
-        ? ` It's been ${inp.daysSinceLastRun} days — an easy run today protects your base.`
+        ? ` It's been ${inp.daysSinceLastRun} days, and an easy run today protects your base.`
         : "";
-    return `Everything has recovered — good day for your Zone-2 run.${gapNudge}`;
+    return `Everything has recovered. Good day for your Zone-2 run.${gapNudge}`;
   }
 
   const worst = limiting[0];
@@ -167,8 +167,8 @@ function composeSentence(
     .filter(Boolean)
     .join(" and ");
   return verdict === "easy"
-    ? `${cap(parts)} — keep today easy.`
-    : `${cap(parts)} — take a rest day.`;
+    ? `${cap(parts)}. Keep today easy.`
+    : `${cap(parts)}. Take a rest day.`;
 }
 
 function describeFactor(f: FabFactor | undefined): string | null {

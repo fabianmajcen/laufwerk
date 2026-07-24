@@ -46,7 +46,7 @@ export function ZoneDiscipline() {
     const totals = runs.map((r) => r.secs.reduce((a, b) => a + b, 0) || 1);
 
     return {
-      grid: { left: 34, right: 12, top: 26, bottom: 24 },
+      grid: { left: 34, right: 12, top: 34, bottom: 24 },
       legend: {
         top: 0,
         left: 0,

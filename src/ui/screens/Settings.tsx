@@ -42,8 +42,8 @@ export function Settings({ onBack }: { onBack: () => void }) {
           ))}
         </div>
         <p className="mt-2 text-[12px] text-ink-3">
-          How far back the first sync reaches. Wellness data costs ~5 requests per day of history — 90 days is
-          the polite default.
+          How far back the first sync reaches. Wellness data costs ~5 requests per day of history, so 90 days
+          is the polite default.
         </p>
       </Card>
 

@@ -168,7 +168,7 @@ export function HomeSegment({ onOpenRun }: { onOpenRun?: (id: number) => void })
       kicker="Home segment"
       title={`Your ${(segment.segLenM / 1000).toFixed(1)} km opener`}
       value={fmtDuration(best.durS)}
-      footnote={`Auto-detected: the opening stretch ${segment.stats.length} runs share (within 25 m). Big number = best time; ♥ labels = avg HR — same time at lower HR is fitness.`}
+      footnote={`Auto-detected: the opening stretch ${segment.stats.length} runs share (within 25 m). Big number = best time; ♥ labels = avg HR. Same time at lower HR is fitness.`}
     >
       <EChart
         option={option}

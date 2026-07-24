@@ -6,7 +6,7 @@ const TOKENS_KEY = "garmin_di_tokens";
 const REFRESH_MARGIN_S = 900; // refresh when JWT exp is within 15 min (python parity)
 
 export class AuthExpiredError extends Error {
-  constructor(msg = "Garmin authentication expired — re-paste tokens from the PC") {
+  constructor(msg = "Garmin authentication expired. Re-paste tokens from the PC") {
     super(msg);
     this.name = "AuthExpiredError";
   }
@@ -126,7 +126,7 @@ export async function bootstrapFromJson(json: string): Promise<DiTokens> {
   try {
     parsed = JSON.parse(json);
   } catch {
-    throw new Error("That is not valid JSON — paste the full contents of garmin_tokens.json");
+    throw new Error("That is not valid JSON. Paste the full contents of garmin_tokens.json");
   }
   if (!parsed.di_token || !parsed.di_refresh_token || !parsed.di_client_id) {
     throw new Error("JSON must contain di_token, di_refresh_token and di_client_id");

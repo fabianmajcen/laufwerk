@@ -119,7 +119,7 @@ export function EfficiencyMap({ onOpenRun }: { onOpenRun?: (id: number) => void 
       kicker="Fitness"
       title="Efficiency map"
       value={efTrend != null ? `EF ${efTrend >= 0 ? "+" : ""}${efTrend.toFixed(1)}%/mo` : undefined}
-      footnote="Each dot is a run (brighter = more recent). Down and right over time = same pace at lower heart rate — the base is building."
+      footnote="Each dot is a run (brighter = more recent). Down and right over time = same pace at lower heart rate: the base is building."
     >
       <EChart
         option={option}

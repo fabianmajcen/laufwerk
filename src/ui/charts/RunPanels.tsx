@@ -12,7 +12,7 @@ import { useSettings } from "../../store/settingsStore";
 type XMode = "elapsed" | "distance";
 
 const PANEL_H = 92;
-const PANEL_GAP = 30;
+const PANEL_GAP = 38; // room for the swatch+label row without touching the top tick
 
 export function RunPanels({ data }: { data: ActivityData }) {
   const [xMode, setXMode] = useState<XMode>("elapsed");
@@ -101,7 +101,7 @@ export function RunPanels({ data }: { data: ActivityData }) {
       // panel titles as positioned labels (axis `name` collides in the gaps);
       // identity = colored swatch, text stays in ink tokens
       graphic: panels.flatMap((p, i) => {
-        const top = 26 + i * (PANEL_H + PANEL_GAP) - 17;
+        const top = 26 + i * (PANEL_H + PANEL_GAP) - 22;
         return [
           {
             type: "rect",

@@ -24,7 +24,7 @@ export function StageBalance() {
       new Date(d + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 
     return {
-      grid: { left: 34, right: 12, top: 26, bottom: 24 },
+      grid: { left: 34, right: 12, top: 32, bottom: 24 },
       legend: {
         top: 0,
         left: 0,

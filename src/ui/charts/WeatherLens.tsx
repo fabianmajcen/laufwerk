@@ -126,7 +126,7 @@ export function WeatherLens({ onOpenRun }: { onOpenRun?: (id: number) => void })
     <Card
       kicker="Weather lens"
       title={`Temperature vs ${mode === "hr" ? "heart rate" : "pace"}`}
-      footnote="Brighter = more recent. Caveat: you also got fitter as summer warmed up — read this alongside the efficiency map, not alone."
+      footnote="Brighter = more recent. Caveat: you also got fitter as summer warmed up, so read this alongside the efficiency map, not alone."
     >
       <div className="mb-2 flex gap-1 text-[12px]" role="tablist">
         {(["hr", "pace"] as Mode[]).map((m) => (

@@ -19,7 +19,7 @@ export function FactorLadder({ fab }: { fab: FabResult }) {
         className="flex w-full items-center justify-between py-1 text-[13px] text-ink-2"
         aria-expanded={open}
       >
-        <span>Why? — factor breakdown</span>
+        <span>Why? Factor breakdown</span>
         <span className={`transition-transform ${open ? "rotate-180" : ""}`} aria-hidden>
           ⌄
         </span>

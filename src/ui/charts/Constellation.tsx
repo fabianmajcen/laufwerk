@@ -111,7 +111,7 @@ export function Constellation() {
       kicker="Constellation"
       title="Every route"
       value={`${routes.length} runs · ${totalKm.toFixed(0)} km`}
-      footnote={sel ? `${sel.label} · ${sel.km.toFixed(1)} km — tap again to clear` : "Brighter = more recent. Tap a route to highlight; pinch to zoom."}
+      footnote={sel ? `${sel.label} · ${sel.km.toFixed(1)} km. Tap again to clear` : "Brighter = more recent. Tap a route to highlight; pinch to zoom."}
     >
       <div className="-mx-4 overflow-hidden rounded-b-2xl bg-page" style={{ marginBottom: -16 }}>
         <EChart

@@ -45,8 +45,8 @@ export function LoadTunnel() {
 
     return {
       grid: [
-        { left: 34, right: 12, top: 24, height: 96 },
-        { left: 34, right: 12, top: 158, height: 78 },
+        { left: 34, right: 12, top: 32, height: 96 },
+        { left: 34, right: 12, top: 168, height: 78 },
       ],
       legend: {
         top: 0,
@@ -141,7 +141,7 @@ export function LoadTunnel() {
         {
           type: "text",
           left: 8,
-          top: 140,
+          top: 148,
           style: { text: "ACWR ratio (0.8–1.3 = safe tunnel)", fill: t.ink2, fontSize: 11, fontWeight: 600 },
           silent: true,
         },
@@ -158,9 +158,9 @@ export function LoadTunnel() {
       kicker="Training load"
       title="Load tunnel"
       value={today.ratio != null ? today.ratio.toFixed(2) : "–"}
-      footnote="Load proxy = km. Ratio above 1.5 (dashed) caps the readiness verdict at Easy — priority #1 is not getting injured."
+      footnote="Load proxy = km. Ratio above 1.5 (dashed) caps the readiness verdict at Easy. Priority #1 is not getting injured."
     >
-      <EChart option={option} height={250} />
+      <EChart option={option} height={262} />
     </Card>
   );
 }

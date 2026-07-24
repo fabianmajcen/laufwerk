@@ -141,7 +141,7 @@ export function SleepReadinessScatter() {
     return (
       <Card kicker="Correlation" title="Sleep → readiness">
         <p className="py-4 text-center text-[13px] text-ink-3">
-          Unlocks at {UNLOCK_N} nights — {pairs.length}/{UNLOCK_N} collected. One new night per day.
+          Unlocks at {UNLOCK_N} nights: {pairs.length}/{UNLOCK_N} collected. One new night per day.
         </p>
         <div className="mx-auto h-1.5 w-2/3 overflow-hidden rounded-full bg-grid">
           <div className="h-full rounded-full bg-accent" style={{ width: `${(pairs.length / UNLOCK_N) * 100}%` }} />
@@ -154,7 +154,7 @@ export function SleepReadinessScatter() {
     <Card
       kicker="Correlation"
       title="Sleep → readiness"
-      footnote="Each dot is one morning: last night's sleep score vs that day's FabScore. Dashed = trend. Readiness also depends on HRV, load and freshness — expect scatter."
+      footnote="Each dot is one morning: last night's sleep score vs that day's FabScore. Dashed = trend. Readiness also depends on HRV, load and freshness, so expect scatter."
     >
       <EChart option={option!} height={210} />
     </Card>

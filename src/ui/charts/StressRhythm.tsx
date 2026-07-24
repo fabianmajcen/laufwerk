@@ -94,7 +94,7 @@ export function StressRhythm() {
     <Card
       kicker="Stress rhythm"
       title="When are you calm?"
-      footnote="Average Garmin stress by weekday and hour over the cached window — brighter = more stressed, scaled to your own range. The dark band overnight is sleep."
+      footnote="Average Garmin stress by weekday and hour over the cached window. Brighter = more stressed, scaled to your own range. The dark band overnight is sleep."
     >
       <EChart option={option} height={210} />
     </Card>

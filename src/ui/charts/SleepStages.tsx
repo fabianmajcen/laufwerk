@@ -31,7 +31,7 @@ export function SleepStages({ onOpenNight }: { onOpenNight?: (date: string) => v
     ] as const;
 
     return {
-      grid: { left: 30, right: 12, top: 30, bottom: 24 },
+      grid: { left: 30, right: 12, top: 34, bottom: 24 },
       legend: {
         top: 0,
         left: 0,

@@ -27,7 +27,7 @@ export function SleepDebt() {
     const need = debt[debt.length - 1].needMin;
 
     return {
-      grid: { left: 36, right: 12, top: 26, bottom: 24 },
+      grid: { left: 36, right: 12, top: 32, bottom: 24 },
       legend: {
         top: 0,
         left: 0,

@@ -59,7 +59,7 @@ export function SleepTab() {
     <div className="pb-4">
       <ScreenHeader title="Sleep" />
       {!latest ? (
-        <EmptyState text="Sleep data arrives with the first sync — hypnogram, stages and consistency live here." />
+        <EmptyState text="Sleep data arrives with the first sync. Hypnogram, stages and consistency live here." />
       ) : (
         <>
           <Hypnogram sleep={latest} />
@@ -99,7 +99,7 @@ function RegularityCard() {
     <Card
       kicker="Regularity"
       title="How consistent is your schedule?"
-      footnote={`Standard deviation over ${reg.nights} nights. Under 30 min counts as very regular — regular beats long for how rested you feel.`}
+      footnote={`Standard deviation over ${reg.nights} nights. Under 30 min counts as very regular. Regular beats long for how rested you feel.`}
     >
       <div className="grid grid-cols-3 gap-3">
         <RegStat label="bedtime ±" value={fmtHoursMin(reg.bedtimeSdMin)} note={verdictFor(reg.bedtimeSdMin)} />

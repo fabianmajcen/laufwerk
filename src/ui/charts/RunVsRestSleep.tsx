@@ -23,7 +23,7 @@ export function RunVsRestSleep() {
     return (
       <Card kicker="Sleep × training" title="Run nights vs rest nights">
         <p className="py-4 text-center text-[13px] text-ink-3">
-          Collecting data — needs at least 2 nights of each ({nRun} run · {nRest} rest so far). Keep syncing.
+          Collecting data. Needs at least 2 nights of each ({nRun} run · {nRest} rest so far). Keep syncing.
         </p>
       </Card>
     );
@@ -33,7 +33,7 @@ export function RunVsRestSleep() {
     <Card
       kicker="Sleep × training"
       title="Nights after running vs rest"
-      footnote={`Averages over ${nRun} post-run and ${nRest} rest nights. Small samples — read direction, not decimals.`}
+      footnote={`Averages over ${nRun} post-run and ${nRest} rest nights. Small samples: read direction, not decimals.`}
     >
       <table className="tnum w-full text-[13px]">
         <thead>

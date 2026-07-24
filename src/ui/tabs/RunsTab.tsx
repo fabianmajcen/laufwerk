@@ -68,7 +68,7 @@ export function RunsTab() {
     <div className="pb-4">
       <ScreenHeader title="Runs" />
       {!runs?.length ? (
-        <EmptyState text="No runs yet — connect your Garmin account in Settings and sync." />
+        <EmptyState text="No runs yet. Connect your Garmin account in Settings and sync." />
       ) : (
         <>
           <AnalyticsHub runs={runs} onOpen={setView} />

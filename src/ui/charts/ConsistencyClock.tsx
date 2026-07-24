@@ -134,7 +134,7 @@ export function ConsistencyClock() {
     <Card
       kicker="Rhythm"
       title="Bed & wake times"
-      footnote="Brighter bar = better sleep score (scaled to this window's best/worst night). Dashed lines = your median bedtime and wake time — regularity is the biggest free lever."
+      footnote="Brighter bar = better sleep score (scaled to this window's best/worst night). Dashed lines = your median bedtime and wake time. Regularity is the biggest free lever."
     >
       <EChart option={option} height={220} />
     </Card>

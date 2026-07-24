@@ -53,7 +53,7 @@ export function RecordsShelf() {
     <Card
       kicker="Personal records"
       title="Your bests"
-      footnote="Straight from Garmin's PR service — beat one and it updates on the next sync. Empty slots are races you haven't run yet."
+      footnote="Straight from Garmin's PR service. Beat one and it updates on the next sync. Empty slots are races you haven't run yet."
     >
       <div className="grid grid-cols-2 gap-3">
         {SLOTS.map((slot) => {
@@ -76,7 +76,7 @@ export function RecordsShelf() {
                 </>
               ) : (
                 <>
-                  <div className="mt-1 text-[20px] font-semibold text-ink-3">—</div>
+                  <div className="mt-1 text-[20px] font-semibold text-ink-3">-</div>
                   <div className="text-[10px] text-ink-3">not yet run</div>
                 </>
               )}

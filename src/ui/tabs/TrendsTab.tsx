@@ -36,7 +36,7 @@ export function TrendsTab() {
     <div className="pb-4">
       <ScreenHeader title="Trends" />
       {!hasData ? (
-        <EmptyState text="Trends need a few weeks of synced data — HRV baseline, training load and VO₂max land here." />
+        <EmptyState text="Trends need a few weeks of synced data. HRV baseline, training load and VO₂max land here." />
       ) : (
         <>
           <HrvBaseline />

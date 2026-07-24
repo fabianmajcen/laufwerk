@@ -51,8 +51,8 @@ export function Hypnogram({ sleep }: { sleep: SleepView }) {
     return {
       grid: [
         { left: 46, right: 12, top: 18, height: 120 },
-        { left: 46, right: 12, top: 168, height: 56 },
-        ...(hasResp ? [{ left: 46, right: 12, top: 252, height: 44 }] : []),
+        { left: 46, right: 12, top: 178, height: 52 },
+        ...(hasResp ? [{ left: 46, right: 12, top: 272, height: 44 }] : []),
       ],
       tooltip: {
         ...tooltipDefaults(t),
@@ -161,7 +161,7 @@ export function Hypnogram({ sleep }: { sleep: SleepView }) {
         {
           type: "text",
           left: 8,
-          top: 150,
+          top: 154,
           style: { text: "HR", fill: t.ink2, fontSize: 11, fontWeight: 600 },
           silent: true,
         },
@@ -170,7 +170,7 @@ export function Hypnogram({ sleep }: { sleep: SleepView }) {
               {
                 type: "text",
                 left: 8,
-                top: 235,
+                top: 248,
                 style: { text: "Breaths/min", fill: t.ink2, fontSize: 11, fontWeight: 600 },
                 silent: true,
               },
@@ -197,7 +197,7 @@ export function Hypnogram({ sleep }: { sleep: SleepView }) {
       title={new Date(sleep.date + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" })}
       value={sleep.score != null ? String(sleep.score) : undefined}
     >
-      <EChart option={option} height={sleep.respiration.length > 5 ? 322 : 250} />
+      <EChart option={option} height={sleep.respiration.length > 5 ? 342 : 256} />
       {(sleep.restlessMoments != null || sleep.awakeCount != null || sleep.sleepNeedMin != null) && (
         <div className="mb-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-ink-3">
           {sleep.restlessMoments != null && <span>{sleep.restlessMoments} restless moments</span>}

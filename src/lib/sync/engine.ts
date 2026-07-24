@@ -93,12 +93,12 @@ export async function syncNow(): Promise<void> {
         await tick(item.label);
       } catch (e) {
         if (e instanceof RateLimitedError) {
-          store.setPhase("error", `Garmin rate limit — try again in ~${Math.ceil(e.retryAfterS / 60)} min. Progress is saved.`);
+          store.setPhase("error", `Garmin rate limit. Try again in ~${Math.ceil(e.retryAfterS / 60)} min; progress is saved.`);
           return;
         }
         if (e instanceof AuthExpiredError) {
           store.setAuth("expired");
-          store.setPhase("error", "Garmin login expired — re-paste tokens in Settings.");
+          store.setPhase("error", "Garmin login expired. Re-paste tokens in Settings.");
           return;
         }
         console.warn(`sync item failed (${item.label})`, e);

@@ -32,7 +32,7 @@ export function HrvBaseline() {
       new Date(d + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 
     return {
-      grid: { left: 34, right: 12, top: 14, bottom: 26 },
+      grid: { left: 34, right: 12, top: 32, bottom: 26 },
       legend: {
         show: true,
         top: 0,
@@ -115,7 +115,7 @@ export function HrvBaseline() {
       kicker="Recovery"
       title="HRV vs baseline"
       value={`${latest.lastNight} ms`}
-      footnote={`Shaded band = your balanced range (${latest.baselineLow ?? "–"}–${latest.baselineUpper ?? "–"} ms). Blue x-axis ticks mark run days. Status: ${latest.status?.toLowerCase() ?? "–"}.`}
+      footnote={`Shaded band = your balanced range (${latest.baselineLow ?? "–"}–${latest.baselineUpper ?? "–"} ms). Blue triangles mark run days. Status: ${latest.status?.toLowerCase() ?? "–"}.`}
     >
       <div className="mb-2 flex gap-1 text-[12px]">
         {[30, 90].map((d) => (

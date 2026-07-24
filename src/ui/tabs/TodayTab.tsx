@@ -35,7 +35,7 @@ export function TodayTab({ onOpenSettings }: { onOpenSettings?: () => void }) {
           </>
         ) : (
           <p className="py-6 text-center text-[14px] text-ink-3">
-            Readiness needs sleep + HRV data — connect and sync in Settings.
+            Readiness needs sleep + HRV data. Connect and sync in Settings.
           </p>
         )}
       </Card>
@@ -64,10 +64,10 @@ function WeekPlanCard() {
   const daysSince = lastRun ? Math.floor((now.getTime() - lastRun.getTime()) / 86400000) : 99;
   const suggestion =
     done >= plan.runsPerWeek
-      ? "Week's plan complete — bonus runs are optional."
+      ? "Week's plan complete. Bonus runs are optional."
       : daysSince < 1
-        ? "Ran today — rest tomorrow, next slot after."
-        : "A run slot is open — today works.";
+        ? "Ran today. Rest tomorrow, next slot after."
+        : "A run slot is open. Today works.";
 
   return (
     <Card kicker="This week" title={`Runs ${done}/${plan.runsPerWeek}`} value={`${km.toFixed(1)} km`} footnote={suggestion}>
@@ -158,7 +158,7 @@ function LastRunMini() {
   return (
     <Card
       kicker="Last run"
-      title={`${fmtDay(d)} — ${r.activityName ?? "Run"}`}
+      title={`${fmtDay(d)} · ${r.activityName ?? "Run"}`}
       footnote={`${fmtKm(r.distance)} km · ${fmtPace(pace)} /km · ${r.averageHR != null ? Math.round(r.averageHR) : "–"} bpm`}
     />
   );
