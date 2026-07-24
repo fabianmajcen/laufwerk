@@ -17,7 +17,13 @@ type View = "main" | { night: string } | "rhythm" | "training" | "duration";
 export function SleepTab() {
   const latest = toSleepView(useLatestWellness("sleep"));
   const [view, setView] = useState<View>("main");
+  const [browseDate, setBrowseDate] = useState<string | null>(null);
   const rows = useWellnessRange("sleep", 60);
+
+  // nights with real data, ascending by date
+  const nights = (rows ?? []).map(toSleepView).filter((v): v is NonNullable<typeof v> => v != null);
+  const heroIdx = browseDate != null ? nights.findIndex((n) => n.date === browseDate) : nights.length - 1;
+  const hero = heroIdx >= 0 ? nights[heroIdx] : latest;
 
   if (typeof view === "object") {
     const night = toSleepView(rows?.find((r) => r.date === view.night));
@@ -58,11 +64,18 @@ export function SleepTab() {
   return (
     <div className="pb-4">
       <ScreenHeader title="Sleep" />
-      {!latest ? (
+      {!hero ? (
         <EmptyState text="Sleep data arrives with the first sync. Hypnogram, stages and consistency live here." />
       ) : (
         <>
-          <Hypnogram sleep={latest} />
+          <Hypnogram
+            sleep={hero}
+            nav={{
+              isLatest: heroIdx === nights.length - 1,
+              onPrev: heroIdx > 0 ? () => setBrowseDate(nights[heroIdx - 1].date) : undefined,
+              onNext: heroIdx < nights.length - 1 ? () => setBrowseDate(nights[heroIdx + 1].date) : undefined,
+            }}
+          />
           <SleepStages onOpenNight={(night) => setView({ night })} />
           <Card kicker="Go deeper" title="Sleep analytics">
             <ExploreRow

@@ -9,6 +9,19 @@ import { fmtHoursMin } from "../../lib/format";
 import { Card } from "../components/ScreenHeader";
 import { useSettings } from "../../store/settingsStore";
 
+function NavBtn({ dir, onClick }: { dir: "prev" | "next"; onClick?: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={!onClick}
+      aria-label={dir === "prev" ? "previous night" : "next night"}
+      className="flex h-8 w-8 items-center justify-center rounded-full bg-page text-[16px] text-ink-2 disabled:opacity-30"
+    >
+      {dir === "prev" ? "‹" : "›"}
+    </button>
+  );
+}
+
 // Garmin activityLevel: 0=deep 1=light 2=REM 3=awake — plotted shallow→deep
 interface Stage {
   level: number;
@@ -22,7 +35,13 @@ const STAGE = (t: Tokens): Stage[] => [
   { level: 3, name: "Awake", color: t.sleepAwake },
 ];
 
-export function Hypnogram({ sleep }: { sleep: SleepView }) {
+export interface HypnogramNav {
+  onPrev?: () => void;
+  onNext?: () => void;
+  isLatest: boolean;
+}
+
+export function Hypnogram({ sleep, nav }: { sleep: SleepView; nav?: HypnogramNav }) {
   const theme = useSettings((s) => s.theme);
 
   const option = useMemo(() => {
@@ -47,12 +66,14 @@ export function Hypnogram({ sleep }: { sleep: SleepView }) {
     const hrData = sleep.heartRate.filter(([ts]) => ts >= tMin - 600000 && ts <= tMax + 600000);
     const respData = sleep.respiration.filter(([ts]) => ts >= tMin - 600000 && ts <= tMax + 600000);
     const hasResp = respData.length > 5;
+    const hrValues = hrData.map(([, v]) => v);
+    const hrRange = hrValues.length ? [Math.min(...hrValues), Math.max(...hrValues)] : null;
 
     return {
       grid: [
         { left: 46, right: 12, top: 18, height: 120 },
-        { left: 46, right: 12, top: 178, height: 52 },
-        ...(hasResp ? [{ left: 46, right: 12, top: 272, height: 44 }] : []),
+        { left: 46, right: 12, top: 184, height: 60 },
+        ...(hasResp ? [{ left: 46, right: 12, top: 292, height: 52 }] : []),
       ],
       tooltip: {
         ...tooltipDefaults(t),
@@ -102,9 +123,26 @@ export function Hypnogram({ sleep }: { sleep: SleepView }) {
             formatter: (v: number) => byLevel.get(Math.round(v))?.name ?? "",
           },
         },
-        { type: "value", gridIndex: 1, scale: true, ...yAxisDefaults(t), splitNumber: 2 },
+        {
+          type: "value",
+          gridIndex: 1,
+          scale: true,
+          ...yAxisDefaults(t),
+          splitNumber: 2,
+          // the topmost tick label would crowd the panel title row
+          axisLabel: { ...yAxisDefaults(t).axisLabel, showMaxLabel: false },
+        },
         ...(hasResp
-          ? [{ type: "value", gridIndex: 2, scale: true, ...yAxisDefaults(t), splitNumber: 2 }]
+          ? [
+              {
+                type: "value",
+                gridIndex: 2,
+                scale: true,
+                ...yAxisDefaults(t),
+                splitNumber: 2,
+                axisLabel: { ...yAxisDefaults(t).axisLabel, showMaxLabel: false },
+              },
+            ]
           : []),
       ],
       series: [
@@ -161,8 +199,8 @@ export function Hypnogram({ sleep }: { sleep: SleepView }) {
         {
           type: "text",
           left: 8,
-          top: 154,
-          style: { text: "HR", fill: t.ink2, fontSize: 11, fontWeight: 600 },
+          top: 158,
+          style: { text: hrRange ? `HR   low ${hrRange[0]} · high ${hrRange[1]} bpm` : "HR", fill: t.ink2, fontSize: 11, fontWeight: 600 },
           silent: true,
         },
         ...(hasResp
@@ -170,7 +208,7 @@ export function Hypnogram({ sleep }: { sleep: SleepView }) {
               {
                 type: "text",
                 left: 8,
-                top: 248,
+                top: 266,
                 style: { text: "Breaths/min", fill: t.ink2, fontSize: 11, fontWeight: 600 },
                 silent: true,
               },
@@ -193,15 +231,21 @@ export function Hypnogram({ sleep }: { sleep: SleepView }) {
 
   return (
     <Card
-      kicker="Last night"
+      kicker={nav && !nav.isLatest ? "Night" : "Last night"}
       title={new Date(sleep.date + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" })}
       value={sleep.score != null ? String(sleep.score) : undefined}
     >
-      <EChart option={option} height={sleep.respiration.length > 5 ? 342 : 256} />
+      {nav && (
+        <div className="-mt-1 mb-1 flex justify-end gap-2">
+          <NavBtn dir="prev" onClick={nav.onPrev} />
+          <NavBtn dir="next" onClick={nav.onNext} />
+        </div>
+      )}
+      <EChart option={option} height={sleep.respiration.length > 5 ? 372 : 274} />
       {(sleep.restlessMoments != null || sleep.awakeCount != null || sleep.sleepNeedMin != null) && (
         <div className="mb-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-ink-3">
           {sleep.restlessMoments != null && <span>{sleep.restlessMoments} restless moments</span>}
-          {sleep.awakeCount != null && <span>{sleep.awakeCount} wake-ups</span>}
+          {sleep.awakeCount != null && <span>{sleep.awakeCount} wake-up{sleep.awakeCount === 1 ? "" : "s"}</span>}
           {sleep.sleepNeedMin != null && <span>need {fmtHoursMin(sleep.sleepNeedMin)}</span>}
         </div>
       )}
