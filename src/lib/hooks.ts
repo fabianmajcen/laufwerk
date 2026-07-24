@@ -56,8 +56,13 @@ export interface SleepView {
   avgOvernightHrv: number | null;
   hrvStatus: string | null;
   bodyBatteryChange: number | null;
+  /** personal sleep need in minutes (Garmin-adjusted) */
+  sleepNeedMin: number | null;
+  restlessMoments: number | null;
+  awakeCount: number | null;
   levels: { startGMT: string; endGMT: string; activityLevel: number }[];
   heartRate: [number, number][]; // [ms epoch, bpm]
+  respiration: [number, number][]; // [ms epoch, breaths/min]
 }
 
 interface SleepPayload {
@@ -70,10 +75,14 @@ interface SleepPayload {
     awakeSleepSeconds?: number;
     sleepStartTimestampLocal?: number;
     sleepEndTimestampLocal?: number;
+    awakeCount?: number;
+    sleepNeed?: { actual?: number; baseline?: number };
     sleepScores?: { overall?: { value?: number; qualifierKey?: string } };
   };
   sleepLevels?: { startGMT: string; endGMT: string; activityLevel: number }[];
   sleepHeartRate?: { startGMT: number; value: number }[];
+  wellnessEpochRespirationDataDTOList?: { startTimeGMT: number; respirationValue: number }[];
+  restlessMomentsCount?: number;
   restingHeartRate?: number;
   avgOvernightHrv?: number;
   hrvStatus?: string;
@@ -100,8 +109,14 @@ export function toSleepView(row: WellnessRow | undefined): SleepView | null {
     avgOvernightHrv: p.avgOvernightHrv ?? null,
     hrvStatus: p.hrvStatus ?? null,
     bodyBatteryChange: p.bodyBatteryChange ?? null,
+    sleepNeedMin: dto.sleepNeed?.actual ?? dto.sleepNeed?.baseline ?? null,
+    restlessMoments: p.restlessMomentsCount ?? null,
+    awakeCount: dto.awakeCount ?? null,
     levels: p.sleepLevels ?? [],
     heartRate: (p.sleepHeartRate ?? []).map((h) => [h.startGMT, h.value]),
+    respiration: (p.wellnessEpochRespirationDataDTOList ?? [])
+      .filter((r) => r.respirationValue > 0)
+      .map((r) => [r.startTimeGMT, r.respirationValue]),
   };
 }
 

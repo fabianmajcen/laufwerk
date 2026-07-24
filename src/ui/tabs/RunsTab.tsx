@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { useRuns } from "../../lib/hooks";
+import { useDecouplingSeries, useRuns } from "../../lib/hooks";
 import { fmtDay, fmtDuration, fmtKm, fmtPace, parseGarminLocal, speedToPace } from "../../lib/format";
-import { ScreenHeader, EmptyState } from "../components/ScreenHeader";
+import { weekStartOf } from "../../lib/derive/weekly";
+import { ScreenHeader, EmptyState, Card } from "../components/ScreenHeader";
+import { SubScreen } from "../components/SubScreen";
 import { RunDetail } from "../screens/RunDetail";
 import { EfficiencyMap } from "../charts/EfficiencyMap";
 import { DecouplingBars } from "../charts/DecouplingBars";
@@ -14,12 +16,49 @@ import { HomeSegment } from "../charts/HomeSegment";
 import { RunShape } from "../charts/RunShape";
 import type { ActivityRow } from "../../lib/db/schema";
 
+type View = "main" | "fitness" | "volume" | "routes" | "technique";
+
 export function RunsTab() {
   const runs = useRuns();
   const [openId, setOpenId] = useState<number | null>(null);
+  const [view, setView] = useState<View>("main");
 
   const open = openId != null ? runs?.find((r) => r.activityId === openId) : undefined;
   if (open) return <RunDetail run={open} onBack={() => setOpenId(null)} />;
+
+  if (view === "fitness") {
+    return (
+      <SubScreen title="Fitness" onBack={() => setView("main")}>
+        <EfficiencyMap onOpenRun={setOpenId} />
+        <DecouplingBars onOpenRun={setOpenId} />
+        <RunShape />
+      </SubScreen>
+    );
+  }
+  if (view === "volume") {
+    return (
+      <SubScreen title="Volume & plan" onBack={() => setView("main")}>
+        <WeeklyVolume />
+      </SubScreen>
+    );
+  }
+  if (view === "routes") {
+    return (
+      <SubScreen title="Routes & segment" onBack={() => setView("main")}>
+        <HomeSegment onOpenRun={setOpenId} />
+        <Constellation />
+      </SubScreen>
+    );
+  }
+  if (view === "technique") {
+    return (
+      <SubScreen title="Technique" onBack={() => setView("main")}>
+        <PacingChart />
+        <FormGrid />
+        <ZoneDiscipline />
+      </SubScreen>
+    );
+  }
 
   return (
     <div className="pb-4">
@@ -28,22 +67,75 @@ export function RunsTab() {
         <EmptyState text="No runs yet — connect your Garmin account in Settings and sync." />
       ) : (
         <>
+          <AnalyticsHub runs={runs} onOpen={setView} />
           {runs.map((r) => (
             <RunCard key={r.activityId} run={r} onOpen={() => setOpenId(r.activityId)} />
           ))}
-          <h2 className="kicker mx-4 mb-2 mt-6">Analytics</h2>
-          <EfficiencyMap onOpenRun={setOpenId} />
-          <DecouplingBars onOpenRun={setOpenId} />
-          <WeeklyVolume />
-          <HomeSegment onOpenRun={setOpenId} />
-          <Constellation />
-          <PacingChart />
-          <RunShape />
-          <FormGrid />
-          <ZoneDiscipline />
         </>
       )}
     </div>
+  );
+}
+
+function AnalyticsHub({ runs, onOpen }: { runs: ActivityRow[]; onOpen: (v: View) => void }) {
+  const decoupling = useDecouplingSeries();
+  const latestDec = decoupling?.filter((d) => d.decoupling != null).at(-1)?.decoupling ?? null;
+
+  const weekStart = weekStartOf(new Date());
+  const weekKm = runs
+    .filter((r) => parseGarminLocal(r.startTimeLocal) >= weekStart)
+    .reduce((s, r) => s + (r.distance ?? 0) / 1000, 0);
+  const totalKm = runs.reduce((s, r) => s + (r.distance ?? 0) / 1000, 0);
+  const cadence = runs[0]?.averageRunningCadenceInStepsPerMinute;
+
+  const tiles: { view: View; label: string; stat: string; note: string }[] = [
+    {
+      view: "fitness",
+      label: "Fitness",
+      stat: latestDec != null ? `${latestDec.toFixed(1)}%` : "–",
+      note: "decoupling · efficiency · run shape",
+    },
+    {
+      view: "volume",
+      label: "Volume",
+      stat: `${weekKm.toFixed(1)} km`,
+      note: "this week · plan · cumulative",
+    },
+    {
+      view: "routes",
+      label: "Routes",
+      stat: `${runs.length} · ${totalKm.toFixed(0)} km`,
+      note: "constellation · home segment",
+    },
+    {
+      view: "technique",
+      label: "Technique",
+      stat: cadence != null ? `${Math.round(cadence)} spm` : "–",
+      note: "pacing · form · HR zones",
+    },
+  ];
+
+  return (
+    <Card kicker="Analytics" title="Go deeper">
+      <div className="grid grid-cols-2 gap-3">
+        {tiles.map((tile) => (
+          <button
+            key={tile.view as string}
+            onClick={() => onOpen(tile.view)}
+            className="rounded-xl bg-page p-3 text-left active:opacity-70"
+          >
+            <div className="flex items-center justify-between">
+              <span className="kicker">{tile.label}</span>
+              <span className="text-ink-3" aria-hidden>
+                ›
+              </span>
+            </div>
+            <div className="tnum mt-1 text-[20px] font-semibold">{tile.stat}</div>
+            <div className="mt-0.5 text-[10px] leading-tight text-ink-3">{tile.note}</div>
+          </button>
+        ))}
+      </div>
+    </Card>
   );
 }
 

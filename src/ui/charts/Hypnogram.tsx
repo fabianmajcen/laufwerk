@@ -45,11 +45,14 @@ export function Hypnogram({ sleep }: { sleep: SleepView }) {
     const tMax = segs[segs.length - 1].end;
 
     const hrData = sleep.heartRate.filter(([ts]) => ts >= tMin - 600000 && ts <= tMax + 600000);
+    const respData = sleep.respiration.filter(([ts]) => ts >= tMin - 600000 && ts <= tMax + 600000);
+    const hasResp = respData.length > 5;
 
     return {
       grid: [
         { left: 46, right: 12, top: 18, height: 120 },
-        { left: 46, right: 12, top: 168, height: 64 },
+        { left: 46, right: 12, top: 168, height: 56 },
+        ...(hasResp ? [{ left: 46, right: 12, top: 252, height: 44 }] : []),
       ],
       tooltip: {
         ...tooltipDefaults(t),
@@ -69,7 +72,7 @@ export function Hypnogram({ sleep }: { sleep: SleepView }) {
         },
       },
       axisPointer: { link: [{ xAxisIndex: "all" }], lineStyle: { color: t.ink3 } },
-      xAxis: [0, 1].map((i) => ({
+      xAxis: (hasResp ? [0, 1, 2] : [0, 1]).map((i, _, arr) => ({
         type: "time",
         gridIndex: i,
         min: tMin,
@@ -77,7 +80,7 @@ export function Hypnogram({ sleep }: { sleep: SleepView }) {
         ...xAxisDefaults(t),
         axisLabel: {
           ...xAxisDefaults(t).axisLabel,
-          show: i === 1,
+          show: i === arr.length - 1,
           formatter: (v: number) =>
             new Date(v).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
         },
@@ -100,6 +103,9 @@ export function Hypnogram({ sleep }: { sleep: SleepView }) {
           },
         },
         { type: "value", gridIndex: 1, scale: true, ...yAxisDefaults(t), splitNumber: 2 },
+        ...(hasResp
+          ? [{ type: "value", gridIndex: 2, scale: true, ...yAxisDefaults(t), splitNumber: 2 }]
+          : []),
       ],
       series: [
         {
@@ -137,8 +143,20 @@ export function Hypnogram({ sleep }: { sleep: SleepView }) {
           showSymbol: false,
           lineStyle: { color: t.hr, width: 2, cap: "round" },
         },
+        ...(hasResp
+          ? [
+              {
+                type: "line",
+                xAxisIndex: 2,
+                yAxisIndex: 2,
+                data: respData,
+                showSymbol: false,
+                lineStyle: { color: t.hrv, width: 1.5, cap: "round" },
+                areaStyle: { color: t.hrv, opacity: 0.08 },
+              },
+            ]
+          : []),
       ],
-      // HR panel label
       graphic: [
         {
           type: "text",
@@ -147,6 +165,17 @@ export function Hypnogram({ sleep }: { sleep: SleepView }) {
           style: { text: "HR", fill: t.ink2, fontSize: 11, fontWeight: 600 },
           silent: true,
         },
+        ...(hasResp
+          ? [
+              {
+                type: "text",
+                left: 8,
+                top: 235,
+                style: { text: "Breaths/min", fill: t.ink2, fontSize: 11, fontWeight: 600 },
+                silent: true,
+              },
+            ]
+          : []),
       ],
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -168,7 +197,14 @@ export function Hypnogram({ sleep }: { sleep: SleepView }) {
       title={new Date(sleep.date + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" })}
       value={sleep.score != null ? String(sleep.score) : undefined}
     >
-      <EChart option={option} height={250} />
+      <EChart option={option} height={sleep.respiration.length > 5 ? 322 : 250} />
+      {(sleep.restlessMoments != null || sleep.awakeCount != null || sleep.sleepNeedMin != null) && (
+        <div className="mb-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-ink-3">
+          {sleep.restlessMoments != null && <span>{sleep.restlessMoments} restless moments</span>}
+          {sleep.awakeCount != null && <span>{sleep.awakeCount} wake-ups</span>}
+          {sleep.sleepNeedMin != null && <span>need {fmtHoursMin(sleep.sleepNeedMin)}</span>}
+        </div>
+      )}
       <table className="tnum mt-1 w-full text-[12px]">
         <tbody>
           {rows.map((r) => (
