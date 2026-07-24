@@ -44,9 +44,11 @@ export function BodyBatteryToday() {
       },
       xAxis: {
         type: "time",
+        splitNumber: 4,
         ...xAxisDefaults(t),
         axisLabel: {
           ...xAxisDefaults(t).axisLabel,
+          hideOverlap: true,
           formatter: (v: number) => new Date(v).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
         },
       },

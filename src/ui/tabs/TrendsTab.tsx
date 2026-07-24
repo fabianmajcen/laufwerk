@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { useBackHandler } from "../../lib/backstack";
 import { ScreenHeader, EmptyState, Card } from "../components/ScreenHeader";
 import { SubScreen, ExploreRow } from "../components/SubScreen";
 import { HrvBaseline } from "../charts/HrvBaseline";
@@ -15,6 +16,11 @@ export function TrendsTab() {
   const runs = useRuns();
   const [view, setView] = useState<View>("main");
   const hasData = hrv != null || (runs?.length ?? 0) > 0;
+
+  useBackHandler(
+    view !== "main",
+    useCallback(() => setView("main"), []),
+  );
 
   if (view === "stress") {
     return (

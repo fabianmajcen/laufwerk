@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { useBackHandler } from "../../lib/backstack";
 import { ScreenHeader, EmptyState, Card } from "../components/ScreenHeader";
 import { SubScreen, ExploreRow } from "../components/SubScreen";
 import { Hypnogram } from "../charts/Hypnogram";
@@ -19,6 +20,11 @@ export function SleepTab() {
   const [view, setView] = useState<View>("main");
   const [browseDate, setBrowseDate] = useState<string | null>(null);
   const rows = useWellnessRange("sleep", 60);
+
+  useBackHandler(
+    view !== "main",
+    useCallback(() => setView("main"), []),
+  );
 
   // nights with real data, ascending by date
   const nights = (rows ?? []).map(toSleepView).filter((v): v is NonNullable<typeof v> => v != null);

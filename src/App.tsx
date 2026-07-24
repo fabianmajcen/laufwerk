@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { TabBar, type TabId } from "./ui/components/TabBar";
+import { useCallback, useEffect, useState } from "react";
+import { TabBar } from "./ui/components/TabBar";
 import { TodayTab } from "./ui/tabs/TodayTab";
 import { RunsTab } from "./ui/tabs/RunsTab";
 import { SleepTab } from "./ui/tabs/SleepTab";
@@ -8,11 +8,13 @@ import { Settings } from "./ui/screens/Settings";
 import { PullToSync } from "./ui/components/PullToSync";
 import { useSettings } from "./store/settingsStore";
 import { useSync } from "./store/syncStore";
+import { useUi } from "./store/uiStore";
 import { isConnected, bootstrapFromJson } from "./lib/garmin/auth";
 import { getDisplayName } from "./lib/garmin/client";
 import { getKv, getSyncState } from "./lib/db/repo";
 import { isMockMode } from "./dev/mockSync";
 import { isSyncRunning, syncNow } from "./lib/sync/engine";
+import { popBack, useBackHandler } from "./lib/backstack";
 import { App as CapApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 
@@ -26,15 +28,16 @@ async function autoSyncIfStale() {
   if (Date.now() - last > AUTO_SYNC_AFTER_MS) syncNow();
 }
 
-const TAB_IDS: TabId[] = ["today", "runs", "sleep", "trends"];
-
 export default function App() {
-  const [tab, setTab] = useState<TabId>(() => {
-    const h = window.location.hash.replace("#", "") as TabId;
-    return TAB_IDS.includes(h) ? h : "today";
-  });
+  const tab = useUi((s) => s.tab);
+  const setTab = useUi((s) => s.setTab);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const theme = useSettings((s) => s.theme);
+
+  useBackHandler(
+    settingsOpen,
+    useCallback(() => setSettingsOpen(false), []),
+  );
 
   useEffect(() => {
     const dark =
@@ -80,13 +83,18 @@ export default function App() {
       autoSyncIfStale();
     })();
 
-    // sync when the app returns to the foreground and data is stale
     if (Capacitor.isNativePlatform()) {
-      const sub = CapApp.addListener("appStateChange", ({ isActive }) => {
+      // hardware/gesture back: close the topmost sub-screen, else minimize
+      const backSub = CapApp.addListener("backButton", () => {
+        if (!popBack()) CapApp.minimizeApp();
+      });
+      // sync when the app returns to the foreground and data is stale
+      const stateSub = CapApp.addListener("appStateChange", ({ isActive }) => {
         if (isActive) autoSyncIfStale();
       });
       return () => {
-        sub.then((s) => s.remove());
+        backSub.then((s) => s.remove());
+        stateSub.then((s) => s.remove());
       };
     }
   }, []);

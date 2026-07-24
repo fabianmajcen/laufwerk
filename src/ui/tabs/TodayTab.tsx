@@ -10,6 +10,7 @@ import {
   useWellnessRange,
 } from "../../lib/hooks";
 import { useSettings } from "../../store/settingsStore";
+import { useUi } from "../../store/uiStore";
 import { fmtDay, fmtHoursMin, fmtKm, fmtPace, isoDate, parseGarminLocal, speedToPace } from "../../lib/format";
 import { weekStartOf } from "../../lib/derive/weekly";
 
@@ -160,6 +161,7 @@ function LastRunMini() {
       kicker="Last run"
       title={`${fmtDay(d)} · ${r.activityName ?? "Run"}`}
       footnote={`${fmtKm(r.distance)} km · ${fmtPace(pace)} /km · ${r.averageHR != null ? Math.round(r.averageHR) : "–"} bpm`}
+      onClick={() => useUi.getState().openRun(r.activityId)}
     />
   );
 }

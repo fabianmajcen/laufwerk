@@ -1,4 +1,5 @@
-export type TabId = "today" | "runs" | "sleep" | "trends";
+import type { TabId } from "../../store/uiStore";
+export type { TabId };
 
 const TABS: { id: TabId; label: string; icon: (active: boolean) => React.ReactNode }[] = [
   { id: "today", label: "Today", icon: (a) => <GaugeIcon active={a} /> },

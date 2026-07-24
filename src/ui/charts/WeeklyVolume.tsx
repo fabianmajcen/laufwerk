@@ -44,8 +44,8 @@ export function WeeklyVolume() {
 
     return {
       grid: [
-        { left: 34, right: 12, top: 14, height: 130 },
-        { left: 34, right: 12, top: 172, height: 46 },
+        { left: 34, right: 12, top: 14, height: 156 },
+        { left: 34, right: 12, top: 204, height: 68 },
       ],
       tooltip: {
         ...tooltipDefaults(t),
@@ -127,7 +127,7 @@ export function WeeklyVolume() {
       value={`${weekly[weekly.length - 1].cumulativeKm.toFixed(0)} km total`}
       footnote="Dashed line = your plan target. Lower panel: cumulative distance."
     >
-      <EChart option={option} height={232} />
+      <EChart option={option} height={300} />
     </Card>
   );
 }

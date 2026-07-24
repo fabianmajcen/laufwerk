@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useDecouplingSeries, useRuns } from "../../lib/hooks";
+import { useUi } from "../../store/uiStore";
+import { useBackHandler } from "../../lib/backstack";
 import { getKv } from "../../lib/db/repo";
 import { fmtDay, fmtDuration, fmtKm, fmtPace, parseGarminLocal, speedToPace } from "../../lib/format";
 import { weekStartOf } from "../../lib/derive/weekly";
@@ -28,6 +30,25 @@ export function RunsTab() {
   const runs = useRuns();
   const [openId, setOpenId] = useState<number | null>(null);
   const [view, setView] = useState<View>("main");
+
+  // cross-tab deep link (e.g. "last run" card on Today)
+  const pendingRunId = useUi((s) => s.pendingRunId);
+  useEffect(() => {
+    if (pendingRunId != null) {
+      setOpenId(pendingRunId);
+      useUi.getState().consumePendingRun();
+    }
+  }, [pendingRunId]);
+
+  // android back: close the run first, then leave the sub-screen
+  useBackHandler(
+    view !== "main" && openId == null,
+    useCallback(() => setView(typeof view === "object" ? "records" : "main"), [view]),
+  );
+  useBackHandler(
+    openId != null,
+    useCallback(() => setOpenId(null), []),
+  );
 
   const open = openId != null ? runs?.find((r) => r.activityId === openId) : undefined;
   if (open) return <RunDetail run={open} onBack={() => setOpenId(null)} />;
