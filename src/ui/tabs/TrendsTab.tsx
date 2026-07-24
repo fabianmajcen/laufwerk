@@ -8,9 +8,10 @@ import { LoadTunnel } from "../charts/LoadTunnel";
 import { Vo2maxTrend } from "../charts/Vo2maxTrend";
 import { TrainingCalendar } from "../charts/TrainingCalendar";
 import { StressRhythm } from "../charts/StressRhythm";
+import { DaySummary } from "../screens/DaySummary";
 import { useLatestWellness, useRuns } from "../../lib/hooks";
 
-type View = "main" | "stress";
+type View = "main" | "stress" | { day: string };
 
 export function TrendsTab() {
   const hrv = useLatestWellness("hrv");
@@ -22,12 +23,22 @@ export function TrendsTab() {
     view !== "main",
     useCallback(() => setView("main"), []),
   );
-  useScrollMemory(`trends:${view}`);
+  useScrollMemory(`trends:${typeof view === "object" ? `day${view.day}` : view}`);
 
   if (view === "stress") {
     return (
       <SubScreen title="Stress rhythm" onBack={() => setView("main")}>
         <StressRhythm />
+      </SubScreen>
+    );
+  }
+  if (typeof view === "object") {
+    return (
+      <SubScreen
+        title={new Date(view.day + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+        onBack={() => setView("main")}
+      >
+        <DaySummary date={view.day} />
       </SubScreen>
     );
   }
@@ -42,7 +53,7 @@ export function TrendsTab() {
           <HrvBaseline />
           <LoadTunnel />
           <Vo2maxTrend />
-          <TrainingCalendar />
+          <TrainingCalendar onOpenDay={(day) => setView({ day })} />
           <Card kicker="Go deeper" title="More trends">
             <ExploreRow
               title="Stress rhythm"

@@ -10,7 +10,7 @@ import { isoDate, parseGarminLocal } from "../../lib/format";
 
 const MONTHS = 3;
 
-export function TrainingCalendar() {
+export function TrainingCalendar({ onOpenDay }: { onOpenDay?: (date: string) => void }) {
   const rows = useWellnessRange("sleep", MONTHS * 31);
   const runs = useRuns();
   const theme = useSettings((s) => s.theme);
@@ -91,9 +91,22 @@ export function TrainingCalendar() {
     <Card
       kicker="Rhythm"
       title="Last 3 months"
-      footnote="Cell brightness = sleep score · green ring = run day."
+      footnote={`Cell brightness = sleep score · green ring = run day.${onOpenDay ? " Tap a day for its summary." : ""}`}
     >
-      <EChart option={option} height={150} />
+      <EChart
+        option={option}
+        height={150}
+        onEvents={
+          onOpenDay
+            ? {
+                click: (p) => {
+                  const q = p as { data?: [string, number] };
+                  if (q.data?.[0]) onOpenDay(q.data[0]);
+                },
+              }
+            : undefined
+        }
+      />
     </Card>
   );
 }

@@ -9,7 +9,7 @@ import { parseGarminLocal } from "../../lib/format";
 import { Card } from "../components/ScreenHeader";
 import { useSettings } from "../../store/settingsStore";
 
-export function WeeklyVolume() {
+export function WeeklyVolume({ onOpenWeek }: { onOpenWeek?: (weekStart: string) => void }) {
   const runs = useRuns();
   const theme = useSettings((s) => s.theme);
   const plan = useSettings((s) => s.plan);
@@ -125,9 +125,23 @@ export function WeeklyVolume() {
       kicker="Volume"
       title="Weekly km"
       value={`${weekly[weekly.length - 1].cumulativeKm.toFixed(0)} km total`}
-      footnote="Dashed line = your plan target. Lower panel: cumulative distance."
+      footnote={`Dashed line = your plan target. Lower panel: cumulative distance.${onOpenWeek ? " Tap a bar for that week's runs." : ""}`}
     >
-      <EChart option={option} height={300} />
+      <EChart
+        option={option}
+        height={300}
+        onEvents={
+          onOpenWeek
+            ? {
+                click: (p) => {
+                  const q = p as { seriesType?: string; dataIndex?: number };
+                  if (q.seriesType === "bar" && q.dataIndex != null && weekly[q.dataIndex])
+                    onOpenWeek(weekly[q.dataIndex].weekStart);
+                },
+              }
+            : undefined
+        }
+      />
     </Card>
   );
 }

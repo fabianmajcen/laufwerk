@@ -36,7 +36,8 @@ type View =
   | "technique"
   | "records"
   | { record: number; label: string }
-  | { form: keyof FormMetrics };
+  | { form: keyof FormMetrics }
+  | { week: string };
 
 export function RunsTab() {
   const runs = useRuns();
@@ -58,7 +59,13 @@ export function RunsTab() {
     useCallback(
       () =>
         setView(
-          typeof view === "object" ? ("record" in view ? "records" : "technique") : "main",
+          typeof view === "object"
+            ? "record" in view
+              ? "records"
+              : "week" in view
+                ? "volume"
+                : "technique"
+            : "main",
         ),
       [view],
     ),
@@ -76,7 +83,9 @@ export function RunsTab() {
           ? view
           : "record" in view
             ? `rec${view.record}`
-            : `form${view.form}`
+            : "week" in view
+              ? `week${view.week}`
+              : `form${view.form}`
     }`,
   );
 
@@ -96,7 +105,30 @@ export function RunsTab() {
   if (view === "volume") {
     return (
       <SubScreen title="Volume & plan" onBack={() => setView("main")}>
-        <WeeklyVolume />
+        <WeeklyVolume onOpenWeek={(week) => setView({ week })} />
+      </SubScreen>
+    );
+  }
+  if (typeof view === "object" && "week" in view) {
+    const weekStart = new Date(view.week + "T00:00:00");
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    const weekRuns = (runs ?? []).filter((r) => {
+      const d = parseGarminLocal(r.startTimeLocal);
+      return d >= weekStart && d < weekEnd;
+    });
+    const weekKm = weekRuns.reduce((s, r) => s + (r.distance ?? 0) / 1000, 0);
+    return (
+      <SubScreen
+        title={`Week of ${weekStart.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`}
+        onBack={() => setView("volume")}
+      >
+        <Card kicker="Week" title={`${weekRuns.length} run${weekRuns.length === 1 ? "" : "s"}`} value={`${weekKm.toFixed(1)} km`} />
+        {weekRuns.length ? (
+          weekRuns.map((r) => <RunCard key={r.activityId} run={r} onOpen={() => setOpenId(r.activityId)} />)
+        ) : (
+          <EmptyState text="No runs this week." />
+        )}
       </SubScreen>
     );
   }
