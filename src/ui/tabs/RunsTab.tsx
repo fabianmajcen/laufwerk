@@ -22,9 +22,20 @@ import { HomeSegment } from "../charts/HomeSegment";
 import { RunShape } from "../charts/RunShape";
 import { WeatherLens } from "../charts/WeatherLens";
 import { Relief3D } from "../charts/Relief3D";
+import { FORM_META } from "../charts/FormGrid";
+import { FormDetail } from "../screens/FormDetail";
+import type { FormMetrics } from "../../lib/derive/form";
 import type { ActivityRow } from "../../lib/db/schema";
 
-type View = "main" | "fitness" | "volume" | "routes" | "technique" | "records" | { record: number; label: string };
+type View =
+  | "main"
+  | "fitness"
+  | "volume"
+  | "routes"
+  | "technique"
+  | "records"
+  | { record: number; label: string }
+  | { form: keyof FormMetrics };
 
 export function RunsTab() {
   const runs = useRuns();
@@ -43,7 +54,13 @@ export function RunsTab() {
   // android back: close the run first, then leave the sub-screen
   useBackHandler(
     view !== "main" && openId == null,
-    useCallback(() => setView(typeof view === "object" ? "records" : "main"), [view]),
+    useCallback(
+      () =>
+        setView(
+          typeof view === "object" ? ("record" in view ? "records" : "technique") : "main",
+        ),
+      [view],
+    ),
   );
   useBackHandler(
     openId != null,
@@ -83,8 +100,15 @@ export function RunsTab() {
     return (
       <SubScreen title="Technique" onBack={() => setView("main")}>
         <PacingChart />
-        <FormGrid />
+        <FormGrid onSelect={(form) => setView({ form })} />
         <ZoneDiscipline />
+      </SubScreen>
+    );
+  }
+  if (typeof view === "object" && "form" in view) {
+    return (
+      <SubScreen title={FORM_META[view.form].label} onBack={() => setView("technique")}>
+        <FormDetail metric={view.form} onOpenRun={setOpenId} />
       </SubScreen>
     );
   }

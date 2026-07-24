@@ -82,7 +82,12 @@ export function computeFabScore(inp: FabInputs): FabResult {
     {
       key: "freshness",
       label: "Days since last run",
-      raw: inp.daysSinceLastRun != null ? `${inp.daysSinceLastRun} d` : "no runs",
+      raw:
+        inp.daysSinceLastRun == null
+          ? "no runs"
+          : inp.daysSinceLastRun === 0
+            ? "ran today"
+            : `${inp.daysSinceLastRun} d`,
       subscore:
         inp.daysSinceLastRun == null ? null : inp.daysSinceLastRun <= 0 ? 0.4 : inp.daysSinceLastRun === 1 ? 0.8 : 1.0,
       weight: 0.15,
@@ -126,7 +131,11 @@ export function computeFabScore(inp: FabInputs): FabResult {
     }
     if (inp.daysSinceLastRun != null && inp.daysSinceLastRun <= 1 && verdict === "train") {
       verdict = "easy";
-      overrides.push("You ran yesterday, and the plan keeps at least one rest day between runs.");
+      overrides.push(
+        inp.daysSinceLastRun === 0
+          ? "You already ran today. Recovery is where the gains happen."
+          : "You ran yesterday, and the plan keeps at least one rest day between runs.",
+      );
     }
   }
 
