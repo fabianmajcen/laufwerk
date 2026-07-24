@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { useBackHandler } from "../../lib/backstack";
+import { useScrollMemory } from "../../lib/scrollMemory";
 import { ScreenHeader, EmptyState, Card } from "../components/ScreenHeader";
 import { SubScreen, ExploreRow } from "../components/SubScreen";
 import { Hypnogram } from "../charts/Hypnogram";
@@ -25,6 +26,7 @@ export function SleepTab() {
     view !== "main",
     useCallback(() => setView("main"), []),
   );
+  useScrollMemory(`sleep:${typeof view === "object" ? `night${view.night}` : view}`);
 
   // nights with real data, ascending by date
   const nights = (rows ?? []).map(toSleepView).filter((v): v is NonNullable<typeof v> => v != null);

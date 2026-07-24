@@ -37,6 +37,7 @@ export function PullToSync({ children }: { children: ReactNode }) {
 
   return (
     <main
+      id="scroll-root"
       ref={ref}
       className="relative flex-1 overflow-y-auto pb-2"
       onTouchStart={onTouchStart}

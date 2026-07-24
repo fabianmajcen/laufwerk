@@ -3,6 +3,7 @@ import { ScreenHeader, Card } from "../components/ScreenHeader";
 import { SubScreen } from "../components/SubScreen";
 import { DailyMetricDetail, type DailyMetric } from "../screens/DailyMetricDetail";
 import { useBackHandler } from "../../lib/backstack";
+import { useScrollMemory } from "../../lib/scrollMemory";
 import { ReadinessRing } from "../charts/ReadinessRing";
 import { FactorLadder } from "../components/FactorLadder";
 import { BodyBatteryToday } from "../charts/BodyBatteryToday";
@@ -34,6 +35,7 @@ export function TodayTab({ onOpenSettings }: { onOpenSettings?: () => void }) {
     view !== "main",
     useCallback(() => setView("main"), []),
   );
+  useScrollMemory(`today:${view}`);
 
   if (view !== "main") {
     return (

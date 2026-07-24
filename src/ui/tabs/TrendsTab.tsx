@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { useBackHandler } from "../../lib/backstack";
+import { useScrollMemory } from "../../lib/scrollMemory";
 import { ScreenHeader, EmptyState, Card } from "../components/ScreenHeader";
 import { SubScreen, ExploreRow } from "../components/SubScreen";
 import { HrvBaseline } from "../charts/HrvBaseline";
@@ -21,6 +22,7 @@ export function TrendsTab() {
     view !== "main",
     useCallback(() => setView("main"), []),
   );
+  useScrollMemory(`trends:${view}`);
 
   if (view === "stress") {
     return (

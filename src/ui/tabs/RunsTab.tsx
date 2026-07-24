@@ -3,6 +3,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { useDecouplingSeries, useRuns } from "../../lib/hooks";
 import { useUi } from "../../store/uiStore";
 import { useBackHandler } from "../../lib/backstack";
+import { useScrollMemory } from "../../lib/scrollMemory";
 import { getKv } from "../../lib/db/repo";
 import { fmtDay, fmtDuration, fmtKm, fmtPace, parseGarminLocal, speedToPace } from "../../lib/format";
 import { weekStartOf } from "../../lib/derive/weekly";
@@ -65,6 +66,18 @@ export function RunsTab() {
   useBackHandler(
     openId != null,
     useCallback(() => setOpenId(null), []),
+  );
+
+  useScrollMemory(
+    `runs:${
+      openId != null
+        ? `run${openId}`
+        : typeof view === "string"
+          ? view
+          : "record" in view
+            ? `rec${view.record}`
+            : `form${view.form}`
+    }`,
   );
 
   const open = openId != null ? runs?.find((r) => r.activityId === openId) : undefined;
