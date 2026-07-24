@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -78,6 +79,7 @@ public class ReadinessWidget extends AppWidgetProvider {
 
         views.setImageViewBitmap(R.id.widget_ring, drawRing(density, score, verdictColor));
         views.setImageViewBitmap(R.id.widget_slots, drawSlots(density, done, planned));
+        views.setImageViewBitmap(R.id.widget_watermark, drawWatermark(density));
 
         Intent launch = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
         if (launch != null) {
@@ -90,10 +92,11 @@ public class ReadinessWidget extends AppWidgetProvider {
         mgr.updateAppWidget(id, views);
     }
 
-    /** The app's hero gauge: 270° track from 135°, score sweep in verdict color. */
+    /** The app's hero gauge: 270° track from 135°, score sweep in verdict
+     *  color with a soft glow underneath. */
     private static Bitmap drawRing(float density, int score, int color) {
-        int size = (int) (76 * density);
-        float stroke = 7.5f * density;
+        int size = (int) (80 * density);
+        float stroke = 8f * density;
         Bitmap bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(bmp);
 
@@ -102,16 +105,60 @@ public class ReadinessWidget extends AppWidgetProvider {
         p.setStrokeWidth(stroke);
         p.setStrokeCap(Paint.Cap.ROUND);
 
-        float half = stroke / 2f + 1;
+        float half = stroke / 2f + 4 * density;
         RectF box = new RectF(half, half, size - half, size - half);
 
         p.setColor(TRACK);
         c.drawArc(box, 135f, 270f, false, p);
 
         if (score >= 0) {
+            float sweep = 270f * Math.min(score, 100) / 100f;
+
+            // glow pass
+            Paint glow = new Paint(p);
+            glow.setColor(color);
+            glow.setAlpha(110);
+            glow.setMaskFilter(new BlurMaskFilter(5 * density, BlurMaskFilter.Blur.NORMAL));
+            c.drawArc(box, 135f, sweep, false, glow);
+
             p.setColor(color);
-            c.drawArc(box, 135f, 270f * Math.min(score, 100) / 100f, false, p);
+            c.drawArc(box, 135f, sweep, false, p);
         }
+        return bmp;
+    }
+
+    /** Faint brand watermark: the app icon's arc-and-dot motif. */
+    private static Bitmap drawWatermark(float density) {
+        int size = (int) (92 * density);
+        Bitmap bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(bmp);
+
+        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        p.setStyle(Paint.Style.STROKE);
+        p.setStrokeCap(Paint.Cap.ROUND);
+
+        float cx = size * 0.62f;
+        float cy = size / 2f;
+        float rOuter = size * 0.40f;
+        float rInner = size * 0.22f;
+
+        // violet platter arc
+        p.setStrokeWidth(6.5f * density);
+        p.setColor(Color.parseColor("#7A6BD8"));
+        p.setAlpha(34);
+        c.drawArc(new RectF(cx - rOuter, cy - rOuter, cx + rOuter, cy + rOuter), -75f, 300f, false, p);
+
+        // inner track
+        p.setStrokeWidth(2.5f * density);
+        p.setAlpha(22);
+        c.drawArc(new RectF(cx - rInner, cy - rInner, cx + rInner, cy + rInner), 0f, 360f, false, p);
+
+        // start dot
+        p.setStyle(Paint.Style.FILL);
+        p.setColor(Color.parseColor("#2CA02C"));
+        p.setAlpha(40);
+        c.drawCircle(cx, cy - rOuter, 4.5f * density, p);
+
         return bmp;
     }
 
