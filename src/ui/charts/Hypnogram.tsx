@@ -244,9 +244,11 @@ export function Hypnogram({ sleep, nav }: { sleep: SleepView; nav?: HypnogramNav
       value={sleep.score != null ? String(sleep.score) : undefined}
     >
       {nav && (
-        <div className="-mt-10 mb-2 flex items-center gap-3">
+        <div className="-mt-8 mb-2 flex items-center">
           <NavBtn dir="prev" onClick={nav.onPrev} />
-          <span className="text-[17px] font-semibold">{dateLabel}</span>
+          {/* fixed width = longest possible label ("Wednesday 31 Sept"), so
+              the right chevron never hops when the date changes */}
+          <span className="w-44 text-center text-[17px] font-semibold">{dateLabel}</span>
           <NavBtn dir="next" onClick={nav.onNext} />
         </div>
       )}
