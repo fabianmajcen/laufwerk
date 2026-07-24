@@ -1,11 +1,14 @@
-// W13 — HR-zone time per run as 100% stacked bars; the base-phase KPI is the
-// easy share (Z1+Z2), labeled per bar.
+// W13 — HR-zone time per run as 100% stacked bars. All runs are recomputed
+// from their HR series against the CURRENT zone boundaries (the newest run's),
+// so history stays comparable when zone settings change (e.g. after fixing
+// resting HR). The base-phase KPI (easy share) is the card headline.
 import { useMemo } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { EChart } from "./EChart";
 import { mixHex, tokens, tooltipDefaults, xAxisDefaults, yAxisDefaults } from "./theme";
 import { db } from "../../lib/db/schema";
 import { getRuns } from "../../lib/db/repo";
+import { timeInZones, zoneBoundaries } from "../../lib/derive/zones";
 import { Card } from "../components/ScreenHeader";
 import { useSettings } from "../../store/settingsStore";
 
@@ -16,17 +19,22 @@ interface RunZones {
 
 export function ZoneDiscipline() {
   const theme = useSettings((s) => s.theme);
-  const runs = useLiveQuery(async () => {
-    const rs = await getRuns();
+  const result = useLiveQuery(async () => {
+    const rs = await getRuns(); // newest first
+    // current zone definition = boundaries of the newest run that has them
+    let bounds: number[] | null = null;
+    for (const r of rs) {
+      const data = await db.activityData.get(r.activityId);
+      bounds = zoneBoundaries(data?.hrZones);
+      if (bounds) break;
+    }
+    if (!bounds) return null;
+
     const out: RunZones[] = [];
     for (const r of [...rs].reverse()) {
       const data = await db.activityData.get(r.activityId);
-      const zones = data?.hrZones;
-      if (!zones?.length) continue;
-      const secs = [1, 2, 3, 4, 5].map(
-        (z) => zones.find((x) => x.zoneNumber === z)?.secsInZone ?? 0,
-      );
-      if (secs.every((s) => s === 0)) continue;
+      const secs = timeInZones(data?.series, bounds);
+      if (!secs) continue;
       out.push({
         label: new Date(r.startTimeLocal.replace(" ", "T")).toLocaleDateString("en-GB", {
           day: "numeric",
@@ -35,11 +43,12 @@ export function ZoneDiscipline() {
         secs,
       });
     }
-    return out;
+    return { runs: out, bounds };
   }, []);
 
   const option = useMemo(() => {
-    if (!runs?.length) return null;
+    if (!result?.runs.length) return null;
+    const { runs } = result;
     const t = tokens();
     // ordinal cool→warm ramp for Z1..Z5 (blue → HR red)
     const zoneColors = [0, 0.25, 0.5, 0.75, 1].map((f) => mixHex(t.cadence, t.hr, f));
@@ -62,7 +71,8 @@ export function ZoneDiscipline() {
           const i = ps[0].dataIndex;
           const r = runs[i];
           const pct = r.secs.map((s) => Math.round((s / totals[i]) * 100));
-          return `<b>${r.label}</b><br/>${pct.map((p, z) => `Z${z + 1} ${p}%`).join(" · ")}`;
+          const easy = pct[0] + pct[1];
+          return `<b>${r.label}</b> · ${easy}% easy<br/>${pct.map((p, z) => `Z${z + 1} ${p}%`).join(" · ")}`;
         },
       },
       xAxis: { type: "category", data: runs.map((r) => r.label), ...xAxisDefaults(t) },
@@ -80,30 +90,23 @@ export function ZoneDiscipline() {
         barMaxWidth: 22,
         data: runs.map((r, i) => Number(((r.secs[z] / totals[i]) * 100).toFixed(1))),
         itemStyle: { color: zoneColors[z] },
-        ...(z === 1
-          ? {
-              label: {
-                show: true,
-                position: "top",
-                fontSize: 10,
-                color: t.ink2,
-                formatter: (p: { dataIndex: number }) => {
-                  const i = p.dataIndex;
-                  const easy = Math.round(((runs[i].secs[0] + runs[i].secs[1]) / totals[i]) * 100);
-                  return `${easy}% easy`;
-                },
-              },
-            }
-          : {}),
       })),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [runs, theme]);
+  }, [result, theme]);
 
-  if (!option) return null;
+  if (!result?.runs.length || !option) return null;
+  const latest = result.runs[result.runs.length - 1];
+  const latestTotal = latest.secs.reduce((a, b) => a + b, 0) || 1;
+  const latestEasy = Math.round(((latest.secs[0] + latest.secs[1]) / latestTotal) * 100);
 
   return (
-    <Card kicker="Zone discipline" title="Time in HR zones" footnote="Base phase goal: keep the easy share (Z1+Z2) high.">
+    <Card
+      kicker="Zone discipline"
+      title="Time in HR zones"
+      value={`${latestEasy}% easy`}
+      footnote={`Base phase goal: keep the easy share (Z1+Z2) high. All runs are measured against your current zones (Z2 from ${result.bounds[1]} bpm, Z3 from ${result.bounds[2]} bpm), so runs recorded before a zone-settings change stay comparable.`}
+    >
       <EChart option={option} height={200} />
     </Card>
   );

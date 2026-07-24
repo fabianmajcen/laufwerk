@@ -7,7 +7,7 @@ import { explodeRangePayload } from "../lib/sync/ingest";
 import type { ActivityData, ActivitySummary } from "../lib/garmin/types";
 
 const SEED_KEY = "fixtureSeedVersion";
-const SEED_VERSION = 3;
+const SEED_VERSION = 4;
 
 export async function seedFixturesIfNeeded() {
   const seeded = await db.kv.get(SEED_KEY);
@@ -16,9 +16,18 @@ export async function seedFixturesIfNeeded() {
   const activities: ActivitySummary[] = await fetchJson("/fixtures/activities.json");
   await upsertActivities(activities);
 
+  // the smoke test captured real zone boundaries for the newest run
+  let sampleHrZones: ActivityData["hrZones"] = null;
+  try {
+    sampleHrZones = await fetchJson("/fixtures/samples/hrZones.json");
+  } catch {
+    /* not captured */
+  }
+
   for (const a of activities) {
     try {
       const data: ActivityData = await fetchJson(`/fixtures/activityData/${a.activityId}.json`);
+      if (sampleHrZones && a.activityId === 23574653884) data.hrZones = sampleHrZones;
       await putActivityData(data);
     } catch {
       // fixture missing for this activity - fine, summary-only
