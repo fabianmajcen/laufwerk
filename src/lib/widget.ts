@@ -10,6 +10,8 @@ export interface WidgetData {
   verdict: string; // "Train" | "Easy only" | "Rest"
   color: string; // verdict hex
   weekLine: string; // "Runs 1/2 · 5.2 km"
+  done: number;
+  planned: number;
   updatedAt: number;
 }
 
@@ -30,7 +32,9 @@ export async function updateWidgetData(
     score: fab.score,
     verdict: meta.word,
     color: meta.color,
-    weekLine: `Runs ${week.done}/${week.planned} · ${week.km.toFixed(1)} km`,
+    weekLine: `Runs ${week.done}/${week.planned} · ${week.km.toFixed(1)} km this week`,
+    done: week.done,
+    planned: week.planned,
     updatedAt: Date.now(),
   };
   await Preferences.set({ key: "widgetData", value: JSON.stringify(data) }).catch(() => {});
