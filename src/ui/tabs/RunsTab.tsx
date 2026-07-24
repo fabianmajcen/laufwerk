@@ -10,6 +10,8 @@ import { Constellation } from "../charts/Constellation";
 import { PacingChart } from "../charts/PacingChart";
 import { FormGrid } from "../charts/FormGrid";
 import { ZoneDiscipline } from "../charts/ZoneDiscipline";
+import { HomeSegment } from "../charts/HomeSegment";
+import { RunShape } from "../charts/RunShape";
 import type { ActivityRow } from "../../lib/db/schema";
 
 export function RunsTab() {
@@ -33,8 +35,10 @@ export function RunsTab() {
           <EfficiencyMap onOpenRun={setOpenId} />
           <DecouplingBars onOpenRun={setOpenId} />
           <WeeklyVolume />
+          <HomeSegment onOpenRun={setOpenId} />
           <Constellation />
           <PacingChart />
+          <RunShape />
           <FormGrid />
           <ZoneDiscipline />
         </>

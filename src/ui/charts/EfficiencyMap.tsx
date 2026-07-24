@@ -65,6 +65,7 @@ export function EfficiencyMap({ onOpenRun }: { onOpenRun?: (id: number) => void 
       yAxis: {
         type: "value",
         scale: true,
+        minInterval: 5, // ≤5 clean bpm ticks
         ...yAxisDefaults(t),
         axisLabel: { ...yAxisDefaults(t).axisLabel, formatter: "{value} bpm" },
       },

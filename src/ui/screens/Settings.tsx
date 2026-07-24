@@ -5,6 +5,7 @@ import { useSync } from "../../store/syncStore";
 import { bootstrapFromJson, clearTokens } from "../../lib/garmin/auth";
 import { getDisplayName } from "../../lib/garmin/client";
 import { abortSync, syncNow } from "../../lib/sync/engine";
+import { exportBackup } from "../../lib/export";
 import { db } from "../../lib/db/schema";
 
 export function Settings({ onBack }: { onBack: () => void }) {
@@ -85,6 +86,12 @@ export function Settings({ onBack }: { onBack: () => void }) {
       </Card>
 
       <Card kicker="Data" title="Local cache">
+        <button
+          onClick={() => exportBackup().catch((e) => alert(`Export failed: ${e}`))}
+          className="mb-2 w-full rounded-lg bg-page py-2 text-[13px] text-ink-2"
+        >
+          Export everything as JSON
+        </button>
         <button
           onClick={async () => {
             if (!confirm("Delete all locally cached data? (Everything re-syncs from Garmin.)")) return;

@@ -5,6 +5,7 @@ import { RunsTab } from "./ui/tabs/RunsTab";
 import { SleepTab } from "./ui/tabs/SleepTab";
 import { TrendsTab } from "./ui/tabs/TrendsTab";
 import { Settings } from "./ui/screens/Settings";
+import { PullToSync } from "./ui/components/PullToSync";
 import { useSettings } from "./store/settingsStore";
 import { useSync } from "./store/syncStore";
 import { isConnected, bootstrapFromJson } from "./lib/garmin/auth";
@@ -16,6 +17,7 @@ import { App as CapApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 
 const AUTO_SYNC_AFTER_MS = 6 * 3600 * 1000;
+let bootStarted = false;
 
 async function autoSyncIfStale() {
   if (isMockMode || isSyncRunning()) return;
@@ -44,6 +46,8 @@ export default function App() {
   // restore auth state on boot; in browser dev (non-mock) auto-bootstrap from
   // the PC token cache via the dev-only /dev-tokens endpoint
   useEffect(() => {
+    if (bootStarted) return; // StrictMode double-invokes effects; boot once
+    bootStarted = true;
     (async () => {
       const sync = useSync.getState();
       const last = await getSyncState<number>("lastSyncAt");
@@ -83,7 +87,7 @@ export default function App() {
 
   return (
     <div className="flex h-dvh flex-col bg-page text-ink">
-      <main className="flex-1 overflow-y-auto pb-2">
+      <PullToSync>
         {settingsOpen ? (
           <Settings onBack={() => setSettingsOpen(false)} />
         ) : (
@@ -94,7 +98,7 @@ export default function App() {
             {tab === "trends" && <TrendsTab />}
           </>
         )}
-      </main>
+      </PullToSync>
       {!settingsOpen && <TabBar active={tab} onChange={setTab} />}
     </div>
   );

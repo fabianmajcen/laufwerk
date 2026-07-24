@@ -59,14 +59,6 @@ export function HrvBaseline() {
           interval: Math.ceil(nights.length / 6) - 1,
           formatter: fmtDate,
         },
-        // run days as accent ticks
-        axisTick: {
-          show: true,
-          alignWithLabel: true,
-          interval: (i: number) => runDates.has(labels[i]),
-          length: 5,
-          lineStyle: { color: t.accent, width: 2 },
-        },
       },
       yAxis: {
         type: "value",
@@ -99,6 +91,16 @@ export function HrvBaseline() {
           showSymbol: false,
           itemStyle: { color: t.hrv },
           lineStyle: { color: t.hrv, width: 2.5 },
+        },
+        {
+          // run-day markers pinned under the nightly line (precise, unlike axis ticks)
+          type: "scatter",
+          data: nights.map((n, i) => (runDates.has(n.date) ? { value: [i, n.lastNight], symbolOffset: [0, 12] } : null)).filter(Boolean),
+          symbol: "triangle",
+          symbolSize: 7,
+          itemStyle: { color: t.accent },
+          silent: true,
+          z: 4,
         },
       ],
     };
