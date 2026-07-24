@@ -1,4 +1,5 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { updateWidgetData } from "../../lib/widget";
 import { ScreenHeader, Card } from "../components/ScreenHeader";
 import { SubScreen } from "../components/SubScreen";
 import { DailyMetricDetail, type DailyMetric } from "../screens/DailyMetricDetail";
@@ -32,12 +33,26 @@ const METRIC_TITLES: Record<DailyMetric, string> = {
 export function TodayTab({ onOpenSettings }: { onOpenSettings?: () => void }) {
   const { fab } = useFabScore();
   const [view, setView] = useState<View>("main");
+  const runs = useRuns();
+  const plan = useSettings((s) => s.plan);
 
   useBackHandler(
     view !== "main",
     useCallback(() => setView("main"), []),
   );
   useScrollMemory(`today:${view}`);
+
+  // keep the home-screen widget's snapshot fresh
+  useEffect(() => {
+    if (!fab || fab.score == null || !runs) return;
+    const weekStart = weekStartOf(new Date());
+    const thisWeek = runs.filter((r) => parseGarminLocal(r.startTimeLocal) >= weekStart);
+    updateWidgetData(fab, {
+      done: thisWeek.length,
+      planned: plan.runsPerWeek,
+      km: thisWeek.reduce((s, r) => s + (r.distance ?? 0) / 1000, 0),
+    });
+  }, [fab, runs, plan.runsPerWeek]);
 
   if (view !== "main") {
     return (
