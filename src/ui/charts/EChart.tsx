@@ -7,11 +7,14 @@ interface Props {
   height: number | string;
   className?: string;
   onEvents?: Record<string, (params: unknown) => void>;
+  /** vertical swipes scroll the page by default; charts with pinch zoom pass
+   *  "pan-y pinch-zoom" */
+  touchAction?: string;
 }
 
 /** Single ECharts wrapper: init once, resize with container, dispose on
  *  unmount, replace option wholesale (notMerge) so charts stay declarative. */
-export function EChart({ option, height, className, onEvents }: Props) {
+export function EChart({ option, height, className, onEvents, touchAction = "pan-y" }: Props) {
   const divRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<ECharts | null>(null);
 
@@ -43,5 +46,5 @@ export function EChart({ option, height, className, onEvents }: Props) {
     };
   }, [onEvents]);
 
-  return <div ref={divRef} className={className} style={{ height, width: "100%" }} />;
+  return <div ref={divRef} className={className} style={{ height, width: "100%", touchAction }} />;
 }

@@ -117,6 +117,7 @@ export function Constellation() {
         <EChart
           option={option}
           height={height}
+          touchAction="pan-y pinch-zoom"
           onEvents={{
             click: (p) => {
               const q = p as { seriesIndex?: number; seriesType?: string };

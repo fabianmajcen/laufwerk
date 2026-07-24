@@ -159,7 +159,7 @@ export function RunPanels({ data }: { data: ActivityData }) {
           </button>
         ))}
       </div>
-      <EChart option={option} height={height} className="px-1" />
+      <EChart option={option} height={height} className="px-1" touchAction="pan-y pinch-zoom" />
     </div>
   );
 }

@@ -74,8 +74,8 @@ export function Hypnogram({ sleep, nav }: { sleep: SleepView; nav?: HypnogramNav
     return {
       grid: [
         { left: 46, right: 12, top: 18, height: 120 },
-        { left: 46, right: 12, top: 184, height: 60 },
-        ...(hasResp ? [{ left: 46, right: 12, top: 292, height: 52 }] : []),
+        { left: 46, right: 12, top: 186, height: 68 },
+        ...(hasResp ? [{ left: 46, right: 12, top: 302, height: 62 }] : []),
       ],
       tooltip: {
         ...tooltipDefaults(t),
@@ -140,6 +140,7 @@ export function Hypnogram({ sleep, nav }: { sleep: SleepView; nav?: HypnogramNav
                 type: "value",
                 gridIndex: 2,
                 scale: true,
+                minInterval: 5,
                 ...yAxisDefaults(t),
                 splitNumber: 2,
                 axisLabel: { ...yAxisDefaults(t).axisLabel, showMaxLabel: false },
@@ -201,7 +202,7 @@ export function Hypnogram({ sleep, nav }: { sleep: SleepView; nav?: HypnogramNav
         {
           type: "text",
           left: 8,
-          top: 158,
+          top: 160,
           style: { text: hrRange ? `HR   low ${hrRange[0]} · high ${hrRange[1]} bpm` : "HR", fill: t.ink2, fontSize: 11, fontWeight: 600 },
           silent: true,
         },
@@ -210,7 +211,7 @@ export function Hypnogram({ sleep, nav }: { sleep: SleepView; nav?: HypnogramNav
               {
                 type: "text",
                 left: 8,
-                top: 266,
+                top: 276,
                 style: { text: "Breaths/min", fill: t.ink2, fontSize: 11, fontWeight: 600 },
                 silent: true,
               },
@@ -244,15 +245,15 @@ export function Hypnogram({ sleep, nav }: { sleep: SleepView; nav?: HypnogramNav
       value={sleep.score != null ? String(sleep.score) : undefined}
     >
       {nav && (
-        <div className="-mt-8 mb-2 flex items-center">
+        <div className="mb-2 flex items-center justify-between">
+          {/* arrows pinned to the card edges: fixed positions regardless of
+              the date's width, and clear of the score above */}
           <NavBtn dir="prev" onClick={nav.onPrev} />
-          {/* fixed width = longest possible label ("Wednesday 31 Sept"), so
-              the right chevron never hops when the date changes */}
-          <span className="w-44 text-center text-[17px] font-semibold">{dateLabel}</span>
+          <span className="flex-1 text-center text-[17px] font-semibold">{dateLabel}</span>
           <NavBtn dir="next" onClick={nav.onNext} />
         </div>
       )}
-      <EChart option={option} height={sleep.respiration.length > 5 ? 372 : 274} />
+      <EChart option={option} height={sleep.respiration.length > 5 ? 392 : 284} />
       {(sleep.restlessMoments != null || sleep.awakeCount != null || sleep.sleepNeedMin != null) && (
         <div className="mb-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-ink-3">
           {sleep.restlessMoments != null && <span>{sleep.restlessMoments} restless moments</span>}
