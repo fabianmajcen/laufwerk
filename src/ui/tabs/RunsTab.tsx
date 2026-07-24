@@ -6,6 +6,10 @@ import { RunDetail } from "../screens/RunDetail";
 import { EfficiencyMap } from "../charts/EfficiencyMap";
 import { DecouplingBars } from "../charts/DecouplingBars";
 import { WeeklyVolume } from "../charts/WeeklyVolume";
+import { Constellation } from "../charts/Constellation";
+import { PacingChart } from "../charts/PacingChart";
+import { FormGrid } from "../charts/FormGrid";
+import { ZoneDiscipline } from "../charts/ZoneDiscipline";
 import type { ActivityRow } from "../../lib/db/schema";
 
 export function RunsTab() {
@@ -29,6 +33,10 @@ export function RunsTab() {
           <EfficiencyMap onOpenRun={setOpenId} />
           <DecouplingBars onOpenRun={setOpenId} />
           <WeeklyVolume />
+          <Constellation />
+          <PacingChart />
+          <FormGrid />
+          <ZoneDiscipline />
         </>
       )}
     </div>
