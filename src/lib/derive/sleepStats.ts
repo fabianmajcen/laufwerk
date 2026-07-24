@@ -1,5 +1,6 @@
 // Advanced sleep analytics, computed from cached wellness rows.
 import type { SleepView } from "../hooks";
+import { utcMidnight } from "../format";
 
 export interface SleepDebtPoint {
   date: string;
@@ -41,15 +42,14 @@ export function computeRegularity(nights: SleepView[]): RegularityStats | null {
   const valid = nights.filter((n) => n.startLocal != null && n.endLocal != null);
   if (valid.length < 5) return null;
 
-  // bedtime as minutes since 18:00 of the previous evening (avoids midnight wrap)
+  // bedtime as minutes since 18:00 of the previous evening (avoids midnight
+  // wrap). Garmin "Local" epochs are wall-clock-as-UTC -> UTC-midnight anchor.
   const bedMin = (n: SleepView) => {
-    const dayStart = new Date(n.date + "T00:00:00").getTime();
-    const anchor = dayStart - 6 * 3600000; // 18:00 previous day
+    const anchor = utcMidnight(n.date) - 6 * 3600000; // 18:00 previous day
     return ((n.startLocal as number) - anchor) / 60000;
   };
   const wakeMin = (n: SleepView) => {
-    const dayStart = new Date(n.date + "T00:00:00").getTime();
-    return ((n.endLocal as number) - dayStart) / 60000;
+    return ((n.endLocal as number) - utcMidnight(n.date)) / 60000;
   };
 
   const sd = (xs: number[]) => {

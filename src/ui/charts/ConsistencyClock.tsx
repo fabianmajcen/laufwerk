@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { EChart } from "./EChart";
 import { mixHex, tokens, tooltipDefaults, xAxisDefaults } from "./theme";
 import { toSleepView, useWellnessRange } from "../../lib/hooks";
+import { utcMidnight } from "../../lib/format";
 import { Card } from "../components/ScreenHeader";
 import { useSettings } from "../../store/settingsStore";
 
@@ -24,10 +25,10 @@ export function ConsistencyClock() {
   const option = useMemo(() => {
     const t = tokens();
 
-    // hours since 20:00 of the evening before the row's calendar date
+    // hours since 20:00 of the evening before the row's calendar date.
+    // Garmin "Local" epochs are wall-clock-as-UTC -> anchor at UTC midnight.
     const toClockHours = (n: { date: string }, tsLocal: number) => {
-      const dayStart = new Date(n.date + "T00:00:00").getTime();
-      const anchor = dayStart - (24 - AXIS_START_H) * 3600000;
+      const anchor = utcMidnight(n.date) - (24 - AXIS_START_H) * 3600000;
       return (tsLocal - anchor) / 3600000;
     };
 
@@ -101,7 +102,15 @@ export function ConsistencyClock() {
                   silent: true,
                   symbol: "none",
                   lineStyle: { color: t.ink3, type: "dashed", width: 1 },
-                  label: { color: t.ink3, fontSize: 10, formatter: (p: { value: number }) => fmtClock(p.value), position: "insideStartTop" },
+                  label: {
+                    color: t.ink2,
+                    fontSize: 10,
+                    formatter: (p: { value: number }) => fmtClock(p.value),
+                    position: "insideStartTop",
+                    backgroundColor: t.card,
+                    padding: [2, 4],
+                    borderRadius: 4,
+                  },
                   data: [{ yAxis: medBed }, { yAxis: medWake }],
                 },
               }

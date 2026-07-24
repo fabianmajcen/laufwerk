@@ -42,6 +42,14 @@ export function fmtDay(d: Date): string {
   return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
 }
 
+/** Garmin's "...TimestampLocal" epochs store the wall clock AS IF it were
+ *  UTC. To turn them into wall-clock offsets, anchor against UTC midnight of
+ *  the calendar date — never against real local midnight. */
+export function utcMidnight(isoDay: string): number {
+  const [y, m, d] = isoDay.split("-").map(Number);
+  return Date.UTC(y, m - 1, d);
+}
+
 /** Date -> "YYYY-MM-DD" (local) */
 export function isoDate(d: Date): string {
   const y = d.getFullYear();
