@@ -25,6 +25,7 @@ import { WeatherLens } from "../charts/WeatherLens";
 import { Relief3D } from "../charts/Relief3D";
 import { FORM_META } from "../charts/FormGrid";
 import { FormDetail } from "../screens/FormDetail";
+import { BarsIcon, PulseIcon, RouteIcon, StrideIcon, TrophyIcon } from "../components/icons";
 import type { FormMetrics } from "../../lib/derive/form";
 import type { ActivityRow } from "../../lib/db/schema";
 
@@ -200,30 +201,50 @@ function AnalyticsHub({ runs, onOpen }: { runs: ActivityRow[]; onOpen: (v: View)
   const totalKm = runs.reduce((s, r) => s + (r.distance ?? 0) / 1000, 0);
   const cadence = runs[0]?.averageRunningCadenceInStepsPerMinute;
 
-  const tiles: { view: View; label: string; stat: string; note: string }[] = [
+  const tiles: {
+    view: View;
+    label: string;
+    icon: React.ReactNode;
+    iconClass: string;
+    stat: string;
+    unit: string;
+    note: string;
+  }[] = [
     {
       view: "fitness",
       label: "Fitness",
+      icon: <PulseIcon />,
+      iconClass: "text-hr",
       stat: latestDec != null ? `${latestDec.toFixed(1)}%` : "–",
-      note: "decoupling · efficiency · run shape",
+      unit: "decoupling",
+      note: "Is the base building?",
     },
     {
       view: "volume",
       label: "Volume",
+      icon: <BarsIcon />,
+      iconClass: "text-accent",
       stat: `${weekKm.toFixed(1)} km`,
-      note: "this week · plan · cumulative",
+      unit: "this week",
+      note: "Distance vs your plan",
     },
     {
       view: "routes",
       label: "Routes",
-      stat: `${runs.length} · ${totalKm.toFixed(0)} km`,
-      note: "constellation · home segment",
+      icon: <RouteIcon />,
+      iconClass: "text-[var(--recency-hi)]",
+      stat: `${totalKm.toFixed(0)} km`,
+      unit: `${runs.length} runs`,
+      note: "Where you've run",
     },
     {
       view: "technique",
       label: "Technique",
-      stat: cadence != null ? `${Math.round(cadence)} spm` : "–",
-      note: "pacing · form · HR zones",
+      icon: <StrideIcon />,
+      iconClass: "text-cadence",
+      stat: cadence != null ? `${Math.round(cadence)}` : "–",
+      unit: "spm cadence",
+      note: "How you run",
     },
   ];
 
@@ -236,14 +257,18 @@ function AnalyticsHub({ runs, onOpen }: { runs: ActivityRow[]; onOpen: (v: View)
             onClick={() => onOpen(tile.view)}
             className="rounded-xl bg-page p-3 text-left active:opacity-70"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className={tile.iconClass}>{tile.icon}</span>
               <span className="kicker">{tile.label}</span>
-              <span className="text-ink-3" aria-hidden>
+              <span className="ml-auto text-ink-3" aria-hidden>
                 ›
               </span>
             </div>
-            <div className="tnum mt-1 text-[20px] font-semibold">{tile.stat}</div>
-            <div className="mt-0.5 text-[10px] leading-tight text-ink-3">{tile.note}</div>
+            <div className="tnum mt-2 flex items-baseline gap-1.5">
+              <span className="text-[20px] font-semibold leading-none">{tile.stat}</span>
+              <span className="text-[11px] text-ink-3">{tile.unit}</span>
+            </div>
+            <div className="mt-1 text-[11px] leading-tight text-ink-2">{tile.note}</div>
           </button>
         ))}
       </div>
@@ -260,12 +285,15 @@ function RecordsTile({ onOpen }: { onOpen: () => void }) {
   const best5k = stored?.payload?.find((p) => p.typeId === 3)?.value;
 
   return (
-    <button onClick={onOpen} className="mt-3 flex w-full items-center justify-between rounded-xl bg-page p-3 text-left active:opacity-70">
+    <button onClick={onOpen} className="mt-3 flex w-full items-center gap-2 rounded-xl bg-page p-3 text-left active:opacity-70">
+      <span className="text-status-warn">
+        <TrophyIcon />
+      </span>
       <div>
         <span className="kicker">Records</span>
-        <div className="mt-0.5 text-[10px] leading-tight text-ink-3">1k · 5k · longest · steps</div>
+        <div className="mt-0.5 text-[11px] leading-tight text-ink-2">Your bests & top 10s</div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-2">
         {best5k != null && (
           <span className="tnum text-[20px] font-semibold">
             5k {fmtDuration(best5k)}

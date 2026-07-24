@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { useBackHandler } from "../../lib/backstack";
 import { useScrollMemory } from "../../lib/scrollMemory";
+import { ClockIcon, MoonBedIcon, SwapIcon } from "../components/icons";
 import { ScreenHeader, EmptyState, Card } from "../components/ScreenHeader";
 import { SubScreen, ExploreRow } from "../components/SubScreen";
 import { Hypnogram } from "../charts/Hypnogram";
@@ -88,18 +89,24 @@ export function SleepTab() {
           <Card kicker="Go deeper" title="Sleep analytics">
             <ExploreRow
               title="Duration & stages"
-              subtitle="Sleep debt vs your need · deep & REM balance"
+              subtitle="Are you sleeping enough, and deep enough?"
               onClick={() => setView("duration")}
+              icon={<MoonBedIcon />}
+              iconClass="text-[var(--sleep-light)]"
             />
             <ExploreRow
               title="Rhythm & regularity"
-              subtitle="Bed/wake clock · consistency · social jetlag"
+              subtitle="Your bed & wake times, night by night"
               onClick={() => setView("rhythm")}
+              icon={<ClockIcon />}
+              iconClass="text-[var(--recency-hi)]"
             />
             <ExploreRow
               title="Sleep × training"
-              subtitle="Run nights vs rest nights · sleep → readiness"
+              subtitle="How running and sleep affect each other"
               onClick={() => setView("training")}
+              icon={<SwapIcon />}
+              iconClass="text-hrv"
             />
           </Card>
         </>

@@ -30,17 +30,26 @@ export function ExploreRow({
   title,
   subtitle,
   onClick,
+  icon,
+  iconClass,
 }: {
   title: string;
   subtitle: string;
   onClick: () => void;
+  icon?: ReactNode;
+  iconClass?: string;
 }) {
   return (
     <button
       onClick={onClick}
-      className="flex w-full items-center justify-between border-t border-hairline px-1 py-3 text-left first:border-t-0 active:opacity-70"
+      className="flex w-full items-center gap-3 border-t border-hairline px-1 py-3 text-left first:border-t-0 active:opacity-70"
     >
-      <span>
+      {icon && (
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-page ${iconClass ?? "text-ink-2"}`}>
+          {icon}
+        </span>
+      )}
+      <span className="flex-1">
         <span className="block text-[14px] font-medium">{title}</span>
         <span className="block text-[12px] text-ink-3">{subtitle}</span>
       </span>

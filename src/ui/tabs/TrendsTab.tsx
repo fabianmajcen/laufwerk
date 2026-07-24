@@ -9,6 +9,7 @@ import { Vo2maxTrend } from "../charts/Vo2maxTrend";
 import { TrainingCalendar } from "../charts/TrainingCalendar";
 import { StressRhythm } from "../charts/StressRhythm";
 import { DaySummary } from "../screens/DaySummary";
+import { WavesIcon } from "../components/icons";
 import { useLatestWellness, useRuns } from "../../lib/hooks";
 
 type View = "main" | "stress" | { day: string };
@@ -57,8 +58,10 @@ export function TrendsTab() {
           <Card kicker="Go deeper" title="More trends">
             <ExploreRow
               title="Stress rhythm"
-              subtitle="Average stress by weekday × hour"
+              subtitle="When your week is calm, and when it isn't"
               onClick={() => setView("stress")}
+              icon={<WavesIcon />}
+              iconClass="text-[var(--recency-hi)]"
             />
           </Card>
         </>
