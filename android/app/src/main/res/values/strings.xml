@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Laufwerk</string>
+    <string name="title_activity_main">Laufwerk</string>
+    <string name="package_name">at.fmajcen.laufwerk</string>
+    <string name="custom_url_scheme">at.fmajcen.laufwerk</string>
+</resources>

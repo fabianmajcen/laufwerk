@@ -31,7 +31,11 @@ export function useWellnessRange(
 export function useLatestWellness(metric: WellnessMetric | RangeMetric): WellnessRow | undefined {
   return useLiveQuery(async () => {
     const rows = await getWellnessRange(metric, "0000-00-00", "9999-99-99");
-    return rows.length ? rows[rows.length - 1] : undefined;
+    // sync writes payload:null placeholders for empty days — skip those
+    for (let i = rows.length - 1; i >= 0; i--) {
+      if (rows[i].payload != null) return rows[i];
+    }
+    return undefined;
   }, [metric]);
 }
 

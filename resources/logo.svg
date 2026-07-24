@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Laufwerk: a disk platter that is also a running track -->
+  <defs>
+    <linearGradient id="ring" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4a3aa7"/>
+      <stop offset="100%" stop-color="#a89df0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="#0d0d0d"/>
+  <!-- outer track lanes -->
+  <circle cx="512" cy="512" r="340" fill="none" stroke="#2c2c2a" stroke-width="14"/>
+  <circle cx="512" cy="512" r="256" fill="none" stroke="#2c2c2a" stroke-width="10"/>
+  <!-- the platter arc / progress ring -->
+  <path d="M 512 172 A 340 340 0 1 1 271.6 271.6" fill="none" stroke="url(#ring)"
+        stroke-width="58" stroke-linecap="round"/>
+  <!-- spindle -->
+  <circle cx="512" cy="512" r="74" fill="#1a1a19" stroke="#3987e5" stroke-width="26"/>
+  <!-- start dot on the track -->
+  <circle cx="512" cy="172" r="44" fill="#2ca02c"/>
+</svg>

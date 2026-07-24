@@ -30,6 +30,11 @@ export async function getTokens(): Promise<DiTokens | null> {
 async function persistTokens(tokens: DiTokens): Promise<void> {
   cached = tokens;
   await Preferences.set({ key: TOKENS_KEY, value: JSON.stringify(tokens) });
+  // browser dev only: mirror rotated tokens back to ~/.garmin_tokens so the
+  // PC python exporter's refresh token stays valid (fire and forget)
+  if (import.meta.env.DEV && !import.meta.env.VITE_MOCK) {
+    fetch("/dev-tokens", { method: "POST", body: JSON.stringify(tokens) }).catch(() => {});
+  }
 }
 
 export async function clearTokens(): Promise<void> {

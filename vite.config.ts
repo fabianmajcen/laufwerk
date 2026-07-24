@@ -1,7 +1,7 @@
 import { defineConfig, type Plugin, type ProxyOptions } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync, renameSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
 
@@ -22,15 +22,36 @@ const GARMIN_HEADERS: Record<string, string> = {
 };
 
 /** Dev-only: serves the PC's Garmin token cache so the browser app can
- *  auto-bootstrap without a paste step. Never part of a build. */
+ *  auto-bootstrap without a paste step, and accepts POSTed rotated tokens so
+ *  the python exporter's copy stays valid (refresh rotates the refresh token).
+ *  Never part of a build. */
 function devTokens(): Plugin {
+  const tokenFile = join(homedir(), ".garmin_tokens", "garmin_tokens.json");
   return {
     name: "laufwerk-dev-tokens",
     apply: "serve",
     configureServer(server) {
-      server.middlewares.use("/dev-tokens", (_req, res) => {
+      server.middlewares.use("/dev-tokens", (req, res) => {
+        if (req.method === "POST") {
+          let body = "";
+          req.on("data", (c) => (body += c));
+          req.on("end", () => {
+            try {
+              const parsed = JSON.parse(body);
+              if (!parsed.di_token || !parsed.di_refresh_token || !parsed.di_client_id) throw new Error("missing keys");
+              const tmp = tokenFile + ".tmp";
+              writeFileSync(tmp, JSON.stringify(parsed));
+              renameSync(tmp, tokenFile);
+              res.end('{"ok":true}');
+            } catch (e) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: String(e) }));
+            }
+          });
+          return;
+        }
         try {
-          const raw = readFileSync(join(homedir(), ".garmin_tokens", "garmin_tokens.json"), "utf-8");
+          const raw = readFileSync(tokenFile, "utf-8");
           res.setHeader("Content-Type", "application/json");
           res.end(raw);
         } catch (e) {
