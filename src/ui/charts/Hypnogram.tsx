@@ -15,7 +15,7 @@ function NavBtn({ dir, onClick }: { dir: "prev" | "next"; onClick?: () => void }
       onClick={onClick}
       disabled={!onClick}
       aria-label={dir === "prev" ? "previous night" : "next night"}
-      className="flex h-8 w-8 items-center justify-center rounded-full bg-page text-[16px] text-ink-2 disabled:opacity-30"
+      className="flex h-10 w-10 items-center justify-center rounded-full bg-page text-[20px] text-ink-2 disabled:opacity-30"
     >
       {dir === "prev" ? "‹" : "›"}
     </button>
@@ -236,7 +236,7 @@ export function Hypnogram({ sleep, nav }: { sleep: SleepView; nav?: HypnogramNav
       value={sleep.score != null ? String(sleep.score) : undefined}
     >
       {nav && (
-        <div className="-mt-1 mb-1 flex justify-end gap-2">
+        <div className="-mt-2 mb-1 flex justify-center gap-8">
           <NavBtn dir="prev" onClick={nav.onPrev} />
           <NavBtn dir="next" onClick={nav.onNext} />
         </div>
