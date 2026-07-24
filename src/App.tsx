@@ -6,8 +6,13 @@ import { SleepTab } from "./ui/tabs/SleepTab";
 import { TrendsTab } from "./ui/tabs/TrendsTab";
 import { useSettings } from "./store/settingsStore";
 
+const TAB_IDS: TabId[] = ["today", "runs", "sleep", "trends"];
+
 export default function App() {
-  const [tab, setTab] = useState<TabId>("today");
+  const [tab, setTab] = useState<TabId>(() => {
+    const h = window.location.hash.replace("#", "") as TabId;
+    return TAB_IDS.includes(h) ? h : "today";
+  });
   const theme = useSettings((s) => s.theme);
 
   useEffect(() => {

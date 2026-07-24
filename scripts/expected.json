@@ -1,0 +1,99 @@
+{
+ "decoupling": {
+  "23034667650": -16.599481331386922,
+  "23093273392": -10.037653561808881,
+  "23155860775": -9.569989299011477,
+  "23257257399": -4.408582063857321,
+  "23333486412": -1.2763186561856896,
+  "23401009960": -0.7170604552693272,
+  "23475705434": 0.7584943129921172,
+  "23574653884": 2.4989803850158423
+ },
+ "form": {
+  "23034667650": {
+   "cadenceSpm": 157.44462691776914,
+   "strideLengthCm": 95.73685445034322,
+   "verticalOscCm": 8.723219653921428,
+   "groundContactMs": 286.07140396587164
+  },
+  "23093273392": {
+   "cadenceSpm": 163.47916666666666,
+   "strideLengthCm": 105.72666727701822,
+   "verticalOscCm": 9.278333282470703,
+   "groundContactMs": 276.8500010172526
+  },
+  "23155860775": {
+   "cadenceSpm": 158.359375,
+   "strideLengthCm": 92.14,
+   "verticalOscCm": 8.776000061035155,
+   "groundContactMs": 294.1999938964844
+  },
+  "23257257399": {
+   "cadenceSpm": 165.203125,
+   "strideLengthCm": 96.88000081380208,
+   "verticalOscCm": 8.706666692097981,
+   "groundContactMs": 276.68333435058594
+  },
+  "23333486412": {
+   "cadenceSpm": 166.38264169312262,
+   "strideLengthCm": 90.80621976154858,
+   "verticalOscCm": 8.48242105476684,
+   "groundContactMs": 281.4729583295882
+  },
+  "23401009960": {
+   "cadenceSpm": 170.12946428571428,
+   "strideLengthCm": 98.02285766601562,
+   "verticalOscCm": 8.592857142857143,
+   "groundContactMs": 269.44285801478793
+  },
+  "23475705434": {
+   "cadenceSpm": 169.75510491789373,
+   "strideLengthCm": 94.10017027680797,
+   "verticalOscCm": 8.457311061843507,
+   "groundContactMs": 273.02583811679193
+  },
+  "23574653884": {
+   "cadenceSpm": 173.92894386320302,
+   "strideLengthCm": 92.73760835517895,
+   "verticalOscCm": 8.166046038058598,
+   "groundContactMs": 267.8521228897005
+  }
+ },
+ "weekly": [
+  {
+   "weekStart": "2026-05-25",
+   "distanceKm": 5.56,
+   "cumulativeKm": 5.56
+  },
+  {
+   "weekStart": "2026-06-01",
+   "distanceKm": 11.129999999999999,
+   "cumulativeKm": 16.689999999999998
+  },
+  {
+   "weekStart": "2026-06-08",
+   "distanceKm": 0.0,
+   "cumulativeKm": 16.689999999999998
+  },
+  {
+   "weekStart": "2026-06-15",
+   "distanceKm": 11.75,
+   "cumulativeKm": 28.439999999999998
+  },
+  {
+   "weekStart": "2026-06-22",
+   "distanceKm": 7.01,
+   "cumulativeKm": 35.449999999999996
+  },
+  {
+   "weekStart": "2026-06-29",
+   "distanceKm": 5.78,
+   "cumulativeKm": 41.23
+  },
+  {
+   "weekStart": "2026-07-06",
+   "distanceKm": 5.63,
+   "cumulativeKm": 46.86
+  }
+ ]
+}

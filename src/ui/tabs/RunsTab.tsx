@@ -1,29 +1,45 @@
-import { useLiveQuery } from "dexie-react-hooks";
-import { getRuns } from "../../lib/db/repo";
+import { useState } from "react";
+import { useRuns } from "../../lib/hooks";
 import { fmtDay, fmtDuration, fmtKm, fmtPace, parseGarminLocal, speedToPace } from "../../lib/format";
 import { ScreenHeader, EmptyState } from "../components/ScreenHeader";
+import { RunDetail } from "../screens/RunDetail";
+import { EfficiencyMap } from "../charts/EfficiencyMap";
+import { DecouplingBars } from "../charts/DecouplingBars";
+import { WeeklyVolume } from "../charts/WeeklyVolume";
 import type { ActivityRow } from "../../lib/db/schema";
 
 export function RunsTab() {
-  const runs = useLiveQuery(getRuns, []);
+  const runs = useRuns();
+  const [openId, setOpenId] = useState<number | null>(null);
+
+  const open = openId != null ? runs?.find((r) => r.activityId === openId) : undefined;
+  if (open) return <RunDetail run={open} onBack={() => setOpenId(null)} />;
 
   return (
-    <div>
+    <div className="pb-4">
       <ScreenHeader title="Runs" />
       {!runs?.length ? (
         <EmptyState text="No runs yet — connect your Garmin account in Settings and sync." />
       ) : (
-        runs.map((r) => <RunCard key={r.activityId} run={r} />)
+        <>
+          {runs.map((r) => (
+            <RunCard key={r.activityId} run={r} onOpen={() => setOpenId(r.activityId)} />
+          ))}
+          <h2 className="kicker mx-4 mb-2 mt-6">Analytics</h2>
+          <EfficiencyMap onOpenRun={setOpenId} />
+          <DecouplingBars onOpenRun={setOpenId} />
+          <WeeklyVolume />
+        </>
       )}
     </div>
   );
 }
 
-function RunCard({ run }: { run: ActivityRow }) {
+function RunCard({ run, onOpen }: { run: ActivityRow; onOpen: () => void }) {
   const d = parseGarminLocal(run.startTimeLocal);
   const pace = speedToPace(run.averageSpeed);
   return (
-    <article className="mx-4 mb-3 rounded-2xl bg-card p-4 active:opacity-80">
+    <article onClick={onOpen} className="mx-4 mb-3 rounded-2xl bg-card p-4 active:opacity-80">
       <div className="mb-1 flex items-baseline justify-between">
         <span className="kicker">
           {fmtDay(d)} · {d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}

@@ -3,10 +3,11 @@
 // Dexie exactly as in production. Active when VITE_MOCK=1.
 import { db } from "../lib/db/schema";
 import { upsertActivities, putActivityData, bulkPutWellness } from "../lib/db/repo";
+import { explodeRangePayload } from "../lib/sync/ingest";
 import type { ActivityData, ActivitySummary } from "../lib/garmin/types";
 
 const SEED_KEY = "fixtureSeedVersion";
-const SEED_VERSION = 1;
+const SEED_VERSION = 2;
 
 export async function seedFixturesIfNeeded() {
   const seeded = await db.kv.get(SEED_KEY);
@@ -32,6 +33,17 @@ export async function seedFixturesIfNeeded() {
     }
   } catch {
     /* not there yet */
+  }
+
+  // Range-endpoint samples (captured by scripts/smoke-api.mjs) exploded into
+  // per-day rows exactly as the real sync ingest does.
+  for (const metric of ["bodyBattery", "steps", "rhr", "maxmet"] as const) {
+    try {
+      const payload = await fetchJson(`/fixtures/samples/${metric}.json`);
+      await bulkPutWellness(explodeRangePayload(metric, payload));
+    } catch {
+      /* sample not captured */
+    }
   }
 
   await db.kv.put({ key: SEED_KEY, value: SEED_VERSION });
