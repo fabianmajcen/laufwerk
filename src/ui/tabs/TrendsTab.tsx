@@ -7,9 +7,10 @@ import { Vo2maxTrend } from "../charts/Vo2maxTrend";
 import { TrainingCalendar } from "../charts/TrainingCalendar";
 import { StressRhythm } from "../charts/StressRhythm";
 import { RecordsShelf } from "../charts/RecordsShelf";
+import { RecordDetail } from "../screens/RecordDetail";
 import { useLatestWellness, useRuns } from "../../lib/hooks";
 
-type View = "main" | "stress" | "records";
+type View = "main" | "stress" | "records" | { record: number; label: string };
 
 export function TrendsTab() {
   const hrv = useLatestWellness("hrv");
@@ -27,7 +28,15 @@ export function TrendsTab() {
   if (view === "records") {
     return (
       <SubScreen title="Personal records" onBack={() => setView("main")}>
-        <RecordsShelf />
+        <RecordsShelf onSelect={(typeId, label) => setView({ record: typeId, label })} />
+      </SubScreen>
+    );
+  }
+
+  if (typeof view === "object") {
+    return (
+      <SubScreen title={view.label} onBack={() => setView("records")}>
+        <RecordDetail typeId={view.record} />
       </SubScreen>
     );
   }

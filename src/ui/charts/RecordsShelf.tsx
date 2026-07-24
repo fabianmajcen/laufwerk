@@ -30,7 +30,7 @@ interface PrRow {
   activityStartDateTimeLocal?: number;
 }
 
-export function RecordsShelf() {
+export function RecordsShelf({ onSelect }: { onSelect?: (typeId: number, label: string) => void }) {
   const stored = useLiveQuery(
     async () => getKv<{ payload: PrRow[]; fetchedAt: number }>("personalRecords"),
     [],
@@ -59,7 +59,11 @@ export function RecordsShelf() {
         {SLOTS.map((slot) => {
           const p = byType.get(slot.typeId);
           return (
-            <div key={slot.typeId} className={`rounded-xl bg-page p-3 ${p ? "" : "opacity-60"}`}>
+            <button
+              key={slot.typeId}
+              onClick={onSelect ? () => onSelect(slot.typeId, slot.label) : undefined}
+              className={`rounded-xl bg-page p-3 text-left active:opacity-70 ${p ? "" : "opacity-60"}`}
+            >
               <div className="kicker">{slot.label}</div>
               {p ? (
                 <>
@@ -80,7 +84,7 @@ export function RecordsShelf() {
                   <div className="text-[10px] text-ink-3">not yet run</div>
                 </>
               )}
-            </div>
+            </button>
           );
         })}
       </div>
