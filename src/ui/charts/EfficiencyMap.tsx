@@ -8,6 +8,7 @@ import { useRuns } from "../../lib/hooks";
 import { fmtPace, parseGarminLocal, speedToPace } from "../../lib/format";
 import { linearFit } from "../../lib/derive/series";
 import { Card } from "../components/ScreenHeader";
+import { Legend, RECENCY_GRADIENT } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 
 export function EfficiencyMap({ onOpenRun }: { onOpenRun?: (id: number) => void }) {
@@ -119,7 +120,7 @@ export function EfficiencyMap({ onOpenRun }: { onOpenRun?: (id: number) => void 
       kicker="Fitness"
       title="Efficiency map"
       value={efTrend != null ? `EF ${efTrend >= 0 ? "+" : ""}${efTrend.toFixed(1)}%/mo` : undefined}
-      footnote="Each dot is a run (brighter = more recent). Down and right over time = same pace at lower heart rate: the base is building."
+      footnote="Newer dots drifting down-right = same pace at lower heart rate: the base is building."
     >
       <EChart
         option={option}
@@ -136,6 +137,7 @@ export function EfficiencyMap({ onOpenRun }: { onOpenRun?: (id: number) => void 
             : undefined
         }
       />
+      <Legend items={[{ swatch: "gradient", gradient: RECENCY_GRADIENT, label: "older → newer" }, { swatch: "dash", label: "trend" }]} />
     </Card>
   );
 }

@@ -6,6 +6,7 @@ import { tokens, tooltipDefaults, xAxisDefaults, yAxisDefaults } from "./theme";
 import { useDecouplingSeries } from "../../lib/hooks";
 import { DECOUPLING_TARGET_PCT } from "../../lib/derive/decoupling";
 import { Card } from "../components/ScreenHeader";
+import { Legend } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 
 export function DecouplingBars({ onOpenRun }: { onOpenRun?: (id: number) => void }) {
@@ -92,7 +93,7 @@ export function DecouplingBars({ onOpenRun }: { onOpenRun?: (id: number) => void
           {latest.toFixed(1)}%
         </span>
       }
-      footnote="Efficiency loss 1st → 2nd half, warm-up excluded. Shaded band ±5% = well-developed base; dashed = 5-run median."
+      footnote="How much your efficiency drops from the first half of a run to the second (warm-up excluded)."
     >
       <EChart
         option={option}
@@ -108,6 +109,7 @@ export function DecouplingBars({ onOpenRun }: { onOpenRun?: (id: number) => void
             : undefined
         }
       />
+      <Legend items={[{ swatch: "bar", color: "var(--status-good)", label: "≤5% good" }, { swatch: "bar", color: "var(--status-serious)", label: ">5% high" }, { swatch: "band", color: "var(--status-good)", label: "target" }, { swatch: "dash", label: "5-run median" }]} />
     </Card>
   );
 }

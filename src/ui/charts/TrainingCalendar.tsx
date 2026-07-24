@@ -5,6 +5,7 @@ import { EChart } from "./EChart";
 import { mixHex, tokens, tooltipDefaults } from "./theme";
 import { toSleepView, useRuns, useWellnessRange } from "../../lib/hooks";
 import { Card } from "../components/ScreenHeader";
+import { Legend } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 import { isoDate, parseGarminLocal } from "../../lib/format";
 
@@ -91,7 +92,7 @@ export function TrainingCalendar({ onOpenDay }: { onOpenDay?: (date: string) => 
     <Card
       kicker="Rhythm"
       title="Last 3 months"
-      footnote={`Cell brightness = sleep score · green ring = run day.${onOpenDay ? " Tap a day for its summary." : ""}`}
+      footnote={onOpenDay ? "Tap a day for its summary." : undefined}
     >
       <EChart
         option={option}
@@ -106,6 +107,12 @@ export function TrainingCalendar({ onOpenDay }: { onOpenDay?: (date: string) => 
               }
             : undefined
         }
+      />
+      <Legend
+        items={[
+          { swatch: "gradient", gradient: "linear-gradient(to right, color-mix(in srgb, var(--recency-lo) 45%, var(--card)), var(--recency-lo), var(--recency-hi))", label: "sleep low → high" },
+          { swatch: "ring", color: "var(--status-good)", label: "run day" },
+        ]}
       />
     </Card>
   );

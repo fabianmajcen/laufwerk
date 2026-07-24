@@ -8,6 +8,7 @@ import { db } from "../../lib/db/schema";
 import { getRuns } from "../../lib/db/repo";
 import { fmtPace } from "../../lib/format";
 import { Card } from "../components/ScreenHeader";
+import { Legend } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 
 interface RunPacing {
@@ -95,7 +96,7 @@ export function PacingChart() {
   if (!runs || runs.length < 2 || !option) return null;
 
   return (
-    <Card kicker="Pacing" title="Per-km splits" footnote="Up = faster. Orange = highlighted run; gray = the rest.">
+    <Card kicker="Pacing" title="Per-km splits" footnote="Up = faster.">
       <div className="mb-2 flex gap-1 overflow-x-auto text-[12px]">
         {[...runs].reverse().map((r) => (
           <button
@@ -108,6 +109,7 @@ export function PacingChart() {
         ))}
       </div>
       <EChart option={option} height={200} />
+      <Legend items={[{ swatch: "line", color: "var(--pace)", label: "highlighted" }, { swatch: "line", color: "var(--grid)", label: "other runs" }]} />
     </Card>
   );
 }

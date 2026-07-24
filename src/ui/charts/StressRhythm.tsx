@@ -5,6 +5,7 @@ import { EChart } from "./EChart";
 import { mixHex, tokens, tooltipDefaults } from "./theme";
 import { useWellnessRange } from "../../lib/hooks";
 import { Card } from "../components/ScreenHeader";
+import { Legend } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -94,9 +95,10 @@ export function StressRhythm() {
     <Card
       kicker="Stress rhythm"
       title="When are you calm?"
-      footnote="Average Garmin stress by weekday and hour over the cached window. Brighter = more stressed, scaled to your own range. The dark band overnight is sleep."
+      footnote="Average stress by weekday and hour, scaled to your own range. The dark overnight band is sleep."
     >
       <EChart option={option} height={210} />
+      <Legend items={[{ swatch: "gradient", gradient: "linear-gradient(to right, color-mix(in srgb, var(--recency-lo) 18%, var(--card)), var(--recency-lo), var(--recency-hi))", label: "calm → stressed" }]} />
     </Card>
   );
 }

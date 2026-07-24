@@ -10,6 +10,7 @@ import { toRunPoints, rollingMean, type RunPoints } from "../../lib/derive/serie
 import { computeRunShape } from "../../lib/derive/runShape";
 import { fmtPace } from "../../lib/format";
 import { Card } from "../components/ScreenHeader";
+import { Legend } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 
 const PANEL_H = 96;
@@ -204,13 +205,19 @@ export function RunShape() {
     <Card
       kicker="Run shape"
       title={`Your typical run (${data.shape.nRuns} runs)`}
-      footnote="Solid = median across runs, shaded = middle 50%. Dashed = your latest run."
     >
       <label className="mb-1 flex items-center gap-2 text-[12px] text-ink-3">
         <input type="checkbox" checked={overlay} onChange={(e) => setOverlay(e.target.checked)} className="accent-[var(--accent)]" />
         overlay latest run
       </label>
       <EChart option={option} height={2 * PANEL_H + 22 + 34 + 26} />
+      <Legend
+        items={[
+          { swatch: "line", color: "var(--ink-2)", label: "median" },
+          { swatch: "band", color: "var(--ink-2)", label: "middle 50%" },
+          ...(overlay ? [{ swatch: "dash" as const, color: "var(--ink-2)", label: "latest run" }] : []),
+        ]}
+      />
     </Card>
   );
 }

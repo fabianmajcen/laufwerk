@@ -7,6 +7,7 @@ import { useRuns } from "../../lib/hooks";
 import { computeWeeklyVolume } from "../../lib/derive/weekly";
 import { parseGarminLocal } from "../../lib/format";
 import { Card } from "../components/ScreenHeader";
+import { Legend } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 
 export function WeeklyVolume({ onOpenWeek }: { onOpenWeek?: (weekStart: string) => void }) {
@@ -125,7 +126,7 @@ export function WeeklyVolume({ onOpenWeek }: { onOpenWeek?: (weekStart: string) 
       kicker="Volume"
       title="Weekly km"
       value={`${weekly[weekly.length - 1].cumulativeKm.toFixed(0)} km total`}
-      footnote={`Dashed line = your plan target. Lower panel: cumulative distance.${onOpenWeek ? " Tap a bar for that week's runs." : ""}`}
+      footnote={onOpenWeek ? "Tap a bar for that week's runs." : undefined}
     >
       <EChart
         option={option}
@@ -142,6 +143,7 @@ export function WeeklyVolume({ onOpenWeek }: { onOpenWeek?: (weekStart: string) 
             : undefined
         }
       />
+      <Legend items={[{ swatch: "bar", color: "var(--accent)", label: "weekly km" }, { swatch: "dash", label: "plan target" }, { swatch: "line", color: "var(--ink-2)", label: "cumulative (below)" }]} />
     </Card>
   );
 }

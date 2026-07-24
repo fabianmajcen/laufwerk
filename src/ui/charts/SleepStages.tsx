@@ -5,6 +5,7 @@ import { EChart } from "./EChart";
 import { tokens, tooltipDefaults, xAxisDefaults, yAxisDefaults } from "./theme";
 import { toSleepView, useWellnessRange } from "../../lib/hooks";
 import { Card } from "../components/ScreenHeader";
+import { Legend } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 import { fmtHoursMin } from "../../lib/format";
 
@@ -31,15 +32,7 @@ export function SleepStages({ onOpenNight }: { onOpenNight?: (date: string) => v
     ] as const;
 
     return {
-      grid: { left: 30, right: 12, top: 34, bottom: 24 },
-      legend: {
-        top: 0,
-        left: 0,
-        itemWidth: 10,
-        itemHeight: 10,
-        icon: "circle",
-        textStyle: { color: t.ink2, fontSize: 11 },
-      },
+      grid: { left: 30, right: 12, top: 14, bottom: 24 },
       tooltip: {
         ...tooltipDefaults(t),
         trigger: "axis",
@@ -99,6 +92,7 @@ export function SleepStages({ onOpenNight }: { onOpenNight?: (date: string) => v
             : undefined
         }
       />
+      <Legend items={[{ swatch: "bar", color: "var(--sleep-deep)", label: "deep" }, { swatch: "bar", color: "var(--sleep-light)", label: "light" }, { swatch: "bar", color: "var(--sleep-rem)", label: "REM" }, { swatch: "bar", color: "var(--sleep-awake)", label: "awake" }]} />
     </Card>
   );
 }

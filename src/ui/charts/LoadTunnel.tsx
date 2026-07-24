@@ -8,6 +8,7 @@ import { useRuns } from "../../lib/hooks";
 import { computeAcwr } from "../../lib/derive/acwr";
 import { parseGarminLocal, isoDate } from "../../lib/format";
 import { Card } from "../components/ScreenHeader";
+import { Legend } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 
 const WINDOW_DAYS = 60;
@@ -45,17 +46,9 @@ export function LoadTunnel() {
 
     return {
       grid: [
-        { left: 34, right: 12, top: 32, height: 96 },
-        { left: 34, right: 12, top: 168, height: 78 },
+        { left: 34, right: 12, top: 14, height: 96 },
+        { left: 34, right: 12, top: 150, height: 78 },
       ],
-      legend: {
-        top: 0,
-        left: 0,
-        itemWidth: 12,
-        itemHeight: 2,
-        textStyle: { color: t.ink2, fontSize: 11 },
-        data: ["acute (7d)", "chronic (28d/4)"],
-      },
       axisPointer: { link: [{ xAxisIndex: "all" }] },
       tooltip: {
         ...tooltipDefaults(t),
@@ -141,8 +134,8 @@ export function LoadTunnel() {
         {
           type: "text",
           left: 8,
-          top: 148,
-          style: { text: "ACWR ratio (0.8–1.3 = safe tunnel)", fill: t.ink2, fontSize: 11, fontWeight: 600 },
+          top: 130,
+          style: { text: "ACWR ratio", fill: t.ink2, fontSize: 11, fontWeight: 600 },
           silent: true,
         },
       ],
@@ -158,9 +151,18 @@ export function LoadTunnel() {
       kicker="Training load"
       title="Load tunnel"
       value={today.ratio != null ? today.ratio.toFixed(2) : "–"}
-      footnote="Load proxy = km. Ratio above 1.5 (dashed) caps the readiness verdict at Easy. Priority #1 is not getting injured."
+      footnote="Load proxy = km. A ratio above 1.5 caps the readiness verdict at Easy."
     >
-      <EChart option={option} height={262} />
+      <EChart option={option} height={244} />
+      <Legend
+        items={[
+          { swatch: "line", color: "var(--accent)", label: "acute (7d)" },
+          { swatch: "dash", color: "var(--ink-3)", label: "chronic (28d/4)" },
+          { swatch: "line", color: "var(--ink)", label: "ratio" },
+          { swatch: "band", color: "var(--status-good)", label: "safe 0.8–1.3" },
+          { swatch: "dash", color: "var(--status-serious)", label: "1.5 caution" },
+        ]}
+      />
     </Card>
   );
 }

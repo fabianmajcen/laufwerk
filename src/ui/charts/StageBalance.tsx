@@ -6,6 +6,7 @@ import { tokens, tooltipDefaults, xAxisDefaults, yAxisDefaults } from "./theme";
 import { toSleepView, useWellnessRange } from "../../lib/hooks";
 import { computeStageBalance, DEEP_NORM, REM_NORM } from "../../lib/derive/sleepStats";
 import { Card } from "../components/ScreenHeader";
+import { Legend } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 
 export function StageBalance() {
@@ -24,15 +25,7 @@ export function StageBalance() {
       new Date(d + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 
     return {
-      grid: { left: 34, right: 12, top: 32, bottom: 24 },
-      legend: {
-        top: 0,
-        left: 0,
-        itemWidth: 12,
-        itemHeight: 2,
-        textStyle: { color: t.ink2, fontSize: 11 },
-        data: ["deep %", "REM %"],
-      },
+      grid: { left: 34, right: 12, top: 14, bottom: 24 },
       tooltip: {
         ...tooltipDefaults(t),
         trigger: "axis",
@@ -99,9 +92,10 @@ export function StageBalance() {
       kicker="Architecture"
       title="Deep & REM share"
       value={`${last.deepPct.toFixed(0)}% / ${last.remPct.toFixed(0)}%`}
-      footnote={`Shaded bands = typical adult ranges (deep ${DEEP_NORM[0]}–${DEEP_NORM[1]}%, REM ${REM_NORM[0]}–${REM_NORM[1]}%). Percentages of total time in bed.`}
+      footnote={`Typical adult: deep ${DEEP_NORM[0]}–${DEEP_NORM[1]}%, REM ${REM_NORM[0]}–${REM_NORM[1]}%. Shares of time in bed.`}
     >
       <EChart option={option} height={190} />
+      <Legend items={[{ swatch: "line", color: "var(--sleep-deep)", label: "deep" }, { swatch: "line", color: "var(--sleep-rem)", label: "REM" }, { swatch: "band", color: "var(--ink-2)", label: "typical range" }]} />
     </Card>
   );
 }

@@ -10,6 +10,7 @@ import { cumDistM } from "../../lib/derive/segments";
 import { rollingMean } from "../../lib/derive/series";
 import { fmtPace } from "../../lib/format";
 import { Card } from "../components/ScreenHeader";
+import { Legend } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 
 type Mode = "pace" | "hr" | "elev";
@@ -185,7 +186,6 @@ export function RouteExplorer() {
     <Card
       kicker="Route explorer"
       title={`${run.label}, colored by ${meta.label}`}
-      footnote="Range covers this run's 5th to 95th percentile. Green dot = start."
     >
       <div className="mb-2 flex gap-1 overflow-x-auto text-[12px]">
         {runs.map((r) => (
@@ -223,6 +223,7 @@ export function RouteExplorer() {
           {meta.unit} {meta.highWord}
         </span>
       </div>
+      <Legend items={[{ swatch: "dot", color: "var(--start-dot)", label: "start" }]} />
     </Card>
   );
 }

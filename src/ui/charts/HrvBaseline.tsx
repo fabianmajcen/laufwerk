@@ -5,6 +5,7 @@ import { EChart } from "./EChart";
 import { tokens, tooltipDefaults, xAxisDefaults, yAxisDefaults } from "./theme";
 import { toHrvView, useRuns, useWellnessRange } from "../../lib/hooks";
 import { Card } from "../components/ScreenHeader";
+import { Legend } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 import { parseGarminLocal, isoDate } from "../../lib/format";
 
@@ -32,16 +33,7 @@ export function HrvBaseline() {
       new Date(d + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 
     return {
-      grid: { left: 34, right: 12, top: 32, bottom: 26 },
-      legend: {
-        show: true,
-        top: 0,
-        right: 0,
-        itemWidth: 12,
-        itemHeight: 2,
-        textStyle: { color: t.ink2, fontSize: 11 },
-        data: ["nightly", "7-day avg"],
-      },
+      grid: { left: 34, right: 12, top: 14, bottom: 26 },
       tooltip: {
         ...tooltipDefaults(t),
         trigger: "axis",
@@ -115,7 +107,7 @@ export function HrvBaseline() {
       kicker="Recovery"
       title="HRV vs baseline"
       value={`${latest.lastNight} ms`}
-      footnote={`Shaded band = your balanced range (${latest.baselineLow ?? "–"}–${latest.baselineUpper ?? "–"} ms). Blue triangles mark run days. Status: ${latest.status?.toLowerCase() ?? "–"}.`}
+      footnote={`Status: ${latest.status?.toLowerCase() ?? "-"}.`}
     >
       <div className="mb-2 flex gap-1 text-[12px]">
         {[30, 90].map((d) => (
@@ -129,6 +121,14 @@ export function HrvBaseline() {
         ))}
       </div>
       <EChart option={option} height={200} />
+      <Legend
+        items={[
+          { swatch: "line", color: "var(--hrv)", opacity: 0.55, label: "nightly" },
+          { swatch: "line", color: "var(--hrv)", label: "7-day avg" },
+          { swatch: "band", color: "var(--hrv)", label: `balanced ${latest.baselineLow ?? "–"}–${latest.baselineUpper ?? "–"} ms` },
+          { swatch: "triangle", color: "var(--accent)", label: "run day" },
+        ]}
+      />
     </Card>
   );
 }

@@ -6,6 +6,7 @@ import { mixHex, tokens, tooltipDefaults, xAxisDefaults } from "./theme";
 import { toSleepView, useWellnessRange } from "../../lib/hooks";
 import { utcMidnight } from "../../lib/format";
 import { Card } from "../components/ScreenHeader";
+import { Legend } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 
 const AXIS_START_H = 20; // 20:00 on the previous evening
@@ -134,9 +135,15 @@ export function ConsistencyClock() {
     <Card
       kicker="Rhythm"
       title="Bed & wake times"
-      footnote="Brighter bar = better sleep score (scaled to this window's best/worst night). Dashed lines = your median bedtime and wake time. Regularity is the biggest free lever."
+      footnote="Regularity is the biggest free lever."
     >
       <EChart option={option} height={220} />
+      <Legend
+        items={[
+          { swatch: "gradient", gradient: "linear-gradient(to right, color-mix(in srgb, var(--recency-lo) 65%, var(--card)), var(--recency-hi))", label: "worse → better sleep" },
+          { swatch: "dash", label: "median bed & wake" },
+        ]}
+      />
     </Card>
   );
 }

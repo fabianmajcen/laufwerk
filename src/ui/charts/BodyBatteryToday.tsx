@@ -5,6 +5,7 @@ import { EChart } from "./EChart";
 import { tokens, tooltipDefaults, xAxisDefaults, yAxisDefaults } from "./theme";
 import { extractBatteryFromStress, toBodyBatteryView, useLatestWellness } from "../../lib/hooks";
 import { Card } from "../components/ScreenHeader";
+import { Legend } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 
 export function BodyBatteryToday() {
@@ -89,6 +90,7 @@ export function BodyBatteryToday() {
       footnote={`charged +${bb.charged ?? "–"} · drained −${bb.drained ?? "–"} today`}
     >
       <EChart option={option} height={150} />
+      <Legend items={[{ swatch: "line", color: "var(--charge)", label: "charging" }, { swatch: "line", color: "var(--drain)", label: "draining" }]} />
     </Card>
   );
 }

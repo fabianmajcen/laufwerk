@@ -7,6 +7,7 @@ import { recencyColor, tokens } from "./theme";
 import { db } from "../../lib/db/schema";
 import { getRuns } from "../../lib/db/repo";
 import { Card } from "../components/ScreenHeader";
+import { Legend, RECENCY_GRADIENT } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 
 interface Route {
@@ -111,8 +112,11 @@ export function Constellation() {
       kicker="Constellation"
       title="Every route"
       value={`${routes.length} runs · ${totalKm.toFixed(0)} km`}
-      footnote={sel ? `${sel.label} · ${sel.km.toFixed(1)} km. Tap again to clear` : "Brighter = more recent. Tap a route to highlight; pinch to zoom."}
+      footnote={sel ? `${sel.label} · ${sel.km.toFixed(1)} km. Tap again to clear.` : "Tap a route to highlight. Pinch to zoom."}
     >
+      <div className="mb-2">
+        <Legend items={[{ swatch: "gradient", gradient: RECENCY_GRADIENT, label: "older → newer" }, { swatch: "dot", color: "var(--start-dot)", label: "start" }]} />
+      </div>
       <div className="-mx-4 overflow-hidden rounded-b-2xl bg-page" style={{ marginBottom: -16 }}>
         <EChart
           option={option}

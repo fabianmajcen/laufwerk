@@ -7,6 +7,7 @@ import { toSleepView, useWellnessRange } from "../../lib/hooks";
 import { computeSleepDebt } from "../../lib/derive/sleepStats";
 import { fmtHoursMin } from "../../lib/format";
 import { Card } from "../components/ScreenHeader";
+import { Legend } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 
 export function SleepDebt() {
@@ -27,15 +28,7 @@ export function SleepDebt() {
     const need = debt[debt.length - 1].needMin;
 
     return {
-      grid: { left: 36, right: 12, top: 32, bottom: 24 },
-      legend: {
-        top: 0,
-        left: 0,
-        itemWidth: 12,
-        itemHeight: 2,
-        textStyle: { color: t.ink2, fontSize: 11 },
-        data: ["nightly", "7-night avg"],
-      },
+      grid: { left: 36, right: 12, top: 14, bottom: 24 },
       tooltip: {
         ...tooltipDefaults(t),
         trigger: "axis",
@@ -101,9 +94,10 @@ export function SleepDebt() {
       kicker="Duration"
       title="Sleep vs your need"
       value={current.debtMin > 30 ? `−${fmtHoursMin(current.debtMin)}` : "✓ rested"}
-      footnote={`"Need" is Garmin's personal estimate (${fmtHoursMin(current.needMin)}, adjusts with training and HRV). Headline = accumulated debt over 30 nights.`}
+      footnote="Your need is Garmin's personal estimate and adjusts with training and HRV. Headline: debt accumulated over 30 nights."
     >
       <EChart option={option} height={190} />
+      <Legend items={[{ swatch: "line", color: "var(--sleep-light)", opacity: 0.6, label: "nightly" }, { swatch: "line", color: "var(--sleep-deep)", label: "7-night avg" }, { swatch: "dash", label: "your need" }]} />
     </Card>
   );
 }

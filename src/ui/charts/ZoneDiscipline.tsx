@@ -10,6 +10,7 @@ import { db } from "../../lib/db/schema";
 import { getRuns } from "../../lib/db/repo";
 import { timeInZones, zoneBoundaries } from "../../lib/derive/zones";
 import { Card } from "../components/ScreenHeader";
+import { Legend } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 
 interface RunZones {
@@ -55,15 +56,7 @@ export function ZoneDiscipline() {
     const totals = runs.map((r) => r.secs.reduce((a, b) => a + b, 0) || 1);
 
     return {
-      grid: { left: 34, right: 12, top: 34, bottom: 24 },
-      legend: {
-        top: 0,
-        left: 0,
-        itemWidth: 10,
-        itemHeight: 10,
-        icon: "circle",
-        textStyle: { color: t.ink2, fontSize: 11 },
-      },
+      grid: { left: 34, right: 12, top: 14, bottom: 24 },
       tooltip: {
         ...tooltipDefaults(t),
         trigger: "axis",
@@ -105,9 +98,10 @@ export function ZoneDiscipline() {
       kicker="Zone discipline"
       title="Time in HR zones"
       value={`${latestEasy}% easy`}
-      footnote={`Base phase goal: keep the easy share (Z1+Z2) high. All runs are measured against your current zones (Z2 from ${result.bounds[1]} bpm, Z3 from ${result.bounds[2]} bpm), so runs recorded before a zone-settings change stay comparable.`}
+      footnote={`Goal: keep the easy share (Z1+Z2) high. Zones use your current settings (Z2 from ${result.bounds[1]}, Z3 from ${result.bounds[2]} bpm), so every run stays comparable.`}
     >
       <EChart option={option} height={200} />
+      <Legend items={[{ swatch: "gradient", gradient: "linear-gradient(to right, var(--cadence), var(--hr))", label: "Z1 easy → Z5 hard" }]} />
     </Card>
   );
 }

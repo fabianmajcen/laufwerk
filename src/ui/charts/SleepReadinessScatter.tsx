@@ -12,6 +12,7 @@ import { computeFabScore } from "../../lib/derive/fabScore";
 import { linearFit } from "../../lib/derive/series";
 import { parseGarminLocal } from "../../lib/format";
 import { Card } from "../components/ScreenHeader";
+import { Legend } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 
 const UNLOCK_N = 21;
@@ -154,9 +155,10 @@ export function SleepReadinessScatter() {
     <Card
       kicker="Correlation"
       title="Sleep → readiness"
-      footnote="Each dot is one morning: last night's sleep score vs that day's FabScore. Dashed = trend. Readiness also depends on HRV, load and freshness, so expect scatter."
+      footnote="Each morning: last night's sleep vs that day's FabScore. Sleep is one input of several, so expect scatter."
     >
       <EChart option={option!} height={210} />
+      <Legend items={[{ swatch: "dot", color: "var(--accent)", label: "one morning" }, { swatch: "dash", label: "trend" }]} />
     </Card>
   );
 }

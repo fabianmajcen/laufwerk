@@ -9,6 +9,7 @@ import { getRuns } from "../../lib/db/repo";
 import { fmtPace, parseGarminLocal, speedToPace } from "../../lib/format";
 import { linearFit } from "../../lib/derive/series";
 import { Card } from "../components/ScreenHeader";
+import { Legend, RECENCY_GRADIENT } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 
 type Mode = "hr" | "pace";
@@ -126,7 +127,7 @@ export function WeatherLens({ onOpenRun }: { onOpenRun?: (id: number) => void })
     <Card
       kicker="Weather lens"
       title={`Temperature vs ${mode === "hr" ? "heart rate" : "pace"}`}
-      footnote="Brighter = more recent. Caveat: you also got fitter as summer warmed up, so read this alongside the efficiency map, not alone."
+      footnote="You also got fitter as summer warmed up, so read this alongside the efficiency map, not alone."
     >
       <div className="mb-2 flex gap-1 text-[12px]" role="tablist">
         {(["hr", "pace"] as Mode[]).map((m) => (
@@ -156,6 +157,7 @@ export function WeatherLens({ onOpenRun }: { onOpenRun?: (id: number) => void })
             : undefined
         }
       />
+      <Legend items={[{ swatch: "gradient", gradient: RECENCY_GRADIENT, label: "older → newer" }, { swatch: "dash", label: "trend" }]} />
     </Card>
   );
 }

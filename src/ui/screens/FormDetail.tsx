@@ -7,6 +7,7 @@ import { FORM_META, useFormPoints } from "../charts/FormGrid";
 import { FORM_DIRECTION, type FormMetrics } from "../../lib/derive/form";
 import { linearFit } from "../../lib/derive/series";
 import { Card } from "../components/ScreenHeader";
+import { Legend } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
 
 export function FormDetail({
@@ -115,7 +116,7 @@ export function FormDetail({
           )}
         </span>
       }
-      footnote={`Dashed = linear trend (${dirWord} is better${meta.band ? `; shaded band = ${meta.band[0]}–${meta.band[1]} ${meta.unit} target` : ""}). Tap a point to open that run.`}
+      footnote="Tap a point to open that run."
     >
       <EChart
         option={option}
@@ -131,6 +132,13 @@ export function FormDetail({
               }
             : undefined
         }
+      />
+      <Legend
+        items={[
+          { swatch: "dot", color: "var(--accent)", label: "per run" },
+          { swatch: "dash", label: `trend (${dirWord} = better)` },
+          ...(meta.band ? [{ swatch: "band" as const, color: "var(--cadence)", label: `target ${meta.band[0]}–${meta.band[1]} ${meta.unit}` }] : []),
+        ]}
       />
     </Card>
   );
