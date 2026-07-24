@@ -41,6 +41,12 @@ export default function App() {
       theme === "dark" ||
       (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
     document.documentElement.classList.toggle("light", !dark);
+    if (Capacitor.isNativePlatform()) {
+      // status-bar icons: light-on-dark / dark-on-light
+      import("@capacitor/status-bar")
+        .then(({ StatusBar, Style }) => StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light }))
+        .catch(() => {});
+    }
   }, [theme]);
 
   // restore auth state on boot; in browser dev (non-mock) auto-bootstrap from
@@ -86,7 +92,12 @@ export default function App() {
   }, []);
 
   return (
-    <div className="flex h-dvh flex-col bg-page text-ink">
+    <div
+      className="flex h-dvh flex-col bg-page text-ink"
+      // Android 15 draws edge-to-edge under the status bar; env() gives the
+      // exact inset where supported, 32px covers WebViews where it reports 0
+      style={Capacitor.isNativePlatform() ? { paddingTop: "max(env(safe-area-inset-top, 0px), 32px)" } : undefined}
+    >
       <PullToSync>
         {settingsOpen ? (
           <Settings onBack={() => setSettingsOpen(false)} />
