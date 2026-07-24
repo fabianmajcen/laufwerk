@@ -218,7 +218,7 @@ function RecordsTile({ onOpen }: { onOpen: () => void }) {
     <button onClick={onOpen} className="mt-3 flex w-full items-center justify-between rounded-xl bg-page p-3 text-left active:opacity-70">
       <div>
         <span className="kicker">Records</span>
-        <div className="mt-0.5 text-[10px] leading-tight text-ink-3">1k · 5k · longest · steps · tap any for its top 10</div>
+        <div className="mt-0.5 text-[10px] leading-tight text-ink-3">1k · 5k · longest · steps</div>
       </div>
       <div className="flex items-center gap-2">
         {best5k != null && (

@@ -53,7 +53,7 @@ export function RecordsShelf({ onSelect }: { onSelect?: (typeId: number, label: 
     <Card
       kicker="Personal records"
       title="Your bests"
-      footnote="Straight from Garmin's PR service. Beat one and it updates on the next sync. Empty slots are races you haven't run yet."
+      footnote="Tap any record for its top 10. Straight from Garmin's PR service; beat one and it updates on the next sync. Empty slots are races you haven't run yet."
     >
       <div className="grid grid-cols-2 gap-3">
         {SLOTS.map((slot) => {

@@ -1,4 +1,8 @@
+import { useCallback, useState } from "react";
 import { ScreenHeader, Card } from "../components/ScreenHeader";
+import { SubScreen } from "../components/SubScreen";
+import { DailyMetricDetail, type DailyMetric } from "../screens/DailyMetricDetail";
+import { useBackHandler } from "../../lib/backstack";
 import { ReadinessRing } from "../charts/ReadinessRing";
 import { FactorLadder } from "../components/FactorLadder";
 import { BodyBatteryToday } from "../charts/BodyBatteryToday";
@@ -14,8 +18,30 @@ import { useUi } from "../../store/uiStore";
 import { fmtDay, fmtHoursMin, fmtKm, fmtPace, isoDate, parseGarminLocal, speedToPace } from "../../lib/format";
 import { weekStartOf } from "../../lib/derive/weekly";
 
+type View = "main" | DailyMetric;
+
+const METRIC_TITLES: Record<DailyMetric, string> = {
+  steps: "Steps",
+  rhr: "Resting heart rate",
+  stress: "Stress",
+};
+
 export function TodayTab({ onOpenSettings }: { onOpenSettings?: () => void }) {
   const { fab } = useFabScore();
+  const [view, setView] = useState<View>("main");
+
+  useBackHandler(
+    view !== "main",
+    useCallback(() => setView("main"), []),
+  );
+
+  if (view !== "main") {
+    return (
+      <SubScreen title={METRIC_TITLES[view]} onBack={() => setView("main")}>
+        <DailyMetricDetail metric={view} />
+      </SubScreen>
+    );
+  }
 
   return (
     <div className="pb-4">
@@ -44,7 +70,7 @@ export function TodayTab({ onOpenSettings }: { onOpenSettings?: () => void }) {
       <WeekPlanCard />
       <BodyBatteryToday />
       <LastNightMini />
-      <DayChips />
+      <DayChips onOpen={setView} />
       <LastRunMini />
     </div>
   );
@@ -53,35 +79,76 @@ export function TodayTab({ onOpenSettings }: { onOpenSettings?: () => void }) {
 function WeekPlanCard() {
   const runs = useRuns();
   const plan = useSettings((s) => s.plan);
+  const [weeksBack, setWeeksBack] = useState(0);
   if (!runs) return null;
 
   const now = new Date();
-  const weekStart = weekStartOf(now);
-  const thisWeek = runs.filter((r) => parseGarminLocal(r.startTimeLocal) >= weekStart);
-  const km = thisWeek.reduce((s, r) => s + (r.distance ?? 0) / 1000, 0);
-  const done = thisWeek.length;
+  const currentWeekStart = weekStartOf(now);
+  const weekStart = new Date(currentWeekStart);
+  weekStart.setDate(weekStart.getDate() - weeksBack * 7);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 7);
+
+  const inWeek = runs.filter((r) => {
+    const d = parseGarminLocal(r.startTimeLocal);
+    return d >= weekStart && d < weekEnd;
+  });
+  const km = inWeek.reduce((s, r) => s + (r.distance ?? 0) / 1000, 0);
+  const done = inWeek.length;
+
+  // browse back to the week of the oldest run
+  const oldest = runs.length ? weekStartOf(parseGarminLocal(runs[runs.length - 1].startTimeLocal)) : currentWeekStart;
+  const canGoBack = weekStart > oldest;
 
   const lastRun = runs.length ? parseGarminLocal(runs[0].startTimeLocal) : null;
   const daysSince = lastRun ? Math.floor((now.getTime() - lastRun.getTime()) / 86400000) : 99;
-  const suggestion =
-    done >= plan.runsPerWeek
-      ? "Week's plan complete. Bonus runs are optional."
-      : daysSince < 1
-        ? "Ran today. Rest tomorrow, next slot after."
-        : "A run slot is open. Today works.";
+  const footnote =
+    weeksBack === 0
+      ? done >= plan.runsPerWeek
+        ? "Week's plan complete. Bonus runs are optional."
+        : daysSince < 1
+          ? "Ran today. Rest tomorrow, next slot after."
+          : "A run slot is open. Today works."
+      : done >= plan.runsPerWeek
+        ? "Plan met."
+        : `${plan.runsPerWeek - done} short of plan.`;
+
+  const weekLabel =
+    weeksBack === 0
+      ? "This week"
+      : `Week of ${weekStart.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
 
   return (
-    <Card kicker="This week" title={`Runs ${done}/${plan.runsPerWeek}`} value={`${km.toFixed(1)} km`} footnote={suggestion}>
-      <div className="mt-1 flex gap-2">
-        {Array.from({ length: Math.max(plan.runsPerWeek, done) }, (_, i) => (
-          <div
-            key={i}
-            className={`h-2.5 flex-1 rounded-full ${i < done ? "bg-accent" : "bg-grid"}`}
-            aria-label={i < done ? "run done" : "run pending"}
-          />
-        ))}
+    <Card kicker={weekLabel} title={`Runs ${done}/${plan.runsPerWeek}`} value={`${km.toFixed(1)} km`} footnote={footnote}>
+      <div className="mb-2 flex items-center justify-between">
+        <WeekBtn dir="prev" onClick={canGoBack ? () => setWeeksBack(weeksBack + 1) : undefined} />
+        <div className="flex flex-1 gap-2 px-3">
+          {Array.from({ length: Math.max(plan.runsPerWeek, done) }, (_, i) => (
+            <div
+              key={i}
+              className={`h-2.5 flex-1 rounded-full ${i < done ? "bg-accent" : "bg-grid"}`}
+              aria-label={i < done ? "run done" : "run pending"}
+            />
+          ))}
+        </div>
+        <WeekBtn dir="next" onClick={weeksBack > 0 ? () => setWeeksBack(weeksBack - 1) : undefined} />
       </div>
     </Card>
+  );
+}
+
+function WeekBtn({ dir, onClick }: { dir: "prev" | "next"; onClick?: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={!onClick}
+      aria-label={dir === "prev" ? "previous week" : "next week"}
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-page text-ink-2 disabled:opacity-25"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+        {dir === "prev" ? <path d="M14.5 6l-6 6 6 6" /> : <path d="M9.5 6l6 6-6 6" />}
+      </svg>
+    </button>
   );
 }
 
@@ -120,7 +187,7 @@ function LastNightMini() {
   );
 }
 
-function DayChips() {
+function DayChips({ onOpen }: { onOpen: (m: DailyMetric) => void }) {
   const stepsRows = useWellnessRange("steps", 1);
   const rhrRows = useWellnessRange("rhr", 1);
   const stressRow = useLatestWellness("stress");
@@ -132,19 +199,19 @@ function DayChips() {
     stressRow?.date === today ? (stressRow.payload as { avgStressLevel?: number }) : undefined;
 
   const chips = [
-    steps?.totalSteps != null && { label: "steps", value: steps.totalSteps.toLocaleString("en-GB") },
-    rhr?.value != null && { label: "resting HR", value: `${rhr.value} bpm` },
-    stress?.avgStressLevel != null && { label: "avg stress", value: String(stress.avgStressLevel) },
-  ].filter(Boolean) as { label: string; value: string }[];
+    steps?.totalSteps != null && { metric: "steps" as const, label: "steps", value: steps.totalSteps.toLocaleString("en-GB") },
+    rhr?.value != null && { metric: "rhr" as const, label: "resting HR", value: `${rhr.value} bpm` },
+    stress?.avgStressLevel != null && { metric: "stress" as const, label: "avg stress", value: String(stress.avgStressLevel) },
+  ].filter(Boolean) as { metric: DailyMetric; label: string; value: string }[];
 
   if (!chips.length) return null;
   return (
     <div className="mx-4 mb-3 flex gap-2">
       {chips.map((c) => (
-        <div key={c.label} className="flex-1 rounded-2xl bg-card px-3 py-2.5">
+        <button key={c.label} onClick={() => onOpen(c.metric)} className="flex-1 rounded-2xl bg-card px-3 py-2.5 text-left active:opacity-70">
           <div className="tnum text-[16px] font-semibold">{c.value}</div>
           <div className="kicker mt-0.5">{c.label}</div>
-        </div>
+        </button>
       ))}
     </div>
   );
