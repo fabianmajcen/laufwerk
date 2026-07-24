@@ -28,11 +28,24 @@ const MODE_META: Record<Mode, { label: string; unit: string; lowWord: string; hi
   elev: { label: "elevation", unit: "m", lowWord: "low", highWord: "high" },
 };
 
+function baseColor(t: Tokens, mode: Mode): string {
+  return mode === "pace" ? t.pace : mode === "hr" ? t.hr : t.elevation;
+}
+
+/** Strong three-stop ramp: near-black -> pure metric color -> near-white. */
 function rampColor(t: Tokens, mode: Mode, frac: number): string {
   const f = Math.max(0, Math.min(1, frac));
-  if (mode === "pace") return mixHex(mixHex(t.pace, "#000000", 0.45), mixHex(t.pace, "#ffffff", 0.35), f);
-  if (mode === "hr") return mixHex(mixHex(t.hr, "#000000", 0.5), mixHex(t.hr, "#ffffff", 0.3), f);
-  return mixHex(mixHex(t.elevation, "#000000", 0.4), mixHex(t.elevation, "#ffffff", 0.55), f);
+  const base = baseColor(t, mode);
+  const dark = mixHex(base, "#000000", 0.72);
+  const light = mixHex(base, "#ffffff", 0.62);
+  return f < 0.5 ? mixHex(dark, base, f * 2) : mixHex(base, light, (f - 0.5) * 2);
+}
+
+function percentile(sorted: number[], p: number): number {
+  const idx = (sorted.length - 1) * p;
+  const lo = Math.floor(idx);
+  const hi = Math.ceil(idx);
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
 }
 
 export function RouteExplorer() {
@@ -103,14 +116,17 @@ export function RouteExplorer() {
     const vals = run.values[mode];
     const present = vals.filter((v): v is number => v != null);
     if (present.length < 5) return null;
-    const vMin = Math.min(...present);
-    const vMax = Math.max(...present);
+    // stretch the ramp over this run's p5..p95 so steady runs still show
+    // contrast (extremes clamp to the ends)
+    const sorted = [...present].sort((a, b) => a - b);
+    const vMin = percentile(sorted, 0.05);
+    const vMax = percentile(sorted, 0.95);
     const norm = (v: number) => (vMax === vMin ? 0.5 : (v - vMin) / (vMax - vMin));
     // pace: smaller = faster = "high" end of the ramp
     const frac = (v: number) => (mode === "pace" ? 1 - norm(v) : norm(v));
 
     // short segments, each colored by its local value
-    const SEG = 36;
+    const SEG = 56;
     const per = Math.max(2, Math.ceil(run.pts.length / SEG));
     const segments: { data: [number, number][]; color: string }[] = [];
     for (let s = 0; s < run.pts.length - 1; s += per) {
@@ -125,8 +141,14 @@ export function RouteExplorer() {
     const fmtVal = (v: number) =>
       mode === "pace" ? fmtPace(v) : mode === "hr" ? `${Math.round(v)}` : `${Math.round(v)}`;
 
+    const t2 = tokens();
+    const gradientCss = `linear-gradient(to right, ${[0, 0.25, 0.5, 0.75, 1]
+      .map((f) => rampColor(t2, mode, f))
+      .join(", ")})`;
+
     return {
       aspect: spanY / spanX,
+      gradientCss,
       legend: { low: fmtVal(mode === "pace" ? vMax : vMin), high: fmtVal(mode === "pace" ? vMin : vMax) },
       option: {
         grid: { left: 8, right: 8, top: 8, bottom: 8 },
@@ -163,7 +185,7 @@ export function RouteExplorer() {
     <Card
       kicker="Route explorer"
       title={`${run.label}, colored by ${meta.label}`}
-      footnote={`Dark = ${meta.lowWord}, bright = ${meta.highWord} (${built.legend.low}${meta.unit} → ${built.legend.high}${meta.unit}). Green dot = start.`}
+      footnote="Range covers this run's 5th to 95th percentile. Green dot = start."
     >
       <div className="mb-2 flex gap-1 overflow-x-auto text-[12px]">
         {runs.map((r) => (
@@ -190,6 +212,17 @@ export function RouteExplorer() {
         ))}
       </div>
       <EChart option={built.option} height={height} />
+      <div className="mt-2 flex items-center gap-2">
+        <span className="tnum text-[11px] text-ink-3">
+          {built.legend.low}
+          {meta.unit} {meta.lowWord}
+        </span>
+        <div className="h-2.5 flex-1 rounded-full" style={{ background: built.gradientCss }} />
+        <span className="tnum text-[11px] text-ink-3">
+          {built.legend.high}
+          {meta.unit} {meta.highWord}
+        </span>
+      </div>
     </Card>
   );
 }
