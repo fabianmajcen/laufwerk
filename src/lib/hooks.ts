@@ -154,6 +154,27 @@ export interface BodyBatteryView {
   current: number | null;
 }
 
+/** Dense intraday battery curve from a stress-day payload (3-min resolution;
+ *  the daily-report endpoint only stores a handful of keyframes). */
+export function extractBatteryFromStress(row: WellnessRow | undefined): [number, number][] {
+  const p = row?.payload as
+    | {
+        bodyBatteryValueDescriptorsDTOList?: { bodyBatteryValueDescriptorIndex: number; bodyBatteryValueDescriptorKey: string }[];
+        bodyBatteryValuesArray?: unknown[][];
+      }
+    | undefined;
+  if (!p?.bodyBatteryValuesArray?.length) return [];
+  const idx = (key: string) =>
+    p.bodyBatteryValueDescriptorsDTOList?.find((d) => d.bodyBatteryValueDescriptorKey === key)
+      ?.bodyBatteryValueDescriptorIndex ?? -1;
+  const ti = idx("timestamp");
+  const li = idx("bodyBatteryLevel");
+  if (ti < 0 || li < 0) return [];
+  return p.bodyBatteryValuesArray
+    .map((v) => [v[ti], v[li]] as [number, number])
+    .filter(([t, l]) => typeof t === "number" && typeof l === "number");
+}
+
 export function toBodyBatteryView(row: WellnessRow | undefined): BodyBatteryView | null {
   if (!row) return null;
   const p = row.payload as {

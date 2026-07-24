@@ -15,7 +15,9 @@ import {
   useWellnessRange,
 } from "../../lib/hooks";
 import { useSettings } from "../../store/settingsStore";
+import { useSync } from "../../store/syncStore";
 import { useUi } from "../../store/uiStore";
+import { syncNow } from "../../lib/sync/engine";
 import { fmtDay, fmtHoursMin, fmtKm, fmtPace, isoDate, parseGarminLocal, speedToPace } from "../../lib/format";
 import { weekStartOf } from "../../lib/derive/weekly";
 
@@ -56,6 +58,8 @@ export function TodayTab({ onOpenSettings }: { onOpenSettings?: () => void }) {
         }
       />
 
+      <SyncErrorBanner />
+
       <Card kicker="Should I train?">
         {fab && fab.score != null ? (
           <>
@@ -74,6 +78,23 @@ export function TodayTab({ onOpenSettings }: { onOpenSettings?: () => void }) {
       <LastNightMini />
       <DayChips onOpen={setView} />
       <LastRunMini />
+    </div>
+  );
+}
+
+function SyncErrorBanner() {
+  const phase = useSync((s) => s.phase);
+  const lastError = useSync((s) => s.lastError);
+  if (phase !== "error" || !lastError) return null;
+  return (
+    <div className="mx-4 mb-3 flex items-center gap-3 rounded-2xl border border-status-warn/40 bg-card p-3">
+      <span className="text-status-warn" aria-hidden>
+        ⚠
+      </span>
+      <p className="flex-1 text-[12px] leading-snug text-ink-2">{lastError}</p>
+      <button onClick={() => syncNow()} className="shrink-0 rounded-lg bg-page px-3 py-1.5 text-[12px] text-ink-2">
+        Retry
+      </button>
     </div>
   );
 }
@@ -173,6 +194,7 @@ function LastNightMini() {
       title={sleep.qualifier ? sleep.qualifier.toLowerCase() : "Sleep"}
       value={sleep.score != null ? String(sleep.score) : undefined}
       footnote={`${fmtHoursMin(totalMin)} asleep · HRV ${sleep.avgOvernightHrv ?? "–"} ms · RHR ${sleep.restingHeartRate ?? "–"} bpm`}
+      onClick={() => useUi.getState().setTab("sleep")}
     >
       <div className="flex h-2.5 w-full gap-0.5 overflow-hidden rounded-full">
         {stages.map((st) => (

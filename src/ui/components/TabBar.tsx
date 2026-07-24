@@ -1,4 +1,5 @@
 import type { TabId } from "../../store/uiStore";
+import { tapFeedback } from "../../lib/haptics";
 export type { TabId };
 
 const TABS: { id: TabId; label: string; icon: (active: boolean) => React.ReactNode }[] = [
@@ -19,7 +20,10 @@ export function TabBar({ active, onChange }: { active: TabId; onChange: (t: TabI
         return (
           <button
             key={t.id}
-            onClick={() => onChange(t.id)}
+            onClick={() => {
+              tapFeedback();
+              onChange(t.id);
+            }}
             className={`flex h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] ${
               isActive ? "text-accent" : "text-ink-3"
             }`}

@@ -3,14 +3,26 @@
 import { useMemo } from "react";
 import { EChart } from "./EChart";
 import { tokens, tooltipDefaults, xAxisDefaults, yAxisDefaults } from "./theme";
-import { toBodyBatteryView, useLatestWellness } from "../../lib/hooks";
+import { extractBatteryFromStress, toBodyBatteryView, useLatestWellness } from "../../lib/hooks";
 import { Card } from "../components/ScreenHeader";
 import { useSettings } from "../../store/settingsStore";
 
 export function BodyBatteryToday() {
   const row = useLatestWellness("bodyBattery");
+  const stressRow = useLatestWellness("stress");
   const theme = useSettings((s) => s.theme);
-  const bb = toBodyBatteryView(row);
+  const bb = useMemo(() => {
+    const view = toBodyBatteryView(row);
+    if (!view) return null;
+    // the stress payload carries the dense 3-min curve; the daily report only
+    // has keyframes. Use the dense one when it covers the same day.
+    const dense = stressRow?.date === view.date ? extractBatteryFromStress(stressRow) : [];
+    if (dense.length > view.values.length) {
+      const levels = dense.map((v) => v[1]);
+      return { ...view, values: dense, peak: Math.max(...levels), current: levels[levels.length - 1] };
+    }
+    return view;
+  }, [row, stressRow]);
 
   const option = useMemo(() => {
     if (!bb || bb.values.length < 2) return null;
@@ -44,7 +56,8 @@ export function BodyBatteryToday() {
       },
       xAxis: {
         type: "time",
-        splitNumber: 4,
+        splitNumber: 6,
+        minInterval: 3600 * 1000, // hour steps, never finer
         ...xAxisDefaults(t),
         axisLabel: {
           ...xAxisDefaults(t).axisLabel,
