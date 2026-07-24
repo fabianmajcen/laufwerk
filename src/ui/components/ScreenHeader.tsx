@@ -33,7 +33,7 @@ export function Card({
       {(title || value) && (
         <div className="mb-2 flex items-baseline justify-between gap-2">
           {title && <h2 className="text-[15px] font-medium text-ink-2">{title}</h2>}
-          {value && <div className="tnum text-[28px] font-semibold leading-none">{value}</div>}
+          {value && <div className={`tnum text-[28px] font-semibold leading-none ${title ? "" : "ml-auto"}`}>{value}</div>}
         </div>
       )}
       {children}

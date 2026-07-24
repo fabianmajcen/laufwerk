@@ -15,9 +15,11 @@ function NavBtn({ dir, onClick }: { dir: "prev" | "next"; onClick?: () => void }
       onClick={onClick}
       disabled={!onClick}
       aria-label={dir === "prev" ? "previous night" : "next night"}
-      className="flex h-10 w-10 items-center justify-center rounded-full bg-page text-[20px] text-ink-2 disabled:opacity-30"
+      className="flex h-11 w-11 items-center justify-center rounded-full bg-page text-ink-2 disabled:opacity-25"
     >
-      {dir === "prev" ? "‹" : "›"}
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+        {dir === "prev" ? <path d="M14.5 6l-6 6 6 6" /> : <path d="M9.5 6l6 6-6 6" />}
+      </svg>
     </button>
   );
 }
@@ -229,15 +231,22 @@ export function Hypnogram({ sleep, nav }: { sleep: SleepView; nav?: HypnogramNav
   ];
   const total = rows.reduce((a, b) => a + b.s, 0) || 1;
 
+  const dateLabel = new Date(sleep.date + "T00:00:00").toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "short",
+  });
+
   return (
     <Card
       kicker={nav && !nav.isLatest ? "Night" : "Last night"}
-      title={new Date(sleep.date + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" })}
+      title={nav ? undefined : dateLabel}
       value={sleep.score != null ? String(sleep.score) : undefined}
     >
       {nav && (
-        <div className="-mt-2 mb-1 flex justify-center gap-8">
+        <div className="-mt-10 mb-2 flex items-center gap-3">
           <NavBtn dir="prev" onClick={nav.onPrev} />
+          <span className="text-[17px] font-semibold">{dateLabel}</span>
           <NavBtn dir="next" onClick={nav.onNext} />
         </div>
       )}
