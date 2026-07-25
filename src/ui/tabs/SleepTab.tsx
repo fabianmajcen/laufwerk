@@ -14,6 +14,7 @@ import { SleepReadinessScatter } from "../charts/SleepReadinessScatter";
 import { toSleepView, useLatestWellness, useWellnessRange } from "../../lib/hooks";
 import { computeRegularity } from "../../lib/derive/sleepStats";
 import { fmtHoursMin } from "../../lib/format";
+import { useTabHome } from "../../lib/tabHome";
 
 type View = "main" | { night: string } | "rhythm" | "training" | "duration";
 
@@ -26,6 +27,12 @@ export function SleepTab() {
   useBackHandler(
     view !== "main",
     useCallback(() => setView("main"), []),
+  );
+  useTabHome(
+    useCallback(() => {
+      setView("main");
+      setBrowseDate(null);
+    }, []),
   );
   useScrollMemory(`sleep:${typeof view === "object" ? `night${view.night}` : view}`);
 

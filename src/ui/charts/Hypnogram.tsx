@@ -242,8 +242,16 @@ export function Hypnogram({ sleep, nav }: { sleep: SleepView; nav?: HypnogramNav
     <Card
       kicker={nav && !nav.isLatest ? "Night" : "Last night"}
       title={nav ? undefined : dateLabel}
-      value={sleep.score != null ? String(sleep.score) : undefined}
+      value={nav ? undefined : sleep.score != null ? String(sleep.score) : undefined}
     >
+      {nav && sleep.score != null && (
+        <div className="mb-3 mt-1 flex justify-end pr-2">
+          <div className="text-right">
+            <div className="tnum text-[40px] font-semibold leading-none">{sleep.score}</div>
+            <div className="kicker mt-1">sleep score</div>
+          </div>
+        </div>
+      )}
       {nav && (
         <div className="mb-2 flex items-center justify-between">
           {/* arrows pinned to the card edges: fixed positions regardless of

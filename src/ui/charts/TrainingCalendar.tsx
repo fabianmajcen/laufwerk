@@ -92,7 +92,7 @@ export function TrainingCalendar({ onOpenDay }: { onOpenDay?: (date: string) => 
     <Card
       kicker="Rhythm"
       title="Last 3 months"
-      info="Cells show the sleep score — brighter is better. Green rings mark run days: the train-recover rhythm at a glance. Tap a day for its summary."
+      info="Cells show the sleep score, brighter is better. Green rings mark run days: the train-recover rhythm at a glance. Tap a day for its summary."
     >
       <EChart
         option={option}

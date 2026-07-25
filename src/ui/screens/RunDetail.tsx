@@ -7,6 +7,7 @@ import { computeDecoupling, DECOUPLING_TARGET_PCT } from "../../lib/derive/decou
 import { RunPanels } from "../charts/RunPanels";
 import { RouteHero } from "../charts/RouteHero";
 import { Card } from "../components/ScreenHeader";
+import { CloudIcon, CloudSunIcon, RainIcon, SnowIcon, SunIcon } from "../components/icons";
 
 export function RunDetail({ run, onBack }: { run: ActivityRow; onBack: () => void }) {
   const data = useActivityData(run.activityId);
@@ -70,7 +71,7 @@ export function RunDetail({ run, onBack }: { run: ActivityRow; onBack: () => voi
 
       {!!data?.splits?.length && (
         <Card kicker="Splits" title="Per km">
-          <table className="tnum w-full text-[13px]">
+          <table className="tnum w-full table-fixed text-[13px]">
             <thead>
               <tr className="text-left text-[11px] uppercase tracking-wide text-ink-3">
                 <th className="py-1 font-medium">km</th>
@@ -100,16 +101,33 @@ export function RunDetail({ run, onBack }: { run: ActivityRow; onBack: () => voi
       )}
 
       {weather && (
-        <Card kicker="Conditions" title={weather.weatherTypeDTO?.desc ?? "Weather"}>
+        <Card
+          kicker="Conditions"
+          title={
+            <span className="flex items-center gap-2">
+              <span className="text-ink-3">{weatherIcon(weather.weatherTypeDTO?.desc)}</span>
+              {weather.weatherTypeDTO?.desc ?? "Weather"}
+            </span>
+          }
+        >
           <div className="flex gap-5 text-[14px]">
             {tempC != null && <span className="tnum">{tempC.toFixed(0)}°C</span>}
             {weather.relativeHumidity != null && <span className="tnum">{weather.relativeHumidity}% humidity</span>}
-            {weather.windSpeed != null && <span className="tnum">wind {weather.windSpeed}</span>}
+            {weather.windSpeed != null && <span className="tnum">wind {Math.round(weather.windSpeed * 1.609)} km/h</span>}
           </div>
         </Card>
       )}
     </div>
   );
+}
+
+function weatherIcon(desc: string | undefined) {
+  const d = (desc ?? "").toLowerCase();
+  if (d.includes("thunder") || d.includes("rain") || d.includes("shower") || d.includes("drizzle")) return <RainIcon />;
+  if (d.includes("snow") || d.includes("sleet") || d.includes("flurr")) return <SnowIcon />;
+  if (d.includes("partly") || d.includes("mostly clear") || d.includes("mostly sunny") || d.includes("fair")) return <CloudSunIcon />;
+  if (d.includes("cloud") || d.includes("overcast") || d.includes("fog") || d.includes("haze") || d.includes("mist")) return <CloudIcon />;
+  return <SunIcon />;
 }
 
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {

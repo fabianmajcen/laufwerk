@@ -100,3 +100,67 @@ export function SwapIcon() {
     </svg>
   );
 }
+
+export function FootprintsIcon() {
+  return (
+    <svg {...S}>
+      <path d="M6.5 3.5C8.2 3.5 9 5.1 9 7c0 2-.8 3-.8 4.5H4.8C4.8 10 4 9 4 7c0-1.9.8-3.5 2.5-3.5z" />
+      <path d="M4.9 14h3.2v1.4a1.6 1.6 0 0 1-3.2 0z" />
+      <path d="M17.5 8.5C15.8 8.5 15 10.1 15 12c0 2 .8 3 .8 4.5h3.4c0-1.5.8-2.5.8-4.5 0-1.9-.8-3.5-2.5-3.5z" />
+      <path d="M15.9 19h3.2v1.4a1.6 1.6 0 0 1-3.2 0z" />
+    </svg>
+  );
+}
+
+export function HeartIcon() {
+  return (
+    <svg {...S}>
+      <path d="M20.8 8.6a5 5 0 0 0-8.8-3.2A5 5 0 0 0 3.2 8.6C3.2 13.6 12 19 12 19s8.8-5.4 8.8-10.4z" />
+    </svg>
+  );
+}
+
+export function SunIcon() {
+  return (
+    <svg {...S}>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2.5v2M12 19.5v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2.5 12h2M19.5 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+    </svg>
+  );
+}
+
+export function CloudSunIcon() {
+  return (
+    <svg {...S}>
+      <circle cx="7.5" cy="7" r="2.4" />
+      <path d="M7.5 2.5v1M2.5 7h1M4 3.5l.7.7M11 3.5l-.7.7" />
+      <path d="M9.5 20h7.8a3.4 3.4 0 0 0 .5-6.8 4.8 4.8 0 0 0-9.3 1.2A2.9 2.9 0 0 0 9.5 20z" />
+    </svg>
+  );
+}
+
+export function CloudIcon() {
+  return (
+    <svg {...S}>
+      <path d="M7 19h9.5a4 4 0 0 0 .6-8 6 6 0 0 0-11.6 1.5A3.5 3.5 0 0 0 7 19z" />
+    </svg>
+  );
+}
+
+export function RainIcon() {
+  return (
+    <svg {...S}>
+      <path d="M7 15h9.5a4 4 0 0 0 .6-8 6 6 0 0 0-11.6 1.5A3.5 3.5 0 0 0 7 15z" />
+      <path d="M8.5 18l-.7 2M12.5 18l-.7 2M16.5 18l-.7 2" />
+    </svg>
+  );
+}
+
+export function SnowIcon() {
+  return (
+    <svg {...S}>
+      <path d="M7 15h9.5a4 4 0 0 0 .6-8 6 6 0 0 0-11.6 1.5A3.5 3.5 0 0 0 7 15z" />
+      <path d="M9 18.5h.01M12.5 19.5h.01M16 18.5h.01" />
+    </svg>
+  );
+}

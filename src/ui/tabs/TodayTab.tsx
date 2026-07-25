@@ -21,6 +21,8 @@ import { useUi } from "../../store/uiStore";
 import { syncNow } from "../../lib/sync/engine";
 import { fmtDay, fmtHoursMin, fmtKm, fmtPace, isoDate, parseGarminLocal, speedToPace } from "../../lib/format";
 import { weekStartOf } from "../../lib/derive/weekly";
+import { useTabHome } from "../../lib/tabHome";
+import { FootprintsIcon, HeartIcon, WavesIcon } from "../components/icons";
 
 type View = "main" | DailyMetric;
 
@@ -40,6 +42,7 @@ export function TodayTab({ onOpenSettings }: { onOpenSettings?: () => void }) {
     view !== "main",
     useCallback(() => setView("main"), []),
   );
+  useTabHome(useCallback(() => setView("main"), []));
   useScrollMemory(`today:${view}`);
 
   // keep the home-screen widget's snapshot fresh
@@ -248,17 +251,38 @@ function DayChips({ onOpen }: { onOpen: (m: DailyMetric) => void }) {
     stressRow?.date === today ? (stressRow.payload as { avgStressLevel?: number }) : undefined;
 
   const chips = [
-    steps?.totalSteps != null && { metric: "steps" as const, label: "steps", value: steps.totalSteps.toLocaleString("en-GB") },
-    rhr?.value != null && { metric: "rhr" as const, label: "resting HR", value: `${rhr.value} bpm` },
-    stress?.avgStressLevel != null && { metric: "stress" as const, label: "avg stress", value: String(stress.avgStressLevel) },
-  ].filter(Boolean) as { metric: DailyMetric; label: string; value: string }[];
+    steps?.totalSteps != null && {
+      metric: "steps" as const,
+      label: "steps",
+      value: steps.totalSteps.toLocaleString("en-GB"),
+      icon: <FootprintsIcon />,
+      cls: "text-[var(--accent)]",
+    },
+    rhr?.value != null && {
+      metric: "rhr" as const,
+      label: "resting HR",
+      value: `${rhr.value} bpm`,
+      icon: <HeartIcon />,
+      cls: "text-[var(--hr)]",
+    },
+    stress?.avgStressLevel != null && {
+      metric: "stress" as const,
+      label: "avg stress",
+      value: String(stress.avgStressLevel),
+      icon: <WavesIcon />,
+      cls: "text-[var(--recency-hi)]",
+    },
+  ].filter(Boolean) as { metric: DailyMetric; label: string; value: string; icon: React.ReactNode; cls: string }[];
 
   if (!chips.length) return null;
   return (
     <div className="mx-4 mb-3 flex gap-2">
       {chips.map((c) => (
         <button key={c.label} onClick={() => onOpen(c.metric)} className="flex-1 rounded-2xl bg-card px-3 py-2.5 text-left active:opacity-70">
-          <div className="tnum text-[16px] font-semibold">{c.value}</div>
+          <div className="flex items-center gap-1.5">
+            <span className={c.cls}>{c.icon}</span>
+            <span className="tnum text-[16px] font-semibold">{c.value}</span>
+          </div>
           <div className="kicker mt-0.5">{c.label}</div>
         </button>
       ))}
@@ -276,7 +300,8 @@ function LastRunMini() {
     <Card
       kicker="Last run"
       title={`${fmtDay(d)} · ${r.activityName ?? "Run"}`}
-      footnote={`${fmtKm(r.distance)} km · ${fmtPace(pace)} /km · ${r.averageHR != null ? Math.round(r.averageHR) : "–"} bpm`}
+      value={`${fmtKm(r.distance)} km`}
+      footnote={`${fmtPace(pace)} /km · ${r.averageHR != null ? Math.round(r.averageHR) : "–"} bpm`}
       onClick={() => useUi.getState().openRun(r.activityId)}
     />
   );

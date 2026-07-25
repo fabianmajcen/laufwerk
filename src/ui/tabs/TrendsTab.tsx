@@ -3,6 +3,7 @@ import { useBackHandler } from "../../lib/backstack";
 import { useScrollMemory } from "../../lib/scrollMemory";
 import { ScreenHeader, EmptyState, Card } from "../components/ScreenHeader";
 import { SubScreen, ExploreRow } from "../components/SubScreen";
+import { useTabHome } from "../../lib/tabHome";
 import { HrvBaseline } from "../charts/HrvBaseline";
 import { LoadTunnel } from "../charts/LoadTunnel";
 import { Vo2maxTrend } from "../charts/Vo2maxTrend";
@@ -24,6 +25,7 @@ export function TrendsTab() {
     view !== "main",
     useCallback(() => setView("main"), []),
   );
+  useTabHome(useCallback(() => setView("main"), []));
   useScrollMemory(`trends:${typeof view === "object" ? `day${view.day}` : view}`);
 
   if (view === "stress") {

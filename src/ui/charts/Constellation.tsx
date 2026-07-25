@@ -124,14 +124,14 @@ export function Constellation() {
       kicker="Constellation"
       title="Every route"
       value={`${routes.length} runs · ${totalKm.toFixed(0)} km`}
-      info="Every GPS track overlaid — newest brightest, green dots mark starts. Tap a route to highlight it; tap again to clear. Pinch to zoom."
+      info="Every GPS track overlaid, newest brightest; green dots mark starts. Tap a route to highlight it; tap again to clear. Pinch to zoom."
     >
       <div className="mb-2">
         <Legend items={[{ swatch: "gradient", gradient: RECENCY_GRADIENT, label: "older → newer" }, { swatch: "dot", color: "var(--start-dot)", label: "start" }]} />
       </div>
       {sel && (
         <p className="mb-2 text-[12px] text-ink-2">
-          {sel.label} · {sel.km.toFixed(1)} km — tap again to clear
+          {sel.label} · {sel.km.toFixed(1)} km · tap again to clear
         </p>
       )}
       <div className="-mx-4 overflow-hidden rounded-b-2xl bg-page" style={{ marginBottom: -16 }}>

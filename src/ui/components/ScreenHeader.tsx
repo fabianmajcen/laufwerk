@@ -19,7 +19,7 @@ export function Card({
   onClick,
 }: {
   kicker?: string;
-  title?: string;
+  title?: ReactNode;
   value?: ReactNode;
   children?: ReactNode;
   /** always-visible line under the chart: dynamic status or data only */

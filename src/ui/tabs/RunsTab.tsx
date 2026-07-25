@@ -4,6 +4,7 @@ import { useDecouplingSeries, useRuns } from "../../lib/hooks";
 import { useUi } from "../../store/uiStore";
 import { useBackHandler } from "../../lib/backstack";
 import { useScrollMemory } from "../../lib/scrollMemory";
+import { useTabHome } from "../../lib/tabHome";
 import { getKv } from "../../lib/db/repo";
 import { fmtDay, fmtDuration, fmtKm, fmtPace, parseGarminLocal, speedToPace } from "../../lib/format";
 import { weekStartOf } from "../../lib/derive/weekly";
@@ -73,6 +74,12 @@ export function RunsTab() {
   useBackHandler(
     openId != null,
     useCallback(() => setOpenId(null), []),
+  );
+  useTabHome(
+    useCallback(() => {
+      setOpenId(null);
+      setView("main");
+    }, []),
   );
 
   useScrollMemory(
