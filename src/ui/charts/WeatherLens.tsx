@@ -44,15 +44,25 @@ export function WeatherLens({ onOpenRun }: { onOpenRun?: (id: number) => void })
     return out;
   }, []);
 
+  const usable = useMemo(() => {
+    const val = (p: WPoint) => (mode === "hr" ? p.hr : p.pace);
+    return (points ?? []).filter((p) => val(p) != null && isFinite(val(p) as number));
+  }, [points, mode]);
+
+  const fit = useMemo(
+    () =>
+      usable.length >= 3
+        ? linearFit(usable.map((p) => p.tempC), usable.map((p) => (mode === "hr" ? p.hr : p.pace) as number))
+        : null,
+    [usable, mode],
+  );
+
   const option = useMemo(() => {
-    if (!points || points.length < 3) return null;
+    if (usable.length < 3) return null;
     const t = tokens();
     const val = (p: WPoint) => (mode === "hr" ? p.hr : p.pace);
-    const usable = points.filter((p) => val(p) != null);
-    if (usable.length < 3) return null;
     const n = usable.length;
 
-    const fit = linearFit(usable.map((p) => p.tempC), usable.map((p) => val(p) as number));
     const lo = Math.min(...usable.map((p) => p.tempC)) - 1;
     const hi = Math.max(...usable.map((p) => p.tempC)) + 1;
 
@@ -99,6 +109,10 @@ export function WeatherLens({ onOpenRun }: { onOpenRun?: (id: number) => void })
               borderColor: t.card,
               borderWidth: 2,
             },
+            // anchor the recency ramp: name the newest dot
+            ...(i === n - 1
+              ? { label: { show: true, formatter: "latest", position: "top", distance: 4, color: t.ink2, fontSize: 10 } }
+              : {}),
           })),
           symbolSize: 15,
         },
@@ -119,15 +133,25 @@ export function WeatherLens({ onOpenRun }: { onOpenRun?: (id: number) => void })
       ],
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [points, mode, theme]);
+  }, [usable, fit, mode, theme]);
 
   if (!option) return null;
+
+  // slope in human units: effect of +5 °C on HR or pace
+  const per5 = fit ? fit[0] * 5 : null;
+  const trendLine =
+    per5 == null
+      ? undefined
+      : mode === "hr"
+        ? `Trend: ${per5 >= 0 ? "+" : "−"}${Math.abs(per5).toFixed(1)} bpm per 5 °C warmer.`
+        : `Trend: ${per5 >= 0 ? "+" : "−"}${Math.abs(per5 * 60).toFixed(0)} s/km per 5 °C warmer.`;
 
   return (
     <Card
       kicker="Weather lens"
       title={`Temperature vs ${mode === "hr" ? "heart rate" : "pace"}`}
-      info="Each dot is a run at its recorded temperature. Caveat: you also got fitter as summer warmed up, so read this alongside the efficiency map, not alone."
+      info="Each dot is a run at its recorded temperature; the dashed line is the linear trend, summarized below the chart. Caveat: you also got fitter as summer warmed up, so read this alongside the efficiency map, not alone."
+      footnote={trendLine}
     >
       <div className="mb-2 flex gap-1 text-[12px]" role="tablist">
         {(["hr", "pace"] as Mode[]).map((m) => (
@@ -150,8 +174,8 @@ export function WeatherLens({ onOpenRun }: { onOpenRun?: (id: number) => void })
             ? {
                 click: (p) => {
                   const q = p as { dataIndex?: number; seriesType?: string };
-                  if (q.seriesType === "scatter" && q.dataIndex != null && points?.[q.dataIndex])
-                    onOpenRun(points[q.dataIndex].activityId);
+                  if (q.seriesType === "scatter" && q.dataIndex != null && usable[q.dataIndex])
+                    onOpenRun(usable[q.dataIndex].activityId);
                 },
               }
             : undefined

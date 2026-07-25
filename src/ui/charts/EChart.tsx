@@ -27,7 +27,15 @@ export function EChart({ option, height, className, onEvents, touchAction = "pan
     chartRef.current = chart;
     const ro = new ResizeObserver(() => chart.resize());
     ro.observe(el);
+    // WebView insurance: a mount mid-layout can mis-measure the container,
+    // and ResizeObserver never fires again if the size doesn't change after.
+    const raf = requestAnimationFrame(() => chart.resize());
+    const t1 = setTimeout(() => chart.resize(), 250);
+    const t2 = setTimeout(() => chart.resize(), 1000);
     return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(t1);
+      clearTimeout(t2);
       ro.disconnect();
       chart.dispose();
       chartRef.current = null;

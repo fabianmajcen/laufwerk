@@ -26,7 +26,7 @@ export function EfficiencyMap({ onOpenRun }: { onOpenRun?: (id: number) => void 
           hr: r.averageHR ?? null,
           km: (r.distance ?? 0) / 1000,
         }))
-        .filter((p) => p.pace != null && p.hr != null),
+        .filter((p) => p.pace != null && isFinite(p.pace) && p.hr != null && isFinite(p.hr)),
     [runs],
   );
 
@@ -42,7 +42,9 @@ export function EfficiencyMap({ onOpenRun }: { onOpenRun?: (id: number) => void 
     const hi = Math.max(...paces) + 0.15;
 
     return {
-      grid: { left: 34, right: 16, top: 14, bottom: 30 },
+      // containLabel: the "145 bpm" labels always fit inside the canvas,
+      // even if the container was measured too small for a frame
+      grid: { left: 12, right: 16, top: 14, bottom: 30, containLabel: true },
       tooltip: {
         ...tooltipDefaults(t),
         formatter: (p: { dataIndex: number; seriesType: string }) => {

@@ -32,28 +32,24 @@ export function Card({
   return (
     <section
       onClick={onClick}
-      className={`mx-4 mb-3 rounded-2xl bg-card p-4 ${onClick ? "active:opacity-80" : ""}`}
+      className={`relative mx-4 mb-3 rounded-2xl bg-card p-4 ${onClick ? "active:opacity-80" : ""}`}
     >
-      {(kicker || info) && (
-        <div className="mb-1 flex items-center justify-between gap-2">
-          <div className="kicker">{kicker}</div>
-          {info && (
-            <button
-              aria-label="About this chart"
-              aria-expanded={showInfo}
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowInfo((v) => !v);
-              }}
-              className={`-my-1.5 -mr-1.5 p-1.5 ${showInfo ? "text-ink" : "text-ink-3"}`}
-            >
-              <InfoIcon />
-            </button>
-          )}
-        </div>
+      {info && (
+        <button
+          aria-label="About this chart"
+          aria-expanded={showInfo}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowInfo((v) => !v);
+          }}
+          className={`absolute right-3 top-3 p-1 ${showInfo ? "text-ink" : "text-ink-3"}`}
+        >
+          <InfoIcon />
+        </button>
       )}
+      {kicker && <div className={`kicker mb-1 ${info ? "pr-7" : ""}`}>{kicker}</div>}
       {(title || value) && (
-        <div className="mb-2 flex items-baseline justify-between gap-2">
+        <div className={`mb-2 flex items-baseline justify-between gap-2 ${info && !kicker ? "pr-7" : ""}`}>
           {title && <h2 className="text-[15px] font-medium text-ink-2">{title}</h2>}
           {value && <div className={`tnum text-[28px] font-semibold leading-none ${title ? "" : "ml-auto"}`}>{value}</div>}
         </div>
