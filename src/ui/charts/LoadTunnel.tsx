@@ -151,7 +151,7 @@ export function LoadTunnel() {
       kicker="Training load"
       title="Load tunnel"
       value={today.ratio != null ? today.ratio.toFixed(2) : "–"}
-      footnote="Load proxy = km. A ratio above 1.5 caps the readiness verdict at Easy."
+      info="Acute = km over the last 7 days; chronic = the 4-week weekly average. Their ratio is the classic injury-risk gauge: 0.8–1.3 is the safe tunnel, above 1.5 caps the readiness verdict at Easy. Distance stands in for load because this watch exports no load stream."
     >
       <EChart option={option} height={244} />
       <Legend

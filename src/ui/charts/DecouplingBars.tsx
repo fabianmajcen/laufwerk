@@ -93,7 +93,7 @@ export function DecouplingBars({ onOpenRun }: { onOpenRun?: (id: number) => void
           {latest.toFixed(1)}%
         </span>
       }
-      footnote="How much your efficiency drops from the first half of a run to the second (warm-up excluded)."
+      info="Decoupling: how much your pace-to-heart-rate efficiency drops from the first half of a run to the second, warm-up excluded. Staying within ±5% is the classic marker of a well-developed aerobic base. Tap a bar to open that run."
     >
       <EChart
         option={option}

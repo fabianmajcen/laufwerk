@@ -127,7 +127,7 @@ function RegularityCard() {
     <Card
       kicker="Regularity"
       title="How consistent is your schedule?"
-      footnote={`Standard deviation over ${reg.nights} nights. Under 30 min counts as very regular. Regular beats long for how rested you feel.`}
+      info={`Standard deviation of your bed and wake times over ${reg.nights} nights; under 30 min counts as very regular. Regular beats long for how rested you feel.`}
     >
       <div className="grid grid-cols-3 gap-3">
         <RegStat label="bedtime ±" value={fmtHoursMin(reg.bedtimeSdMin)} note={verdictFor(reg.bedtimeSdMin)} />

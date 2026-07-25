@@ -87,6 +87,7 @@ export function BodyBatteryToday() {
       kicker="Energy"
       title="Body battery"
       value={bb.current != null ? String(bb.current) : undefined}
+      info="Garmin's energy model: recharges during sleep and calm stretches, drains with stress and activity. The curve runs from midnight to now."
       footnote={`charged +${bb.charged ?? "–"} · drained −${bb.drained ?? "–"} today`}
     >
       <EChart option={option} height={150} />

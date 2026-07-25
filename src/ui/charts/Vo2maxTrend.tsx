@@ -73,7 +73,7 @@ export function Vo2maxTrend() {
       kicker="Fitness"
       title="VO₂max"
       value={latest.v.toFixed(1)}
-      footnote="Estimated from run HR-vs-pace by the watch. Race predictions appear here once Garmin has enough history to compute them."
+      info="Garmin's estimate from heart rate vs pace on outdoor runs. Race predictions appear here once there's enough history to compute them."
     >
       <EChart option={option} height={170} />
     </Card>

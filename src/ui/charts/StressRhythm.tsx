@@ -95,7 +95,7 @@ export function StressRhythm() {
     <Card
       kicker="Stress rhythm"
       title="When are you calm?"
-      footnote="Average stress by weekday and hour, scaled to your own range. The dark overnight band is sleep."
+      info="Average Garmin stress per weekday and hour over the cached window, scaled to your own range. The dark overnight band is sleep; gaps are hours without data yet."
     >
       <EChart option={option} height={210} />
       <Legend items={[{ swatch: "gradient", gradient: "linear-gradient(to right, color-mix(in srgb, var(--recency-lo) 18%, var(--card)), var(--recency-lo), var(--recency-hi))", label: "calm → stressed" }]} />

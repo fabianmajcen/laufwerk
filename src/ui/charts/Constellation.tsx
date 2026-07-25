@@ -64,8 +64,8 @@ export function Constellation() {
         xAxis: { type: "value", min: Math.min(...xs), max: Math.max(...xs), show: false },
         yAxis: { type: "value", min: Math.min(...ys), max: Math.max(...ys), show: false },
         dataZoom: [
-          { type: "inside", xAxisIndex: 0 },
-          { type: "inside", yAxisIndex: 0 },
+          { type: "inside", xAxisIndex: 0, preventDefaultMouseMove: false },
+          { type: "inside", yAxisIndex: 0, preventDefaultMouseMove: false },
         ],
         series: [
           ...routes.map((r, i) => {
@@ -75,7 +75,7 @@ export function Constellation() {
               type: "line",
               data: projected[i],
               showSymbol: false,
-              silent: false,
+              silent: true,
               lineStyle: {
                 color: dimOthers ? t.grid : recencyColor(t, n > 1 ? i / (n - 1) : 1),
                 width: isSel ? 3.5 : 2,
@@ -88,6 +88,18 @@ export function Constellation() {
               emphasis: { disabled: true },
             };
           }),
+          // invisible fat twins of each route: finger-sized tap targets
+          // (thin line bodies never fire click events on touch)
+          ...routes.map((r, i) => ({
+            type: "line",
+            data: projected[i],
+            showSymbol: false,
+            silent: false,
+            triggerLineEvent: true,
+            lineStyle: { color: "rgba(0,0,0,0)", width: 20 },
+            z: 3,
+            emphasis: { disabled: true },
+          })),
           {
             type: "scatter",
             data: projected.map((p) => p[0]),
@@ -112,11 +124,16 @@ export function Constellation() {
       kicker="Constellation"
       title="Every route"
       value={`${routes.length} runs · ${totalKm.toFixed(0)} km`}
-      footnote={sel ? `${sel.label} · ${sel.km.toFixed(1)} km. Tap again to clear.` : "Tap a route to highlight. Pinch to zoom."}
+      info="Every GPS track overlaid — newest brightest, green dots mark starts. Tap a route to highlight it; tap again to clear. Pinch to zoom."
     >
       <div className="mb-2">
         <Legend items={[{ swatch: "gradient", gradient: RECENCY_GRADIENT, label: "older → newer" }, { swatch: "dot", color: "var(--start-dot)", label: "start" }]} />
       </div>
+      {sel && (
+        <p className="mb-2 text-[12px] text-ink-2">
+          {sel.label} · {sel.km.toFixed(1)} km — tap again to clear
+        </p>
+      )}
       <div className="-mx-4 overflow-hidden rounded-b-2xl bg-page" style={{ marginBottom: -16 }}>
         <EChart
           option={option}
@@ -125,8 +142,10 @@ export function Constellation() {
           onEvents={{
             click: (p) => {
               const q = p as { seriesIndex?: number; seriesType?: string };
-              if (q.seriesType === "line" && q.seriesIndex != null && routes[q.seriesIndex]) {
-                const id = routes[q.seriesIndex].activityId;
+              if (q.seriesType !== "line" || q.seriesIndex == null) return;
+              const idx = q.seriesIndex >= routes.length ? q.seriesIndex - routes.length : q.seriesIndex;
+              if (routes[idx]) {
+                const id = routes[idx].activityId;
                 setSelected((cur) => (cur === id ? null : id));
               }
             },

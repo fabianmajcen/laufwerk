@@ -73,7 +73,7 @@ export function RunPanels({ data }: { data: ActivityData }) {
         link: [{ xAxisIndex: "all" }],
         lineStyle: { color: t.ink3, width: 1 },
       },
-      dataZoom: [{ type: "inside", xAxisIndex: panels.map((_, i) => i), zoomOnMouseWheel: true }],
+      dataZoom: [{ type: "inside", xAxisIndex: panels.map((_, i) => i), zoomOnMouseWheel: true, preventDefaultMouseMove: false }],
       xAxis: panels.map((_, i) => ({
         type: "value",
         gridIndex: i,

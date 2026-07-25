@@ -98,7 +98,7 @@ export function ZoneDiscipline() {
       kicker="Zone discipline"
       title="Time in HR zones"
       value={`${latestEasy}% easy`}
-      footnote={`Goal: keep the easy share (Z1+Z2) high. Zones use your current settings (Z2 from ${result.bounds[1]}, Z3 from ${result.bounds[2]} bpm), so every run stays comparable.`}
+      info={`Base-phase goal: keep the easy share (Z1+Z2) high. Times are recomputed from raw heart-rate samples against your current zone settings (Z2 from ${result.bounds[1]}, Z3 from ${result.bounds[2]} bpm), so runs from before a settings change stay comparable.`}
     >
       <EChart option={option} height={200} />
       <Legend items={[{ swatch: "gradient", gradient: "linear-gradient(to right, var(--cadence), var(--hr))", label: "Z1 easy → Z5 hard" }]} />

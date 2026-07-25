@@ -107,6 +107,7 @@ export function HrvBaseline() {
       kicker="Recovery"
       title="HRV vs baseline"
       value={`${latest.lastNight} ms`}
+      info="Overnight HRV vs your personal balanced band from Garmin. Higher generally means better recovery; dips after hard days are normal if they rebound within a day or two. Triangles mark run days."
       footnote={`Status: ${latest.status?.toLowerCase() ?? "-"}.`}
     >
       <div className="mb-2 flex gap-1 text-[12px]">

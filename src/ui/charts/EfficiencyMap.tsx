@@ -120,7 +120,7 @@ export function EfficiencyMap({ onOpenRun }: { onOpenRun?: (id: number) => void 
       kicker="Fitness"
       title="Efficiency map"
       value={efTrend != null ? `EF ${efTrend >= 0 ? "+" : ""}${efTrend.toFixed(1)}%/mo` : undefined}
-      footnote="Newer dots drifting down-right = same pace at lower heart rate: the base is building."
+      info="Each dot is one run: average pace vs average heart rate, newest brightest. Newer dots drifting down-right mean the same pace at a lower heart rate — the aerobic base is building. The readout above is the efficiency-factor trend per month."
     >
       <EChart
         option={option}

@@ -116,7 +116,7 @@ export function FormDetail({
           )}
         </span>
       }
-      footnote="Tap a point to open that run."
+      info="Each point is one run's distance-weighted lap average, so short fast laps don't skew it. Dashed: linear trend. Tap a point to open that run."
     >
       <EChart
         option={option}

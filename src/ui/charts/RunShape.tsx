@@ -205,6 +205,7 @@ export function RunShape() {
     <Card
       kicker="Run shape"
       title={`Your typical run (${data.shape.nRuns} runs)`}
+      info="Median heart rate and pace across all runs, with x = percent of run elapsed so different distances align. Shaded: the middle 50% of runs. Enable the overlay to compare your latest run against your typical one."
     >
       <label className="mb-1 flex items-center gap-2 text-[12px] text-ink-3">
         <input type="checkbox" checked={overlay} onChange={(e) => setOverlay(e.target.checked)} className="accent-[var(--accent)]" />

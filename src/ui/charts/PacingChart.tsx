@@ -96,7 +96,7 @@ export function PacingChart() {
   if (!runs || runs.length < 2 || !option) return null;
 
   return (
-    <Card kicker="Pacing" title="Per-km splits" footnote="Up = faster.">
+    <Card kicker="Pacing" title="Per-km splits" info="Per-km lap paces with the y-axis inverted, so up = faster. Pick a run above to highlight it against the rest.">
       <div className="mb-2 flex gap-1 overflow-x-auto text-[12px]">
         {[...runs].reverse().map((r) => (
           <button

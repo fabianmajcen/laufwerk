@@ -155,7 +155,7 @@ export function SleepReadinessScatter() {
     <Card
       kicker="Correlation"
       title="Sleep → readiness"
-      footnote="Each morning: last night's sleep vs that day's FabScore. Sleep is one input of several, so expect scatter."
+      info="Each dot is one morning: last night's sleep score vs the FabScore it woke up to. Sleep is only one input — HRV, load and freshness count too — so expect scatter."
     >
       <EChart option={option!} height={210} />
       <Legend items={[{ swatch: "dot", color: "var(--accent)", label: "one morning" }, { swatch: "dash", label: "trend" }]} />

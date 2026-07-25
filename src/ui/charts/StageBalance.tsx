@@ -92,7 +92,7 @@ export function StageBalance() {
       kicker="Architecture"
       title="Deep & REM share"
       value={`${last.deepPct.toFixed(0)}% / ${last.remPct.toFixed(0)}%`}
-      footnote={`Typical adult: deep ${DEEP_NORM[0]}–${DEEP_NORM[1]}%, REM ${REM_NORM[0]}–${REM_NORM[1]}%. Shares of time in bed.`}
+      info={`Shares of total time in bed. Typical adult ranges: deep ${DEEP_NORM[0]}–${DEEP_NORM[1]}%, REM ${REM_NORM[0]}–${REM_NORM[1]}%. Single nights swing a lot — watch the drift, not one dip.`}
     >
       <EChart option={option} height={190} />
       <Legend items={[{ swatch: "line", color: "var(--sleep-deep)", label: "deep" }, { swatch: "line", color: "var(--sleep-rem)", label: "REM" }, { swatch: "band", color: "var(--ink-2)", label: "typical range" }]} />

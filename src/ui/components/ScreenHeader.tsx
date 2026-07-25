@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 export function ScreenHeader({ title, right }: { title: string; right?: ReactNode }) {
   return (
@@ -15,30 +15,65 @@ export function Card({
   value,
   children,
   footnote,
+  info,
   onClick,
 }: {
   kicker?: string;
   title?: string;
   value?: ReactNode;
   children?: ReactNode;
+  /** always-visible line under the chart: dynamic status or data only */
   footnote?: string;
+  /** explanation behind the ⓘ toggle: how to read the chart, caveats, methods */
+  info?: string;
   onClick?: () => void;
 }) {
+  const [showInfo, setShowInfo] = useState(false);
   return (
     <section
       onClick={onClick}
       className={`mx-4 mb-3 rounded-2xl bg-card p-4 ${onClick ? "active:opacity-80" : ""}`}
     >
-      {kicker && <div className="kicker mb-1">{kicker}</div>}
+      {(kicker || info) && (
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <div className="kicker">{kicker}</div>
+          {info && (
+            <button
+              aria-label="About this chart"
+              aria-expanded={showInfo}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowInfo((v) => !v);
+              }}
+              className={`-my-1.5 -mr-1.5 p-1.5 ${showInfo ? "text-ink" : "text-ink-3"}`}
+            >
+              <InfoIcon />
+            </button>
+          )}
+        </div>
+      )}
       {(title || value) && (
         <div className="mb-2 flex items-baseline justify-between gap-2">
           {title && <h2 className="text-[15px] font-medium text-ink-2">{title}</h2>}
           {value && <div className={`tnum text-[28px] font-semibold leading-none ${title ? "" : "ml-auto"}`}>{value}</div>}
         </div>
       )}
+      {info && showInfo && (
+        <p className="mb-2 rounded-lg bg-elevated px-3 py-2 text-[12px] leading-relaxed text-ink-2">{info}</p>
+      )}
       {children}
       {footnote && <p className="mt-2 text-[12px] text-ink-3">{footnote}</p>}
     </section>
+  );
+}
+
+function InfoIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <line x1="12" y1="11" x2="12" y2="16.2" strokeLinecap="round" />
+      <circle cx="12" cy="7.7" r="1.15" fill="currentColor" stroke="none" />
+    </svg>
   );
 }
 

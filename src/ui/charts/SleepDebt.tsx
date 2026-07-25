@@ -94,7 +94,7 @@ export function SleepDebt() {
       kicker="Duration"
       title="Sleep vs your need"
       value={current.debtMin > 30 ? `−${fmtHoursMin(current.debtMin)}` : "✓ rested"}
-      footnote="Your need is Garmin's personal estimate and adjusts with training and HRV. Headline: debt accumulated over 30 nights."
+      info="Your need is Garmin's personal estimate and adjusts with training, HRV and recent sleep. The headline is debt accumulated against it over the last 30 nights."
     >
       <EChart option={option} height={190} />
       <Legend items={[{ swatch: "line", color: "var(--sleep-light)", opacity: 0.6, label: "nightly" }, { swatch: "line", color: "var(--sleep-deep)", label: "7-night avg" }, { swatch: "dash", label: "your need" }]} />

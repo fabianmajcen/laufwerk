@@ -186,6 +186,7 @@ export function RouteExplorer() {
     <Card
       kicker="Route explorer"
       title={`${run.label}, colored by ${meta.label}`}
+      info="The color ramp stretches over this run's 5th–95th percentile, so even steady runs show contrast (extremes clamp to the ends). Values are smoothed over roughly 15 seconds."
     >
       <div className="mb-2 flex gap-1 overflow-x-auto text-[12px]">
         {runs.map((r) => (

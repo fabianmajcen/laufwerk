@@ -21,7 +21,9 @@ export function EChart({ option, height, className, onEvents, touchAction = "pan
   useEffect(() => {
     const el = divRef.current;
     if (!el) return;
-    const chart = echarts.init(el, undefined, { renderer: "canvas" });
+    // useCoarsePointer widens every hit target for fingers (tapping dots,
+    // bars, routes and grabbing the crosshair)
+    const chart = echarts.init(el, undefined, { renderer: "canvas", useCoarsePointer: true, pointerSize: 24 });
     chartRef.current = chart;
     const ro = new ResizeObserver(() => chart.resize());
     ro.observe(el);

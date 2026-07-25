@@ -33,7 +33,7 @@ export function RunVsRestSleep() {
     <Card
       kicker="Sleep × training"
       title="Nights after running vs rest"
-      footnote={`Averages over ${nRun} post-run and ${nRest} rest nights. Small samples: read direction, not decimals.`}
+      info={`Averages over ${nRun} post-run and ${nRest} rest nights. Small samples: read direction, not decimals.`}
     >
       <table className="tnum w-full text-[13px]">
         <thead>

@@ -47,7 +47,7 @@ export function TrainingCalendar({ onOpenDay }: { onOpenDay?: (date: string) => 
           const score = sleepByDate.get(d);
           return `<b>${new Date(d + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}</b><br/>${
             score != null ? `sleep ${score}` : "no sleep data"
-          }${runDates.has(d) ? " · 🏃 run" : ""}`;
+          }${runDates.has(d) ? " · 🏃 run" : ""}<br/><span style="opacity:.7">tap for day summary</span>`;
         },
       },
       calendar: {
@@ -92,7 +92,7 @@ export function TrainingCalendar({ onOpenDay }: { onOpenDay?: (date: string) => 
     <Card
       kicker="Rhythm"
       title="Last 3 months"
-      footnote={onOpenDay ? "Tap a day for its summary." : undefined}
+      info="Cells show the sleep score — brighter is better. Green rings mark run days: the train-recover rhythm at a glance. Tap a day for its summary."
     >
       <EChart
         option={option}

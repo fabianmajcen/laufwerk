@@ -54,7 +54,7 @@ export function WeeklyVolume({ onOpenWeek }: { onOpenWeek?: (weekStart: string) 
         formatter: (ps: { dataIndex: number }[]) => {
           const i = ps[0].dataIndex;
           const w = weekly[i];
-          return `<b>week of ${labels[i]}</b><br/>${w.distanceKm.toFixed(1)} km · total ${w.cumulativeKm.toFixed(1)} km`;
+          return `<b>week of ${labels[i]}</b><br/>${w.distanceKm.toFixed(1)} km · total ${w.cumulativeKm.toFixed(1)} km<br/><span style="opacity:.7">tap for that week's runs</span>`;
         },
       },
       axisPointer: { link: [{ xAxisIndex: "all" }] },
@@ -126,7 +126,7 @@ export function WeeklyVolume({ onOpenWeek }: { onOpenWeek?: (weekStart: string) 
       kicker="Volume"
       title="Weekly km"
       value={`${weekly[weekly.length - 1].cumulativeKm.toFixed(0)} km total`}
-      footnote={onOpenWeek ? "Tap a bar for that week's runs." : undefined}
+      info="Monday-start weeks. The dashed target comes from your plan in Settings (runs per week × minutes, at your recent pace). Tap a bar for that week's runs."
     >
       <EChart
         option={option}
