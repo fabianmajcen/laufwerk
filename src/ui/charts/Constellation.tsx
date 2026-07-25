@@ -90,7 +90,7 @@ export function Constellation() {
           }),
           // invisible fat twins of each route: finger-sized tap targets
           // (thin line bodies never fire click events on touch)
-          ...routes.map((r, i) => ({
+          ...routes.map((_, i) => ({
             type: "line",
             data: projected[i],
             showSymbol: false,
