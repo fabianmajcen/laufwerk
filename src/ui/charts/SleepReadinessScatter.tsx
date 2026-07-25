@@ -55,8 +55,14 @@ export function SleepReadinessScatter() {
 
       const before = runList.filter((r) => r.date < day);
       const lastRun = before.length ? before.reduce((a, b) => (b.date > a.date ? b : a)) : null;
+      // calendar days (midnight-anchored), not elapsed hours — an evening run
+      // is 1 day back the next morning
       const daysSince = lastRun
-        ? Math.floor((day.getTime() - lastRun.date.getTime()) / 86400000)
+        ? Math.floor(
+            (new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime() -
+              new Date(lastRun.date.getFullYear(), lastRun.date.getMonth(), lastRun.date.getDate()).getTime()) /
+              86400000,
+          )
         : null;
 
       // trailing 7-day rhr average before this date

@@ -64,7 +64,9 @@ export function computeFabScore(inp: FabInputs): FabResult {
       label: "HRV vs baseline",
       raw:
         inp.hrvLastNight != null
-          ? `${inp.hrvLastNight} ms${inp.hrvBaselineLow != null ? ` (baseline low ${inp.hrvBaselineLow})` : ""}`
+          ? inp.hrvBaselineLow != null
+            ? `${inp.hrvLastNight} vs ${inp.hrvBaselineLow}+ ms`
+            : `${inp.hrvLastNight} ms`
           : "no data",
       subscore:
         inp.hrvLastNight != null && inp.hrvBaselineLow != null && inp.hrvBaselineLow > 0
@@ -186,7 +188,7 @@ function describeFactor(f: FabFactor | undefined): string | null {
     case "sleep":
       return `sleep was ${f.raw}/100`;
     case "hrv":
-      return `HRV is below your baseline (${f.raw})`;
+      return `HRV is below your baseline at ${f.raw}`;
     case "bodyBattery":
       return `body battery is at ${f.raw}`;
     case "freshness":

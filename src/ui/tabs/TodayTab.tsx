@@ -139,14 +139,24 @@ function WeekPlanCard() {
   const canGoBack = weekStart > oldest;
 
   const lastRun = runs.length ? parseGarminLocal(runs[0].startTimeLocal) : null;
-  const daysSince = lastRun ? Math.floor((now.getTime() - lastRun.getTime()) / 86400000) : 99;
+  // calendar days, not elapsed hours: a run yesterday evening is 1 day ago
+  // this morning even if fewer than 24h have passed
+  const daysSince = lastRun
+    ? Math.floor(
+        (new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() -
+          new Date(lastRun.getFullYear(), lastRun.getMonth(), lastRun.getDate()).getTime()) /
+          86400000,
+      )
+    : 99;
   const footnote =
     weeksBack === 0
       ? done >= plan.runsPerWeek
         ? "Week's plan complete. Bonus runs are optional."
         : daysSince < 1
           ? "Ran today. Rest tomorrow, next slot after."
-          : "A run slot is open. Today works."
+          : daysSince === 1
+            ? "Ran yesterday. Rest today; tomorrow works."
+            : "A run slot is open. Today works."
       : done >= plan.runsPerWeek
         ? "Plan met."
         : `${plan.runsPerWeek - done} short of plan.`;
