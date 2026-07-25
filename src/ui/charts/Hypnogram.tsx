@@ -245,15 +245,15 @@ export function Hypnogram({ sleep, nav }: { sleep: SleepView; nav?: HypnogramNav
       value={nav ? undefined : sleep.score != null ? String(sleep.score) : undefined}
     >
       {nav && sleep.score != null && (
-        <div className="mb-3 mt-1 flex justify-end pr-2">
-          <div className="text-right">
-            <div className="tnum text-[40px] font-semibold leading-none">{sleep.score}</div>
-            <div className="kicker mt-1">sleep score</div>
+        <div className="mb-3 mt-1 text-center">
+          <div className="tnum text-[44px] font-semibold leading-none">{sleep.score}</div>
+          <div className="kicker mt-1.5">
+            {sleep.qualifier ? `${sleep.qualifier.toLowerCase()} · sleep score` : "sleep score"}
           </div>
         </div>
       )}
       {nav && (
-        <div className="mb-2 flex items-center justify-between">
+        <div className="mb-3 flex items-center justify-between">
           {/* arrows pinned to the card edges: fixed positions regardless of
               the date's width, and clear of the score above */}
           <NavBtn dir="prev" onClick={nav.onPrev} />
