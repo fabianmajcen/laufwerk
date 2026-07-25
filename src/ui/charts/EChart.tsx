@@ -25,17 +25,22 @@ export function EChart({ option, height, className, onEvents, touchAction = "pan
     // bars, routes and grabbing the crosshair)
     const chart = echarts.init(el, undefined, { renderer: "canvas", useCoarsePointer: true, pointerSize: 24 });
     chartRef.current = chart;
-    const ro = new ResizeObserver(() => chart.resize());
+    // Never let zrender measure the container itself: the Android WebView
+    // has been seen wedging a chart at ~1/3 width while the div is fine.
+    // Explicit pixel sizes from the layout rect bypass its measurement.
+    const applySize = () => {
+      const rect = el.getBoundingClientRect();
+      if (rect.width < 1 || rect.height < 1) return;
+      if (Math.abs(chart.getWidth() - rect.width) > 1 || Math.abs(chart.getHeight() - rect.height) > 1)
+        chart.resize({ width: rect.width, height: rect.height });
+    };
+    const ro = new ResizeObserver(applySize);
     ro.observe(el);
-    // WebView insurance: a mount mid-layout can mis-measure the container,
-    // and ResizeObserver never fires again if the size doesn't change after.
-    const raf = requestAnimationFrame(() => chart.resize());
-    const t1 = setTimeout(() => chart.resize(), 250);
-    const t2 = setTimeout(() => chart.resize(), 1000);
+    const raf = requestAnimationFrame(applySize);
+    const timers = [250, 1000, 2500].map((ms) => setTimeout(applySize, ms));
     return () => {
       cancelAnimationFrame(raf);
-      clearTimeout(t1);
-      clearTimeout(t2);
+      timers.forEach(clearTimeout);
       ro.disconnect();
       chart.dispose();
       chartRef.current = null;
@@ -43,7 +48,16 @@ export function EChart({ option, height, className, onEvents, touchAction = "pan
   }, []);
 
   useEffect(() => {
-    chartRef.current?.setOption(option, { notMerge: true });
+    const chart = chartRef.current;
+    if (!chart) return;
+    chart.setOption(option, { notMerge: true });
+    // re-check the size on every data/theme swap too
+    const el = divRef.current;
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      if (rect.width > 1 && Math.abs(chart.getWidth() - rect.width) > 1)
+        chart.resize({ width: rect.width, height: rect.height });
+    }
   }, [option]);
 
   useEffect(() => {

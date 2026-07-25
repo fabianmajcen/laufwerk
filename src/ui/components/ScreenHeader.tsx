@@ -32,24 +32,30 @@ export function Card({
   return (
     <section
       onClick={onClick}
-      className={`relative mx-4 mb-3 rounded-2xl bg-card p-4 ${onClick ? "active:opacity-80" : ""}`}
+      className={`mx-4 mb-3 rounded-2xl bg-card p-4 ${onClick ? "active:opacity-80" : ""}`}
     >
-      {info && (
-        <button
-          aria-label="About this chart"
-          aria-expanded={showInfo}
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowInfo((v) => !v);
-          }}
-          className={`absolute right-3 top-3 p-1 ${showInfo ? "text-ink" : "text-ink-3"}`}
-        >
-          <InfoIcon />
-        </button>
+      {(kicker || info) && (
+        // no negative vertical margins on the button: the row reserves its
+        // full height, so the icon never crowds the value line below
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <div className="kicker">{kicker}</div>
+          {info && (
+            <button
+              aria-label="About this chart"
+              aria-expanded={showInfo}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowInfo((v) => !v);
+              }}
+              className={`-mr-1 p-1 ${showInfo ? "text-ink" : "text-ink-3"}`}
+            >
+              <InfoIcon />
+            </button>
+          )}
+        </div>
       )}
-      {kicker && <div className={`kicker mb-1 ${info ? "pr-7" : ""}`}>{kicker}</div>}
       {(title || value) && (
-        <div className={`mb-2 flex items-baseline justify-between gap-2 ${info && !kicker ? "pr-7" : ""}`}>
+        <div className="mb-2 flex items-baseline justify-between gap-2">
           {title && <h2 className="text-[15px] font-medium text-ink-2">{title}</h2>}
           {value && <div className={`tnum text-[28px] font-semibold leading-none ${title ? "" : "ml-auto"}`}>{value}</div>}
         </div>
