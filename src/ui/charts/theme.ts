@@ -97,6 +97,22 @@ export function tooltipDefaults(t: Tokens) {
   };
 }
 
+/** Even local-clock hour ticks for time axes. ECharts time axes ignore
+ *  interval/minInterval/maxInterval, so charts pass these explicit values
+ *  via axisLabel.customValues. Ticks land on hours where h % stepH === 0. */
+export function localHourTicks(tMin: number, tMax: number, stepH: number): number[] {
+  const d = new Date(tMin);
+  d.setMinutes(0, 0, 0);
+  if (d.getTime() < tMin) d.setHours(d.getHours() + 1);
+  while (d.getHours() % stepH !== 0) d.setHours(d.getHours() + 1);
+  const out: number[] = [];
+  while (d.getTime() <= tMax) {
+    out.push(d.getTime());
+    d.setHours(d.getHours() + stepH);
+  }
+  return out;
+}
+
 /** Sequential recency ramp (single hue): 0 = oldest, 1 = newest. */
 export function recencyColor(t: Tokens, frac: number): string {
   return mixHex(t.recencyLo, t.recencyHi, Math.max(0, Math.min(1, frac)));

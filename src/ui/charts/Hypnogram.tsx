@@ -3,7 +3,7 @@
 // the documented contrast-relief channel for the stage colors).
 import { useMemo } from "react";
 import { EChart } from "./EChart";
-import { tokens, tooltipDefaults, xAxisDefaults, yAxisDefaults, type Tokens } from "./theme";
+import { localHourTicks, tokens, tooltipDefaults, xAxisDefaults, yAxisDefaults, type Tokens } from "./theme";
 import type { SleepView } from "../../lib/hooks";
 import { fmtHoursMin } from "../../lib/format";
 import { Card } from "../components/ScreenHeader";
@@ -104,6 +104,9 @@ export function Hypnogram({ sleep, nav }: { sleep: SleepView; nav?: HypnogramNav
         axisLabel: {
           ...xAxisDefaults(t).axisLabel,
           show: i === arr.length - 1,
+          // hourly labels collide over a full night; time axes ignore
+          // minInterval, so hand them explicit 2-3h ticks
+          customValues: localHourTicks(tMin, tMax, tMax - tMin > 9 * 3600 * 1000 ? 3 : 2),
           formatter: (v: number) =>
             new Date(v).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
         },

@@ -2,7 +2,7 @@
 // slope sign, current value as the card stat.
 import { useMemo } from "react";
 import { EChart } from "./EChart";
-import { tokens, tooltipDefaults, xAxisDefaults, yAxisDefaults } from "./theme";
+import { localHourTicks, tokens, tooltipDefaults, xAxisDefaults, yAxisDefaults } from "./theme";
 import { extractBatteryFromStress, toBodyBatteryView, useLatestWellness } from "../../lib/hooks";
 import { Card } from "../components/ScreenHeader";
 import { Legend } from "../components/Legend";
@@ -57,12 +57,18 @@ export function BodyBatteryToday() {
       },
       xAxis: {
         type: "time",
-        splitNumber: 6,
-        minInterval: 3600 * 1000, // hour steps, never finer
+        min: bb.values[0][0],
+        max: bb.values[bb.values.length - 1][0],
         ...xAxisDefaults(t),
         axisLabel: {
           ...xAxisDefaults(t).axisLabel,
-          hideOverlap: true,
+          // time axes ignore interval hints (ECharts picked 6h steps and
+          // showed two labels); hand them explicit even-hour ticks
+          customValues: localHourTicks(
+            bb.values[0][0],
+            bb.values[bb.values.length - 1][0],
+            bb.values[bb.values.length - 1][0] - bb.values[0][0] > 15 * 3600 * 1000 ? 4 : 2,
+          ),
           formatter: (v: number) => new Date(v).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
         },
       },
