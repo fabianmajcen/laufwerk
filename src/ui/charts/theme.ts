@@ -94,6 +94,22 @@ export function tooltipDefaults(t: Tokens) {
     padding: [8, 12],
     textStyle: { color: t.ink, fontSize: 12 },
     confine: true,
+    // touch-friendly: center the readout above the finger (with fingertip
+    // clearance) instead of letting it sit under it; fall below when the
+    // touch is near the top edge
+    position: (
+      point: [number, number],
+      _params: unknown,
+      _dom: unknown,
+      _rect: unknown,
+      size: { contentSize: [number, number]; viewSize: [number, number] },
+    ) => {
+      const [cw, ch] = size.contentSize;
+      const vw = size.viewSize[0];
+      const x = Math.max(4, Math.min(point[0] - cw / 2, vw - cw - 4));
+      const yAbove = point[1] - ch - 30;
+      return [x, yAbove >= 4 ? yAbove : point[1] + 36];
+    },
   };
 }
 
