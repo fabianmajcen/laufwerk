@@ -36,23 +36,33 @@ export function PullToSync({ children }: { children: ReactNode }) {
   };
 
   return (
-    <main
-      id="scroll-root"
-      ref={ref}
-      className="relative flex-1 overflow-y-auto pb-2"
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-      style={pull > 0 ? { transform: `translateY(${pull}px)`, transition: "none" } : { transition: "transform .2s" }}
-    >
+    // outer wrapper is NOT a scroll container: the pull indicator lives here,
+    // as a sibling of <main>, so it isn't clipped by main's own
+    // overflow-y-auto (an absolutely-positioned child with negative top
+    // inside a scrolling ancestor is outside its scrollable overflow and
+    // never paints, however the transform on that ancestor is animated)
+    <div className="relative flex-1 overflow-hidden">
       {(pull > 0 || busy) && (
-        <div className="pointer-events-none absolute -top-9 left-0 right-0 flex justify-center">
-          <span className="rounded-full bg-elevated px-3 py-1 text-[11px] text-ink-2">
+        <div
+          className="pointer-events-none absolute inset-x-0 z-10 flex justify-center"
+          style={{ top: 4 + Math.min(pull * 0.4, 40) }}
+        >
+          <span className="rounded-full bg-elevated px-3 py-1 text-[11px] text-ink-2 shadow-lg">
             {busy ? `syncing ${sync.done}/${sync.total}` : pull >= THRESHOLD_PX * 0.45 ? "release to sync" : "pull to sync"}
           </span>
         </div>
       )}
-      {children}
-    </main>
+      <main
+        id="scroll-root"
+        ref={ref}
+        className="h-full overflow-y-auto pb-2"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        style={pull > 0 ? { transform: `translateY(${pull}px)`, transition: "none" } : { transition: "transform .2s" }}
+      >
+        {children}
+      </main>
+    </div>
   );
 }
