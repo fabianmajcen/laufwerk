@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { useDecouplingSeries, useRuns } from "../../lib/hooks";
+import { useAllRuns, useDecouplingSeries } from "../../lib/hooks";
 import { useUi } from "../../store/uiStore";
 import { useBackHandler } from "../../lib/backstack";
 import { useScrollMemory } from "../../lib/scrollMemory";
@@ -41,7 +41,10 @@ type View =
   | { week: string };
 
 export function RunsTab() {
-  const runs = useRuns();
+  // the list shows everything (so an excluded run stays findable); the
+  // analytics hub and every chart below see only the runs that count
+  const allRuns = useAllRuns();
+  const runs = useMemo(() => allRuns?.filter((r) => !r.excluded), [allRuns]);
   const [openId, setOpenId] = useState<number | null>(null);
   const [view, setView] = useState<View>("main");
 
@@ -96,7 +99,8 @@ export function RunsTab() {
     }`,
   );
 
-  const open = openId != null ? runs?.find((r) => r.activityId === openId) : undefined;
+  // allRuns, not runs: an excluded run must stay openable to un-exclude it
+  const open = openId != null ? allRuns?.find((r) => r.activityId === openId) : undefined;
   if (open) return <RunDetail run={open} onBack={() => setOpenId(null)} />;
 
   if (view === "fitness") {
@@ -181,12 +185,12 @@ export function RunsTab() {
   return (
     <div className="pb-4">
       <ScreenHeader title="Runs" />
-      {!runs?.length ? (
+      {!allRuns?.length ? (
         <EmptyState text="No runs yet. Connect your Garmin account in Settings and sync." />
       ) : (
         <>
-          <AnalyticsHub runs={runs} onOpen={setView} />
-          {runs.map((r) => (
+          <AnalyticsHub runs={runs ?? []} onOpen={setView} />
+          {allRuns.map((r) => (
             <RunCard key={r.activityId} run={r} onOpen={() => setOpenId(r.activityId)} />
           ))}
         </>
@@ -317,13 +321,22 @@ function RunCard({ run, onOpen }: { run: ActivityRow; onOpen: () => void }) {
   const pace = speedToPace(run.averageSpeed);
   return (
     <article onClick={onOpen} className="mx-4 mb-3 rounded-2xl bg-card p-4 active:opacity-80">
-      <div className="mb-1 flex items-baseline justify-between">
+      <div className="mb-1 flex items-baseline justify-between gap-2">
         <span className="kicker">
           {fmtDay(d)} · {d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
         </span>
+        {run.excluded && (
+          <span className="shrink-0 rounded-full bg-elevated px-2 py-0.5 text-[10px] uppercase tracking-wide text-ink-3">
+            not counted
+          </span>
+        )}
       </div>
-      <h2 className="mb-2 text-[15px] font-medium">{run.activityName ?? "Run"}</h2>
-      <div className="tnum flex gap-5 text-[14px]">
+      <h2 className={`mb-2 text-[15px] font-medium ${run.excluded ? "text-ink-3" : ""}`}>
+        {run.activityName ?? "Run"}
+      </h2>
+      {/* a 4-column grid, not a flex row: an hour-plus duration (1:02:14)
+          overflowed the inline layout and clipped the heart rate */}
+      <div className={`tnum grid grid-cols-4 gap-x-2 ${run.excluded ? "opacity-45" : ""}`}>
         <Stat label="km" value={fmtKm(run.distance)} />
         <Stat label="/km" value={fmtPace(pace)} />
         <Stat label="time" value={fmtDuration(run.duration)} />
@@ -335,9 +348,11 @@ function RunCard({ run, onOpen }: { run: ActivityRow; onOpen: () => void }) {
 
 function Stat({ label, value, accent }: { label: string; value: string; accent?: "hr" }) {
   return (
-    <div className="flex items-baseline gap-1">
-      <span className={`text-[17px] font-semibold ${accent === "hr" ? "text-hr" : ""}`}>{value}</span>
-      <span className="text-[11px] text-ink-3">{label}</span>
+    <div className="min-w-0">
+      <div className={`truncate text-[17px] font-semibold leading-tight ${accent === "hr" ? "text-hr" : ""}`}>
+        {value}
+      </div>
+      <div className="text-[11px] text-ink-3">{label}</div>
     </div>
   );
 }

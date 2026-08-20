@@ -1,7 +1,7 @@
 // Dexie-backed data hooks — the only way UI components read data.
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, type ActivityRow } from "./db/schema";
-import { getActivityData, getRuns, getWellnessRange } from "./db/repo";
+import { getActivityData, getAllRuns, getRuns, getWellnessRange } from "./db/repo";
 import type { ActivityData, RangeMetric, WellnessMetric, WellnessRow } from "./garmin/types";
 import { isoDate, parseGarminLocal } from "./format";
 import { toRunPoints } from "./derive/series";
@@ -9,8 +9,15 @@ import { computeDecoupling } from "./derive/decoupling";
 import { computeAcwr } from "./derive/acwr";
 import { computeFabScore, type FabResult } from "./derive/fabScore";
 
+/** Runs that count toward stats (manually excluded ones filtered out). */
 export function useRuns(): ActivityRow[] | undefined {
   return useLiveQuery(getRuns, []);
+}
+
+/** Every run including excluded ones (each carrying `excluded`), for the run
+ *  list and detail screen. */
+export function useAllRuns(): ActivityRow[] | undefined {
+  return useLiveQuery(getAllRuns, []);
 }
 
 export function useActivityData(activityId: number | null): ActivityData | undefined {

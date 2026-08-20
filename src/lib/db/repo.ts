@@ -19,10 +19,42 @@ export async function putActivityData(data: ActivityData) {
   await db.activityData.put(data);
 }
 
-/** Runs only (any typeKey containing "run"), newest first. */
+// ---------- manual exclusions ----------
+// Runs you don't want polluting the numbers (a social walk-run, an interval
+// session, a battery-death fragment). Kept in kv keyed by activityId, NOT on
+// the activity row: every sync re-upserts rows from Garmin and would wipe a
+// flag stored there.
+
+const EXCLUDED_KEY = "excludedRuns";
+
+export async function getExcludedRunIds(): Promise<Set<number>> {
+  return new Set((await getKv<number[]>(EXCLUDED_KEY)) ?? []);
+}
+
+export async function setRunExcluded(activityId: number, excluded: boolean) {
+  const ids = await getExcludedRunIds();
+  if (excluded) ids.add(activityId);
+  else ids.delete(activityId);
+  await setKv(EXCLUDED_KEY, [...ids]);
+}
+
+/** Every run, newest first, each tagged with its exclusion state. For the run
+ *  list and run detail, which must still show (and un-exclude) them. */
+export async function getAllRuns(): Promise<ActivityRow[]> {
+  const [all, excluded] = await Promise.all([
+    db.activities.orderBy("startTimeLocal").reverse().toArray(),
+    getExcludedRunIds(),
+  ]);
+  return all
+    .filter((a) => a.typeKey.toLowerCase().includes("run"))
+    .map((a) => (excluded.has(a.activityId) ? { ...a, excluded: true } : a));
+}
+
+/** Runs that count, newest first: the analytics view of the world. Manually
+ *  excluded runs are dropped here, so every chart, the readiness score and
+ *  the widget all agree without each having to remember to filter. */
 export async function getRuns(): Promise<ActivityRow[]> {
-  const all = await db.activities.orderBy("startTimeLocal").reverse().toArray();
-  return all.filter((a) => a.typeKey.toLowerCase().includes("run"));
+  return (await getAllRuns()).filter((a) => !a.excluded);
 }
 
 export async function getActivityData(activityId: number) {

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useActivityData } from "../../lib/hooks";
+import { setRunExcluded } from "../../lib/db/repo";
 import type { ActivityRow } from "../../lib/db/schema";
 import { fmtDay, fmtDuration, fmtKm, fmtPace, parseGarminLocal, speedToPace } from "../../lib/format";
 import { toRunPoints } from "../../lib/derive/series";
@@ -117,7 +118,47 @@ export function RunDetail({ run, onBack }: { run: ActivityRow; onBack: () => voi
           </div>
         </Card>
       )}
+
+      <CountToggle run={run} />
     </div>
+  );
+}
+
+/** Keep this run out of every chart, the readiness score and the widget
+ *  (social walk-runs, interval sessions, watch-battery fragments). */
+function CountToggle({ run }: { run: ActivityRow }) {
+  const excluded = run.excluded === true;
+  return (
+    <Card
+      kicker="Stats"
+      info="Excluded runs stay in this list but are ignored everywhere else: weekly volume, the efficiency map, decoupling, training load, zones, records and the readiness score. Use it for runs that were not really your own training, like a social run with walking breaks or an interval session. The choice sticks across syncs."
+    >
+      <button
+        onClick={() => setRunExcluded(run.activityId, !excluded)}
+        className="flex w-full items-center justify-between gap-3 text-left active:opacity-70"
+      >
+        <span>
+          <span className="block text-[14px] font-medium">
+            {excluded ? "Not counted in stats" : "Counted in stats"}
+          </span>
+          <span className="block text-[12px] text-ink-3">
+            {excluded ? "Tap to count this run again" : "Tap to exclude this run"}
+          </span>
+        </span>
+        <span
+          aria-hidden
+          className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+            excluded ? "bg-grid" : "bg-accent"
+          }`}
+        >
+          <span
+            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${
+              excluded ? "left-0.5" : "left-[22px]"
+            }`}
+          />
+        </span>
+      </button>
+    </Card>
   );
 }
 

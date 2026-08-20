@@ -14,6 +14,9 @@ export interface KvRow {
 export interface ActivityRow extends ActivitySummary {
   /** duplicated from activityType.typeKey for indexing */
   typeKey: string;
+  /** manually excluded from analytics; set at read time, never stored on the
+   *  row itself (the sync engine overwrites rows from Garmin) */
+  excluded?: boolean;
 }
 
 class LaufwerkDB extends Dexie {
