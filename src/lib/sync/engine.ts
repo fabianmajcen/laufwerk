@@ -6,7 +6,7 @@ import { bulkPutWellness, putActivityData, putWellness, setKv, setSyncState, ups
 import { gcGet, getDisplayName, sleep, RateLimitedError } from "../garmin/client";
 import { AuthExpiredError } from "../garmin/auth";
 import { ep } from "../garmin/endpoints";
-import { buildActivityData, explodeRangePayload } from "./ingest";
+import { buildActivityData, explodeRangePayload, INGEST_VERSION } from "./ingest";
 import { plan, type PlanSettings, type WorkItem } from "./planner";
 import { useSync } from "../../store/syncStore";
 import { useSettings } from "../../store/settingsStore";
@@ -135,7 +135,9 @@ async function runActivities(
     const start = new Date(String(a.startTimeLocal).replace(" ", "T")).getTime();
     if (isNaN(start) || start < cutoff) continue;
     const existing = await db.activityData.get(a.activityId);
-    if (!existing) runsNeedingData.push(a);
+    // re-fetch runs stored by an older ingest version: their series were
+    // shaped differently (v1 dropped each run's final samples)
+    if (!existing || (existing.ingestV ?? 1) < INGEST_VERSION) runsNeedingData.push(a);
   }
 
   for (const a of runsNeedingData) {

@@ -12,6 +12,10 @@ import type {
 const MAX_SERIES_POINTS = 600;
 const MAX_POLYLINE_POINTS = 500;
 
+/** Bump when series/polyline shaping changes; cached runs below this are
+ *  re-fetched on the next sync. v2: decimation keeps the final sample. */
+export const INGEST_VERSION = 2;
+
 // metricDescriptors key -> series field (mirror of scripts/make-fixtures.mjs)
 const METRIC_FIELDS: Record<string, keyof ActivitySeries> = {
   directTimestamp: "t",
@@ -30,11 +34,15 @@ interface DetailsPayload {
   geoPolylineDTO?: { polyline?: { lat: number; lon: number }[] };
 }
 
+/** Even-spaced subsample that always keeps BOTH endpoints. Dropping the tail
+ *  (the old floor(i * len/max) form never reached the last sample) lost the
+ *  final seconds of every run: enough to put a 10.01 km run under 10 km of
+ *  covered distance and hide its 10k best effort entirely. */
 function decimate<T>(arr: T[], maxLen: number): T[] {
   if (arr.length <= maxLen) return arr;
-  const stride = arr.length / maxLen;
+  const stride = (arr.length - 1) / (maxLen - 1);
   const out: T[] = [];
-  for (let i = 0; i < maxLen; i++) out.push(arr[Math.floor(i * stride)]);
+  for (let i = 0; i < maxLen; i++) out.push(arr[Math.round(i * stride)]);
   return out;
 }
 
@@ -80,6 +88,7 @@ export function buildActivityData(
     weather: weather && !("_error" in weather) ? weather : null,
     hrZones: hrZonesPayload ?? null,
     fetchedAt: Date.now(),
+    ingestV: INGEST_VERSION,
   };
 }
 

@@ -69,6 +69,9 @@ export interface ActivityData {
   weather: ActivityWeather | null;
   hrZones: HrTimeInZone[] | null;
   fetchedAt: number;
+  /** ingest format version; bumped when the series/polyline shaping changes
+   *  so cached runs get re-fetched instead of keeping stale-shaped data */
+  ingestV?: number;
 }
 
 export interface HrTimeInZone {

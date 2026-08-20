@@ -146,7 +146,9 @@ export function DailyMetricDetail({ metric }: { metric: DailyMetric }) {
   const hi = Math.max(...values);
   const lo = Math.min(...values);
   const highlight = cfg.betterWhen === "lower" ? lo : hi;
-  const highlightLabel = cfg.betterWhen === "lower" ? "best (lowest)" : "highest";
+  // short labels: "30d average" and "best (lowest)" wrapped to two lines in a
+  // third-width tile, pushing those numbers a line below the others
+  const highlightLabel = cfg.betterWhen === "lower" ? "best" : "highest";
 
   return (
     <Card kicker={cfg.kicker} title={cfg.title} value={latest.toLocaleString("en-GB")}>
@@ -163,7 +165,7 @@ export function DailyMetricDetail({ metric }: { metric: DailyMetric }) {
       </div>
       <EChart option={option} height={220} />
       <div className="mt-2 grid grid-cols-3 gap-3">
-        <StatTile label={`${days}d average`} value={Math.round(avg).toLocaleString("en-GB")} unit={cfg.unit} />
+        <StatTile label={`${days}d avg`} value={Math.round(avg).toLocaleString("en-GB")} unit={cfg.unit} />
         <StatTile label={highlightLabel} value={highlight.toLocaleString("en-GB")} unit={cfg.unit} />
         <StatTile label={cfg.betterWhen === "lower" ? "highest" : "lowest"} value={(cfg.betterWhen === "lower" ? hi : lo).toLocaleString("en-GB")} unit={cfg.unit} />
       </div>
@@ -173,9 +175,11 @@ export function DailyMetricDetail({ metric }: { metric: DailyMetric }) {
 
 function StatTile({ label, value, unit }: { label: string; value: string; unit: string }) {
   return (
-    <div className="rounded-xl bg-page p-3">
+    // h-full + mt-auto: the numbers sit on one baseline across the row even if
+    // one label still wraps
+    <div className="flex h-full flex-col rounded-xl bg-page p-3">
       <div className="kicker">{label}</div>
-      <div className="tnum mt-1 flex items-baseline gap-1">
+      <div className="tnum mt-auto flex items-baseline gap-1 pt-1">
         <span className="text-[18px] font-semibold">{value}</span>
         {unit && <span className="text-[11px] text-ink-3">{unit}</span>}
       </div>
