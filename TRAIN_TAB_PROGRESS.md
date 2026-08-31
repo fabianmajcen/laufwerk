@@ -25,19 +25,40 @@ without re-deriving anything.
         reworded, separate "Delete workout history"
   - [ ] `src/dev/mockSync.ts` — demo sessions for dev (optional; seeding already works
         in mock because it runs on the production boot path)
-- [ ] **M2 — guided player** ← NEXT. Ship M1+M2 together as release 1.
-  - [ ] `src/lib/timer.ts` — `useNow(active)` gated, `useDeadlineAlarm` (3 triggers)
-  - [ ] `src/lib/workouts/cues.ts` — WebAudio beep + `primeAudio()`
-  - [ ] `src/lib/workouts/screenAwake.ts` — refcounted wake lock
-  - [ ] `src/lib/haptics.ts` — `restOverBuzz`, `successBuzz`
-  - [ ] `src/store/workoutStore.ts` — live session machine, write-through, `hydrate()`
-  - [ ] `src/ui/workout/` — `WorkoutRuntime` (headless), `WorkoutPlayer`, `StepList`,
+- [x] **M2 — guided player** — commit `67d740e`, RELEASED as v0.2.33
+  - [x] `src/lib/timer.ts` — `useNow(active)` gated, `useDeadlineAlarm` (3 triggers)
+  - [x] `src/lib/workouts/cues.ts` — WebAudio beep + `primeAudio()`
+  - [x] `src/lib/workouts/screenAwake.ts` — refcounted wake lock
+  - [x] `src/lib/haptics.ts` — `restOverBuzz`, `successBuzz`
+  - [x] `src/store/workoutStore.ts` — live session machine, write-through, `hydrate()`
+  - [x] `src/ui/workout/` — `WorkoutRuntime` (headless), `WorkoutPlayer`, `StepList`,
         `ActionDock`, `WorkoutMiniBar`
-  - [ ] `src/ui/components/Sheet.tsx` — bottom sheet for quit prompt
-  - [ ] `App.tsx` — player outside `PullToSync`, mini-bar, hydrate on boot
-  - [ ] enable the Start button in `TrainingTab.tsx` (remove the disabled state and
+  - [x] `src/ui/components/Sheet.tsx` — bottom sheet for quit prompt
+  - [x] `App.tsx` — player outside `PullToSync`, mini-bar, hydrate on boot
+  - [x] enable the Start button in `TrainingTab.tsx` (remove the disabled state and
         the "arrives in the next update" note)
-- [ ] M3 Today integration · M4 scheduling · M5 history+restore
+- [ ] **M3 Today integration** ← NEXT
+  - [ ] `src/lib/derive/trainingWeek.ts` + `useTrainingWeek` — land as a pure no-op
+        refactor of `WeekPlanCard` and the widget effect FIRST, verify identical, then add
+  - [ ] `TodayTab.tsx` second pill row (Runs + Workouts, A/B/C letters, 3rd dashed)
+  - [ ] `widget.ts` weekLine "Runs 1/2 · Cali 2/3 · 5.2 km" + caliDone/caliPlanned
+- [ ] M4 scheduling · M5 history + JSON restore
+
+## Verified in the browser (M2)
+
+- rest expiry fires exactly one cue (4 tones); 6 further resume checks add none
+- no premature cue during an active rest across 5 visibility events
+- kill/reload mid-session resumes the same exercise and set with the rest clock
+  continued (1:56, not restarted)
+- minimize shows the mini-bar and restores the tab bar; resume reopens mid-set
+- end-early sheet reports "3 of 26 sets"; "count it" logs partial and the rotation
+  advances to Day B with the week card at 1/3
+
+## Still unverified (needs the phone)
+
+audible beep at real media volume and while music plays · vibration · screen staying
+awake for a full session and sleeping again afterwards · hardware back minimizing ·
+force-stop and relaunch · the Dexie v2 upgrade over an installed v1 build
 
 ## Hazards (do not rediscover)
 
