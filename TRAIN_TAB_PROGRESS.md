@@ -37,12 +37,32 @@ without re-deriving anything.
   - [x] `App.tsx` — player outside `PullToSync`, mini-bar, hydrate on boot
   - [x] enable the Start button in `TrainingTab.tsx` (remove the disabled state and
         the "arrives in the next update" note)
-- [ ] **M3 Today integration** ← NEXT
-  - [ ] `src/lib/derive/trainingWeek.ts` + `useTrainingWeek` — land as a pure no-op
-        refactor of `WeekPlanCard` and the widget effect FIRST, verify identical, then add
-  - [ ] `TodayTab.tsx` second pill row (Runs + Workouts, A/B/C letters, 3rd dashed)
-  - [ ] `widget.ts` weekLine "Runs 1/2 · Cali 2/3 · 5.2 km" + caliDone/caliPlanned
-- [ ] M4 scheduling · M5 history + JSON restore
+- [x] **Session picker** (v0.2.34): Day A/B/C chips on the Next-up card + a Start
+      button on the plan detail. Needed because his real rotation began outside the app.
+      No rotation logic changed: it follows what was actually done.
+- [x] **M3 Today integration** — v0.2.35
+  - [x] `src/lib/derive/trainingWeek.ts` + `useTrainingWeek`; both old copies of the
+        week math (WeekPlanCard + widget effect) now use it
+  - [x] `TodayTab.tsx` second pill row (violet, dashed bonus slot, session letters)
+  - [x] `widget.ts` weekLine + caliDone/caliPlanned (no Java change needed)
+- [ ] **M4 scheduling** ← NEXT
+  - [ ] "Plan your week" SubScreen: 7 day rows, workout (A/B/C or undecided) or run
+  - [ ] `suggestNextWorkoutDates` + "suggest this week" writing `source: "suggested"`
+  - [ ] post-session prompt: only when the session counted, `askToScheduleNext` is on,
+        and NO future workout slot exists (that last clause is what stops it nagging)
+  - [ ] runs: non-modal CTA on the week card, not a popup fired by background sync
+  - [ ] tapping an empty pill on Today opens the planner
+- [ ] M5 history + JSON restore
+
+## Gotchas hit during implementation
+
+- **zustand selectors must return primitives.** `useSettings((s) => ({...}))` builds a new
+  object every render and zustand compares by identity, so it re-renders forever. Cost an
+  infinite-loop bug in `useTrainingWeek`; select the fields separately.
+- Puppeteer hash-only navigation does NOT remount the app (uiStore reads the hash once at
+  creation). Use a query param to force a real reload when testing a specific tab.
+- The scratchpad's puppeteer install and the mock dev server both get cleared by temp
+  reaping between sessions: `npm i puppeteer-core` and restart `npm run dev:mock -- --port 5199`.
 
 ## Verified in the browser (M2)
 
