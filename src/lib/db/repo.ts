@@ -122,5 +122,9 @@ export async function exportAll() {
     wellness: await db.wellness.toArray(),
     ranges: await db.ranges.toArray(),
     kv: await db.kv.toArray(),
+    // user-authored and not re-syncable from Garmin, so this is the only copy
+    workoutPlans: await db.workoutPlans.toArray(),
+    workoutSessions: await db.workoutSessions.toArray(),
+    schedule: await db.schedule.toArray(),
   };
 }

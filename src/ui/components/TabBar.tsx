@@ -5,6 +5,8 @@ export type { TabId };
 
 const TABS: { id: TabId; label: string; icon: (active: boolean) => React.ReactNode }[] = [
   { id: "today", label: "Today", icon: (a) => <GaugeIcon active={a} /> },
+  // "act on today" pair first, then the analytics block
+  { id: "training", label: "Train", icon: (a) => <TrainIcon active={a} /> },
   { id: "runs", label: "Runs", icon: (a) => <RunIcon active={a} /> },
   { id: "sleep", label: "Sleep", icon: (a) => <MoonIcon active={a} /> },
   { id: "trends", label: "Trends", icon: (a) => <TrendIcon active={a} /> },
@@ -31,11 +33,26 @@ export function TabBar({ active, onChange }: { active: TabId; onChange: (t: TabI
             }`}
           >
             {t.icon(isActive)}
-            <span>{t.label}</span>
+            {/* five tabs share the width, so never let a label wrap and break
+                the h-14 vertical centering */}
+            <span className="whitespace-nowrap">{t.label}</span>
           </button>
         );
       })}
     </nav>
+  );
+}
+
+/** Gymnast rings: calisthenics without implying dumbbells, and nothing like
+ *  the Trends chart glyph it sits two tabs away from. */
+function TrainIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 3v6.5" />
+      <path d="M16 3v6.5" />
+      <circle cx="8" cy="15" r="4.2" />
+      <circle cx="16" cy="15" r="4.2" />
+    </svg>
   );
 }
 

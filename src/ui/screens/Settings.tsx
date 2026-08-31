@@ -86,6 +86,43 @@ export function Settings({ onBack }: { onBack: () => void }) {
         </div>
       </Card>
 
+      <Card kicker="Plan" title="Calisthenics">
+        <div className="flex items-center justify-between py-1 text-[14px]">
+          <span className="text-ink-2">Workouts per week</span>
+          <Stepper
+            value={settings.workouts.workoutsPerWeek}
+            onChange={(v) => settings.setWorkouts({ workoutsPerWeek: v })}
+            min={1}
+            max={7}
+          />
+        </div>
+        <div className="flex items-center justify-between py-1 text-[14px]">
+          <span className="text-ink-2">Rest days between</span>
+          <Stepper
+            value={settings.workouts.minRestDaysBetweenWorkouts}
+            onChange={(v) => settings.setWorkouts({ minRestDaysBetweenWorkouts: v })}
+            min={0}
+            max={3}
+          />
+        </div>
+        <SettingToggle
+          label="Sound cue when rest ends"
+          note="Uses the media volume"
+          value={settings.workouts.restCueSound}
+          onChange={(v) => settings.setWorkouts({ restCueSound: v })}
+        />
+        <SettingToggle
+          label="Vibrate when rest ends"
+          value={settings.workouts.restCueVibrate}
+          onChange={(v) => settings.setWorkouts({ restCueVibrate: v })}
+        />
+        <SettingToggle
+          label="Keep screen on during a session"
+          value={settings.workouts.keepAwake}
+          onChange={(v) => settings.setWorkouts({ keepAwake: v })}
+        />
+      </Card>
+
       <UpdateCard />
 
       <Card kicker="Data" title="Local cache">
@@ -97,7 +134,9 @@ export function Settings({ onBack }: { onBack: () => void }) {
         </button>
         <button
           onClick={async () => {
-            if (!confirm("Delete all locally cached data? (Everything re-syncs from Garmin.)")) return;
+            if (!confirm("Delete the synced Garmin data? Your workout plans, logged sessions and schedule are kept, and the Garmin data re-syncs.")) return;
+            // deliberately does NOT touch workoutPlans / workoutSessions /
+            // schedule: that data is his own and cannot be re-synced
             await Promise.all([
               db.activities.clear(),
               db.activityData.clear(),
@@ -109,11 +148,21 @@ export function Settings({ onBack }: { onBack: () => void }) {
           }}
           className="w-full rounded-lg bg-page py-2 text-[13px] text-status-serious"
         >
-          Clear cached data
+          Clear synced Garmin data
+        </button>
+        <button
+          onClick={async () => {
+            if (!confirm("Delete every logged workout session and the schedule? Your A/B/C plans stay. This cannot be undone: workout history never came from Garmin, so it cannot be re-synced.")) return;
+            await Promise.all([db.workoutSessions.clear(), db.schedule.clear()]);
+          }}
+          className="mt-2 w-full rounded-lg bg-page py-2 text-[13px] text-status-serious"
+        >
+          Delete workout history
         </button>
         <p className="mt-2 text-[11px] leading-relaxed text-ink-3">
           Laufwerk talks directly to Garmin's (unofficial) Connect API from this phone and keeps everything in a
-          local cache. Nothing leaves the device. {sync.lastSyncAt ? `Last sync ${new Date(sync.lastSyncAt).toLocaleString("en-GB")}.` : ""}
+          local cache. Nothing leaves the device. Workout plans and sessions are yours alone: they never came from
+          Garmin, so the JSON export is their only backup. {sync.lastSyncAt ? `Last sync ${new Date(sync.lastSyncAt).toLocaleString("en-GB")}.` : ""}
         </p>
       </Card>
     </div>
@@ -293,6 +342,39 @@ function UpdateCard() {
         </>
       )}
     </Card>
+  );
+}
+
+function SettingToggle({
+  label,
+  note,
+  value,
+  onChange,
+}: {
+  label: string;
+  note?: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      onClick={() => onChange(!value)}
+      aria-pressed={value}
+      className="flex w-full items-center justify-between gap-3 py-1.5 text-left active:opacity-70"
+    >
+      <span className="min-w-0">
+        <span className="block text-[14px] text-ink-2">{label}</span>
+        {note && <span className="block text-[11px] text-ink-3">{note}</span>}
+      </span>
+      <span
+        aria-hidden
+        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${value ? "bg-accent" : "bg-grid"}`}
+      >
+        <span
+          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${value ? "left-[22px]" : "left-0.5"}`}
+        />
+      </span>
+    </button>
   );
 }
 

@@ -1,7 +1,15 @@
 // Dexie-backed data hooks — the only way UI components read data.
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, type ActivityRow } from "./db/schema";
+import { db, type ActivityRow, type WorkoutPlanRow, type WorkoutSessionRow } from "./db/schema";
 import { getActivityData, getAllRuns, getRuns, getWellnessRange } from "./db/repo";
+import {
+  getActiveWorkoutSession,
+  getRecentWorkoutSessions,
+  getWorkoutPlan,
+  getWorkoutPlans,
+  getWorkoutSessions,
+  nextPlanInRotation,
+} from "./db/workouts";
 import type { ActivityData, RangeMetric, WellnessMetric, WellnessRow } from "./garmin/types";
 import { isoDate, parseGarminLocal } from "./format";
 import { toRunPoints } from "./derive/series";
@@ -18,6 +26,39 @@ export function useRuns(): ActivityRow[] | undefined {
  *  list and detail screen. */
 export function useAllRuns(): ActivityRow[] | undefined {
   return useLiveQuery(getAllRuns, []);
+}
+
+// ---------- calisthenics ----------
+
+export function useWorkoutPlans(): WorkoutPlanRow[] | undefined {
+  return useLiveQuery(getWorkoutPlans, []);
+}
+
+export function useWorkoutPlan(id: string | null): WorkoutPlanRow | undefined {
+  return useLiveQuery(async () => (id == null ? undefined : getWorkoutPlan(id)), [id]);
+}
+
+/** undefined = loading, null = no session in progress. The extra null matters:
+ *  "nothing running" is a real answer, not a loading state. */
+export function useActiveWorkoutSession(): WorkoutSessionRow | null | undefined {
+  return useLiveQuery(async () => (await getActiveWorkoutSession()) ?? null, []);
+}
+
+export function useRecentWorkoutSessions(limit?: number): WorkoutSessionRow[] | undefined {
+  return useLiveQuery(async () => getRecentWorkoutSessions(limit), [limit]);
+}
+
+export function useNextPlanInRotation(): WorkoutPlanRow | undefined {
+  return useLiveQuery(nextPlanInRotation, []);
+}
+
+/** Counted sessions over the last `days`, oldest first. */
+export function useWorkoutSessions(days: number): WorkoutSessionRow[] | undefined {
+  return useLiveQuery(async () => {
+    const to = isoDate(new Date());
+    const from = isoDate(new Date(Date.now() - days * 86400000));
+    return getWorkoutSessions(from, to);
+  }, [days]);
 }
 
 export function useActivityData(activityId: number | null): ActivityData | undefined {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { TabBar } from "./ui/components/TabBar";
 import { TodayTab } from "./ui/tabs/TodayTab";
+import { TrainingTab } from "./ui/tabs/TrainingTab";
 import { RunsTab } from "./ui/tabs/RunsTab";
 import { SleepTab } from "./ui/tabs/SleepTab";
 import { TrendsTab } from "./ui/tabs/TrendsTab";
@@ -12,6 +13,7 @@ import { useUi } from "./store/uiStore";
 import { isConnected, bootstrapFromJson } from "./lib/garmin/auth";
 import { getDisplayName } from "./lib/garmin/client";
 import { getKv, getSyncState } from "./lib/db/repo";
+import { ensureWorkoutPlansSeeded } from "./lib/db/workouts";
 import { isMockMode } from "./dev/mockSync";
 import { isSyncRunning, syncNow } from "./lib/sync/engine";
 import { popBack, useBackHandler } from "./lib/backstack";
@@ -58,6 +60,10 @@ export default function App() {
     if (bootStarted) return; // StrictMode double-invokes effects; boot once
     bootStarted = true;
     (async () => {
+      // his calisthenics plan must exist in production, not just mock mode;
+      // idempotent and never overwrites a plan he has edited
+      ensureWorkoutPlansSeeded().catch((e) => console.error("[workouts] seed failed", e));
+
       const sync = useSync.getState();
       const last = await getSyncState<number>("lastSyncAt");
       if (last) sync.setLastSyncAt(last);
@@ -112,6 +118,7 @@ export default function App() {
         ) : (
           <>
             {tab === "today" && <TodayTab onOpenSettings={() => setSettingsOpen(true)} />}
+            {tab === "training" && <TrainingTab />}
             {tab === "runs" && <RunsTab />}
             {tab === "sleep" && <SleepTab />}
             {tab === "trends" && <TrendsTab />}

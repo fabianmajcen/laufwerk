@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
-export type TabId = "today" | "runs" | "sleep" | "trends";
-const TAB_IDS: TabId[] = ["today", "runs", "sleep", "trends"];
+export type TabId = "today" | "training" | "runs" | "sleep" | "trends";
+const TAB_IDS: TabId[] = ["today", "training", "runs", "sleep", "trends"];
 
 interface UiState {
   tab: TabId;
