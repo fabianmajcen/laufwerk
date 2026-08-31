@@ -15,10 +15,13 @@ import {
 import { useWorkout } from "../../store/workoutStore";
 import { PROGRESSION_NOTES } from "../../lib/workouts/planSeed";
 import { WeekStrip } from "../components/WeekStrip";
+import { WorkoutHistory } from "../screens/WorkoutHistory";
+import { ExploreRow } from "../components/SubScreen";
+import { ClockIcon } from "../components/icons";
 import { isoDate } from "../../lib/format";
 import type { WorkoutPlanRow, WorkoutSessionRow } from "../../lib/db/schema";
 
-type View = "main" | { plan: string };
+type View = "main" | { plan: string } | "history";
 
 export function TrainingTab() {
   const [view, setView] = useState<View>("main");
@@ -32,6 +35,14 @@ export function TrainingTab() {
   useBackHandler(view !== "main", useCallback(() => setView("main"), []));
   useTabHome(useCallback(() => setView("main"), []));
   useScrollMemory(`training:${typeof view === "string" ? view : `plan${view.plan}`}`);
+
+  if (view === "history") {
+    return (
+      <SubScreen title="History" onBack={() => setView("main")}>
+        <WorkoutHistory />
+      </SubScreen>
+    );
+  }
 
   if (typeof view === "object") {
     const plan = plans?.find((p) => p.id === view.plan);
@@ -82,6 +93,15 @@ export function TrainingTab() {
             onClick={() => setView({ plan: p.id })}
           />
         ))}
+      </Card>
+      <Card kicker="Go deeper" title="Your training">
+        <ExploreRow
+          title="History"
+          subtitle="Every session and how the weeks look"
+          onClick={() => setView("history")}
+          icon={<ClockIcon />}
+          iconClass="text-[var(--recency-hi)]"
+        />
       </Card>
     </div>
   );

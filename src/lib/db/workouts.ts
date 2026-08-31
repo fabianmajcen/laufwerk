@@ -142,6 +142,40 @@ export async function reapStaleWorkoutSessions(): Promise<WorkoutSessionRow | un
   return active;
 }
 
+// ---------- backup restore ----------
+
+/** Restore plans, sessions and the schedule from a Laufwerk JSON export.
+ *
+ *  This exists because workout data is the only thing in the app Garmin cannot
+ *  give back: everything else re-syncs, so exporting without an import path
+ *  meant the backup was not actually a backup. Merges by primary key rather
+ *  than replacing, so importing an older file cannot delete newer sessions. */
+export async function importWorkouts(json: string): Promise<{ plans: number; sessions: number; schedule: number }> {
+  const parsed = JSON.parse(json) as {
+    workoutPlans?: WorkoutPlanRow[];
+    workoutSessions?: WorkoutSessionRow[];
+    schedule?: ScheduleDayRow[];
+  };
+  const plans = Array.isArray(parsed.workoutPlans) ? parsed.workoutPlans.filter((p) => p && typeof p.id === "string") : [];
+  const sessions = Array.isArray(parsed.workoutSessions)
+    ? parsed.workoutSessions.filter((s) => s && typeof s.id === "string" && typeof s.date === "string")
+    : [];
+  const schedule = Array.isArray(parsed.schedule)
+    ? parsed.schedule.filter((d) => d && typeof d.date === "string" && Array.isArray(d.slots))
+    : [];
+
+  if (!plans.length && !sessions.length && !schedule.length) {
+    throw new Error("No workout data found in that file.");
+  }
+  // never bring back a half-finished session as if it were live
+  const cleaned = sessions.map((s) => (s.status === "active" ? { ...s, status: "abandoned" as const } : s));
+
+  if (plans.length) await db.workoutPlans.bulkPut(plans);
+  if (cleaned.length) await db.workoutSessions.bulkPut(cleaned);
+  if (schedule.length) await db.schedule.bulkPut(schedule);
+  return { plans: plans.length, sessions: cleaned.length, schedule: schedule.length };
+}
+
 // ---------- schedule ----------
 
 export async function getScheduleRange(from: string, to: string): Promise<ScheduleDayRow[]> {

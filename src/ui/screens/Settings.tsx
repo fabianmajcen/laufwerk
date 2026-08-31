@@ -8,8 +8,11 @@ import { abortSync, syncNow } from "../../lib/sync/engine";
 import { exportBackup } from "../../lib/export";
 import { APP_VERSION, isUpdaterConfigured } from "../../lib/updater";
 import { db } from "../../lib/db/schema";
+import { importWorkouts } from "../../lib/db/workouts";
 
 export function Settings({ onBack }: { onBack: () => void }) {
+  const [importing, setImporting] = useState(false);
+  const [importText, setImportText] = useState("");
   const settings = useSettings();
   const sync = useSync();
 
@@ -150,6 +153,42 @@ export function Settings({ onBack }: { onBack: () => void }) {
         >
           Clear synced Garmin data
         </button>
+        <button
+          onClick={() => setImporting((v) => !v)}
+          className="mt-2 w-full rounded-lg bg-page py-2 text-[13px] text-ink-2"
+        >
+          Restore workouts from a backup
+        </button>
+        {importing && (
+          <div className="mt-2">
+            <textarea
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+              placeholder="Paste the contents of a laufwerk-backup JSON file"
+              rows={4}
+              className="w-full rounded-lg bg-page p-2 text-[12px] text-ink placeholder:text-ink-3"
+            />
+            <button
+              onClick={async () => {
+                try {
+                  const n = await importWorkouts(importText);
+                  setImportText("");
+                  setImporting(false);
+                  alert(`Restored ${n.plans} plans, ${n.sessions} sessions and ${n.schedule} scheduled days.`);
+                } catch (e) {
+                  alert(`Restore failed: ${e instanceof Error ? e.message : e}`);
+                }
+              }}
+              className="mt-1 w-full rounded-lg bg-page py-2 text-[13px] text-accent"
+            >
+              Restore
+            </button>
+            <p className="mt-1 text-[11px] leading-relaxed text-ink-3">
+              Merges by id, so nothing newer gets deleted. Only workout plans, sessions and the schedule are read:
+              Garmin data is left alone because it re-syncs on its own.
+            </p>
+          </div>
+        )}
         <button
           onClick={async () => {
             if (!confirm("Delete every logged workout session and the schedule? Your A/B/C plans stay. This cannot be undone: workout history never came from Garmin, so it cannot be re-synced.")) return;
