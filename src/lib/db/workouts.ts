@@ -169,29 +169,46 @@ export async function removeScheduleSlot(date: string, index: number): Promise<v
   await setScheduleSlots(date, day.slots.filter((_, i) => i !== index));
 }
 
-/** The plan after the last one that actually happened, cycling on order.
- *  Future scheduled slots count as history, so planning three days ahead
- *  yields A, B, C rather than B, B, B. */
+/** The plan after the last one actually completed, cycling on order. Based only
+ *  on history: scheduled slots carry no letter of their own, they inherit one
+ *  from their position (assignScheduledWorkouts). */
 export async function nextPlanInRotation(): Promise<WorkoutPlanRow | undefined> {
   const plans = await getWorkoutPlans();
   if (!plans.length) return undefined;
 
-  const sessions = (await db.workoutSessions.toArray()).filter(countsTowardWeek);
-  const pairs: { date: string; planId: string }[] = sessions.map((s) => ({ date: s.date, planId: s.planId }));
+  const done = (await db.workoutSessions.toArray())
+    .filter(countsTowardWeek)
+    .sort((a, b) => a.startedAt - b.startedAt);
+  if (!done.length) return plans[0];
 
-  const today = isoDate(new Date());
-  for (const day of await db.schedule.where("date").above(today).toArray()) {
-    for (const slot of day.slots) {
-      if (slot.kind === "workout" && slot.planId) pairs.push({ date: day.date, planId: slot.planId });
-    }
-  }
-
-  if (!pairs.length) return plans[0];
-  pairs.sort((a, b) => a.date.localeCompare(b.date));
-  const lastId = pairs[pairs.length - 1].planId;
-  const idx = plans.findIndex((p) => p.id === lastId);
-  if (idx < 0) return plans[0]; // last one was archived or unknown
+  const idx = plans.findIndex((p) => p.id === done[done.length - 1].planId);
+  if (idx < 0) return plans[0]; // the last one was archived or unknown
   return plans[(idx + 1) % plans.length];
+}
+
+/** Which session each upcoming scheduled workout becomes, keyed "date#index".
+ *  Walks every future workout slot in date order from the rotation's next plan,
+ *  so adding a workout on Wednesday when Friday was already planned makes
+ *  Wednesday the earlier letter and pushes Friday to the next one. */
+export async function assignScheduledWorkouts(now = new Date()): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  const plans = await getWorkoutPlans();
+  if (!plans.length) return out;
+
+  const start = await nextPlanInRotation();
+  let i = Math.max(0, plans.findIndex((p) => p.id === start?.id));
+
+  const days = (await db.schedule.where("date").aboveOrEqual(isoDate(now)).toArray()).sort((a, b) =>
+    a.date.localeCompare(b.date),
+  );
+  for (const day of days) {
+    day.slots.forEach((slot, index) => {
+      if (slot.kind !== "workout") return;
+      out.set(`${day.date}#${index}`, plans[i % plans.length].id);
+      i++;
+    });
+  }
+  return out;
 }
 
 export async function hasFutureSlot(kind: "workout" | "run", today = isoDate(new Date())): Promise<boolean> {
@@ -219,7 +236,12 @@ export async function suggestNextWorkoutDates(
   const hasWorkout = new Set<string>();
   const hasRun = new Set<string>();
   for (const day of schedule) {
-    for (const s of day.slots) (s.kind === "workout" ? hasWorkout : hasRun).add(day.date);
+    for (const s of day.slots) {
+      // a planned rest day is off limits for a workout, same as one already
+      // holding a workout
+      if (s.kind === "workout" || s.kind === "rest") hasWorkout.add(day.date);
+      else if (s.kind === "run") hasRun.add(day.date);
+    }
   }
   for (const s of sessions) if (countsTowardWeek(s)) hasWorkout.add(s.date);
   for (const r of runs) {

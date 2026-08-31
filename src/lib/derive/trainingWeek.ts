@@ -14,7 +14,7 @@ export interface TrainingDay {
   sessions: WorkoutSessionRow[];
   /** fulfilment is derived, never stored: runs arrive from Garmin long after a
    *  slot was written, so a stored flag would go stale */
-  slots: { kind: "workout" | "run"; planId?: string | null; fulfilled: boolean }[];
+  slots: { kind: "workout" | "run" | "rest"; planId?: string | null; fulfilled: boolean }[];
 }
 
 export interface TrainingWeek {
@@ -38,6 +38,8 @@ export function buildTrainingWeek(args: {
   runs: ActivityRow[];
   sessions: WorkoutSessionRow[];
   schedule?: ScheduleDayRow[];
+  /** derived session letters for upcoming workout slots, keyed "date#index" */
+  assigned?: Map<string, string>;
   goals: { runsPerWeek: number; workoutsPerWeek: number; minWorkoutsPerWeek: number };
   now?: Date;
 }): TrainingWeek {
@@ -71,18 +73,25 @@ export function buildTrainingWeek(args: {
       isPast: iso < todayIso,
       runs: dayRuns,
       sessions: daySessions,
-      slots: planned.map((slot) => {
+      slots: planned.map((slot, index) => {
+        // the letter comes from the upcoming order, not from the stored slot
+        const planId = slot.kind === "workout" ? (args.assigned?.get(`${iso}#${index}`) ?? slot.planId) : slot.planId;
         // a slot is filled by any matching activity that day, regardless of
         // which plan: scheduled B and did C still counts
         if (slot.kind === "run" && runsLeft > 0) {
           runsLeft--;
-          return { kind: slot.kind, planId: slot.planId, fulfilled: true };
+          return { kind: slot.kind, planId, fulfilled: true };
         }
         if (slot.kind === "workout" && sessionsLeft > 0) {
           sessionsLeft--;
-          return { kind: slot.kind, planId: slot.planId, fulfilled: true };
+          return { kind: slot.kind, planId, fulfilled: true };
         }
-        return { kind: slot.kind, planId: slot.planId, fulfilled: false };
+        // a rest day is "fulfilled" by simply not training, so it never shows
+        // as an unmet plan
+        if (slot.kind === "rest") {
+          return { kind: slot.kind, planId, fulfilled: dayRuns.length === 0 && daySessions.length === 0 };
+        }
+        return { kind: slot.kind, planId, fulfilled: false };
       }),
     });
   }

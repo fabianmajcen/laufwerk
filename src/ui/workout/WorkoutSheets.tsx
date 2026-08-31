@@ -47,7 +47,8 @@ export function WorkoutFinishedSheet() {
             <SheetButton
               key={d}
               onClick={() => {
-                void addScheduleSlot(d, { kind: "workout", planId: offer.next.id, source: "manual" });
+                // letterless: the session it becomes follows from the upcoming order
+                void addScheduleSlot(d, { kind: "workout", planId: null, source: "manual" });
                 dismiss();
               }}
             >

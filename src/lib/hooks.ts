@@ -3,6 +3,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db, type ActivityRow, type WorkoutPlanRow, type WorkoutSessionRow } from "./db/schema";
 import { getActivityData, getAllRuns, getRuns, getWellnessRange } from "./db/repo";
 import {
+  assignScheduledWorkouts,
   getActiveWorkoutSession,
   getRecentWorkoutSessions,
   getScheduleRange,
@@ -67,16 +68,20 @@ export function useTrainingWeek(weeksBack = 0): TrainingWeek | undefined {
     const { start, end } = weekRange(weeksBack);
     const from = isoDate(start);
     const to = isoDate(new Date(end.getTime() - 86400000));
-    const [runs, sessions, schedule] = await Promise.all([
+    const [runs, sessions, schedule, assigned] = await Promise.all([
       getRuns(),
       getWorkoutSessions(from, to),
       getScheduleRange(from, to),
+      // assigned globally from today forward, so letters stay in sequence
+      // across week boundaries rather than restarting each week
+      assignScheduledWorkouts(),
     ]);
     return buildTrainingWeek({
       weeksBack,
       runs,
       sessions,
       schedule,
+      assigned,
       goals: { runsPerWeek, workoutsPerWeek, minWorkoutsPerWeek },
     });
   }, [weeksBack, runsPerWeek, workoutsPerWeek, minWorkoutsPerWeek]);

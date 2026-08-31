@@ -118,8 +118,11 @@ export interface WorkoutSessionRow {
 }
 
 export interface ScheduleSlot {
-  kind: "workout" | "run";
-  /** null = "a workout, decide later" */
+  kind: "workout" | "run" | "rest";
+  /** Left null for workouts: which session a planned slot becomes is DERIVED
+   *  from its position in the upcoming order (see assignScheduledWorkouts), so
+   *  inserting a workout earlier in the week reshuffles the later letters
+   *  instead of leaving a stale one behind. */
   planId?: string | null;
   /** a re-suggest may rewrite "suggested" slots, never "manual" ones */
   source: "manual" | "suggested";

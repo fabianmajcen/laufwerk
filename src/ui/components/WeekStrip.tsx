@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Card } from "./ScreenHeader";
 import { Sheet, SheetButton } from "./Sheet";
 import { DumbbellGlyph, RunGlyph } from "./icons";
-import { useTrainingWeek, useWorkoutPlans } from "../../lib/hooks";
+import { useTrainingWeek } from "../../lib/hooks";
 import { addScheduleSlot, removeScheduleSlot } from "../../lib/db/workouts";
 import type { TrainingDay } from "../../lib/derive/trainingWeek";
 
@@ -28,7 +28,6 @@ export function WeekStrip() {
   const [offset, setOffset] = useState(0);
   const [picking, setPicking] = useState<string | null>(null);
   const week = useTrainingWeek(offset);
-  const plans = useWorkoutPlans();
 
   if (!week) return null;
 
@@ -47,18 +46,23 @@ export function WeekStrip() {
 
   // what is actually next: the readiness card above already gives the run
   // advice, so this stays factual about the plan rather than repeating it
+  const describeSlot = (s: TrainingDay["slots"][number]) =>
+    s.kind === "run" ? "a run" : s.kind === "rest" ? "rest" : `day ${s.planId ?? "workout"}`;
+  const open = (d: TrainingDay) => d.slots.filter((s) => s.kind === "rest" || !s.fulfilled);
+
   const today = week.days.find((d) => d.isToday);
-  const todayOpen = today?.slots.filter((s) => !s.fulfilled) ?? [];
-  const nextPlanned = week.days.find((d) => !d.isPast && !d.isToday && d.slots.some((s) => !s.fulfilled));
+  const todayOpen = today ? open(today) : [];
+  const nextPlanned = week.days.find((d) => !d.isPast && !d.isToday && open(d).length > 0);
   const hint =
     offset !== 0
       ? undefined
       : todayOpen.length > 0
-        ? `Planned today: ${todayOpen.map((s) => (s.kind === "run" ? "a run" : `day ${s.planId ?? "?"}`)).join(" and ")}.`
+        ? `Planned today: ${todayOpen.map(describeSlot).join(" and ")}.`
         : nextPlanned
-          ? `Next up ${new Date(nextPlanned.date + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long" })}: ${nextPlanned.slots
-              .filter((s) => !s.fulfilled)
-              .map((s) => (s.kind === "run" ? "a run" : `day ${s.planId ?? "?"}`))
+          ? `Next up ${new Date(nextPlanned.date + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long" })}: ${open(
+              nextPlanned,
+            )
+              .map(describeSlot)
               .join(" and ")}.`
           : "Nothing planned yet. Tap a day to put something in.";
 
@@ -88,6 +92,7 @@ export function WeekStrip() {
             done={runs.done}
             goal={runs.planned}
             label="runs"
+            extra={`${runs.km.toFixed(1)} km`}
           />
           <Counter
             icon={<DumbbellGlyph size={13} />}
@@ -110,9 +115,11 @@ export function WeekStrip() {
           subtitle={describeDay(pickedDay)}
           onClose={() => setPicking(null)}
         >
-          {/* clearing comes first when there is something to clear */}
+          {/* clearing comes first when there is something to clear. A rest day
+              counts as fulfilled the moment you do not train, so it is always
+              removable, unlike a run or workout that already happened. */}
           {pickedDay.slots.map((s, i) =>
-            s.fulfilled ? null : (
+            s.fulfilled && s.kind !== "rest" ? null : (
               <SheetButton
                 key={`rm${i}`}
                 tone="danger"
@@ -121,21 +128,21 @@ export function WeekStrip() {
                   setPicking(null);
                 }}
               >
-                Remove planned {s.kind === "run" ? "run" : `day ${s.planId ?? ""}`}
+                Remove planned {s.kind === "run" ? "run" : s.kind === "rest" ? "rest day" : `day ${s.planId ?? "workout"}`}
               </SheetButton>
             ),
           )}
-          {(plans ?? []).map((p) => (
-            <SheetButton
-              key={p.id}
-              onClick={() => {
-                void addScheduleSlot(picking, { kind: "workout", planId: p.id, source: "manual" });
-                setPicking(null);
-              }}
-            >
-              Plan day {p.id} · {p.title}
-            </SheetButton>
-          ))}
+          {/* no letter to choose: which session it becomes follows from where
+              it lands in the order, and inserting an earlier one reshuffles
+              the rest automatically */}
+          <SheetButton
+            onClick={() => {
+              void addScheduleSlot(picking, { kind: "workout", planId: null, source: "manual" });
+              setPicking(null);
+            }}
+          >
+            Plan a workout
+          </SheetButton>
           <SheetButton
             onClick={() => {
               void addScheduleSlot(picking, { kind: "run", source: "manual" });
@@ -143,6 +150,14 @@ export function WeekStrip() {
             }}
           >
             Plan a run
+          </SheetButton>
+          <SheetButton
+            onClick={() => {
+              void addScheduleSlot(picking, { kind: "rest", source: "manual" });
+              setPicking(null);
+            }}
+          >
+            Plan a rest day
           </SheetButton>
         </Sheet>
       )}
@@ -155,9 +170,11 @@ function DayCell({ day, weekday, onClick }: { day: TrainingDay; weekday: string;
   const didRun = day.runs.length > 0;
   const plannedWorkouts = day.slots.filter((s) => s.kind === "workout" && !s.fulfilled);
   const plannedRun = day.slots.some((s) => s.kind === "run" && !s.fulfilled);
-  const empty = !didRun && !doneLetters.length && !plannedWorkouts.length && !plannedRun;
-  // only a past day can be called a rest day; today is not over yet
-  const rest = empty && day.isPast;
+  const plannedRest = day.slots.some((s) => s.kind === "rest");
+  const empty = !didRun && !doneLetters.length && !plannedWorkouts.length && !plannedRun && !plannedRest;
+  // a past day with nothing on it reads as rest too, just more faintly than one
+  // you deliberately planned
+  const impliedRest = empty && day.isPast;
 
   return (
     <button
@@ -196,8 +213,10 @@ function DayCell({ day, weekday, onClick }: { day: TrainingDay; weekday: string;
             <RunGlyph size={15} />
           </span>
         )}
-        {/* a past day with nothing on it: read as rest, not as a gap */}
-        {rest && <span className="h-0.5 w-3.5 rounded-full bg-grid" />}
+        {/* a deliberate rest day is a visible dash; an unplanned empty past day
+            gets the same shape, fainter */}
+        {plannedRest && <span className="h-0.5 w-3.5 rounded-full bg-[var(--ink-3)]" />}
+        {impliedRest && <span className="h-0.5 w-3.5 rounded-full bg-grid" />}
       </span>
     </button>
   );
@@ -210,6 +229,7 @@ function Counter({
   goal,
   floor,
   label,
+  extra,
 }: {
   icon: React.ReactNode;
   color: string;
@@ -217,6 +237,8 @@ function Counter({
   goal: number;
   floor?: number;
   label: string;
+  /** a secondary stat pinned right, e.g. the week's km */
+  extra?: string;
 }) {
   const pct = goal > 0 ? Math.min(100, (done / goal) * 100) : 0;
   return (
@@ -227,6 +249,7 @@ function Counter({
           {done}/{goal}
         </span>
         <span className="truncate text-[11px] text-ink-3">{label}</span>
+        {extra && <span className="tnum ml-auto shrink-0 text-[12px] font-medium text-ink-2">{extra}</span>}
       </div>
       <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-grid">
         <div className="h-full rounded-full transition-[width] duration-300" style={{ width: `${pct}%`, background: color }} />
@@ -259,8 +282,12 @@ function describeDay(day: TrainingDay): string {
   for (const s of day.sessions) parts.push(`day ${s.planId} done`);
   if (day.runs.length) parts.push(day.runs.length > 1 ? `${day.runs.length} runs` : "run done");
   for (const s of day.slots) {
+    if (s.kind === "rest") {
+      parts.push("rest day planned");
+      continue;
+    }
     if (s.fulfilled) continue;
-    parts.push(s.kind === "run" ? "run planned" : `day ${s.planId ?? "?"} planned`);
+    parts.push(s.kind === "run" ? "run planned" : `day ${s.planId ?? "workout"} planned`);
   }
   if (!parts.length) return day.isPast ? "rest day" : "nothing planned";
   return parts.join(" · ");
