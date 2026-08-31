@@ -45,14 +45,24 @@ without re-deriving anything.
         week math (WeekPlanCard + widget effect) now use it
   - [x] `TodayTab.tsx` second pill row (violet, dashed bonus slot, session letters)
   - [x] `widget.ts` weekLine + caliDone/caliPlanned (no Java change needed)
-- [ ] **M4 scheduling** ← NEXT
-  - [ ] "Plan your week" SubScreen: 7 day rows, workout (A/B/C or undecided) or run
-  - [ ] `suggestNextWorkoutDates` + "suggest this week" writing `source: "suggested"`
-  - [ ] post-session prompt: only when the session counted, `askToScheduleNext` is on,
-        and NO future workout slot exists (that last clause is what stops it nagging)
-  - [ ] runs: non-modal CTA on the week card, not a popup fired by background sync
-  - [ ] tapping an empty pill on Today opens the planner
-- [ ] M5 history + JSON restore
+- [x] **Week card separation** (v0.2.36): pager on its own line, then a runs block and a
+      workouts block split by a hairline, each label directly above its own pills
+- [x] **M4 scheduling** — v0.2.36
+  - [x] "Plan your week" SubScreen: 14 day rows, workout (A/B/C) or run slots via sheet,
+        tap a chip to remove, trained days show "done"
+  - [x] `suggestNextWorkoutDates`: after the rest gap, skips days already holding a
+        workout or a done session, prefers run-free days
+  - [x] post-session prompt gated on counted + setting + no future workout slot.
+        Verified both ways: first finish offered Wed/Thu/Fri, next finish offered nothing
+  - [x] Today card says "Day B planned for Wednesday"
+  - [ ] optional later: a "suggest this week" bulk button writing `source: "suggested"`
+        (the field exists; only manual slots are written today)
+- [ ] **M5 history + JSON restore** ← NEXT
+  - [ ] session history list (day, plan, sets, partial badge, discarded dimmed)
+  - [ ] consistency view (sessions per week over ~12 weeks)
+  - [ ] `importWorkouts(json)` paste box in Settings — export is currently write-only and
+        workout data is the ONLY non-resyncable data in the app
+  - [ ] optional one-line session note
 
 ## Gotchas hit during implementation
 
