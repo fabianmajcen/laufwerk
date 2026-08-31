@@ -8,7 +8,6 @@ import { Sheet, SheetButton } from "./Sheet";
 import { DumbbellGlyph, RunGlyph } from "./icons";
 import { useTrainingWeek, useWorkoutPlans } from "../../lib/hooks";
 import { addScheduleSlot, removeScheduleSlot } from "../../lib/db/workouts";
-import { isoDate } from "../../lib/format";
 import type { TrainingDay } from "../../lib/derive/trainingWeek";
 
 /** Distinct but low-saturation per session, so A/B/C are told apart at a glance
@@ -266,6 +265,3 @@ function describeDay(day: TrainingDay): string {
   if (!parts.length) return day.isPast ? "rest day" : "nothing planned";
   return parts.join(" · ");
 }
-
-/** today's ISO date, exported so callers can compare without re-deriving it */
-export const todayIso = () => isoDate(new Date());
