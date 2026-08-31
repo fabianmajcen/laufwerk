@@ -12,15 +12,13 @@ import {
   useWorkoutPlans,
   useWorkoutSessions,
 } from "../../lib/hooks";
-import { useSettings } from "../../store/settingsStore";
 import { useWorkout } from "../../store/workoutStore";
 import { PROGRESSION_NOTES } from "../../lib/workouts/planSeed";
-import { PlanWeek } from "../screens/PlanWeek";
-import { weekStartOf } from "../../lib/derive/weekly";
+import { WeekStrip } from "../components/WeekStrip";
 import { isoDate } from "../../lib/format";
 import type { WorkoutPlanRow, WorkoutSessionRow } from "../../lib/db/schema";
 
-type View = "main" | { plan: string } | "week";
+type View = "main" | { plan: string };
 
 export function TrainingTab() {
   const [view, setView] = useState<View>("main");
@@ -30,19 +28,10 @@ export function TrainingTab() {
   const plans = useWorkoutPlans();
   const sessions = useWorkoutSessions(120);
   const next = useNextPlanInRotation();
-  const goal = useSettings((s) => s.workouts);
 
   useBackHandler(view !== "main", useCallback(() => setView("main"), []));
   useTabHome(useCallback(() => setView("main"), []));
   useScrollMemory(`training:${typeof view === "string" ? view : `plan${view.plan}`}`);
-
-  if (view === "week") {
-    return (
-      <SubScreen title="Plan your week" onBack={() => setView("main")}>
-        <PlanWeek />
-      </SubScreen>
-    );
-  }
 
   if (typeof view === "object") {
     const plan = plans?.find((p) => p.id === view.plan);
@@ -66,7 +55,6 @@ export function TrainingTab() {
     );
   }
 
-  const done = sessions ? countThisWeek(sessions) : 0;
   const hero = plans.find((p) => p.id === picked) ?? next;
 
   return (
@@ -80,12 +68,7 @@ export function TrainingTab() {
         onPick={setPicked}
         lastDone={hero ? lastDoneOf(sessions, hero.id) : null}
       />
-      <WeekCard
-        done={done}
-        goal={goal.workoutsPerWeek}
-        floor={goal.minWorkoutsPerWeek}
-        onPlanWeek={() => setView("week")}
-      />
+      <WeekStrip />
       <Card
         kicker="Your plan"
         title="Sessions"
@@ -166,55 +149,6 @@ function NextUpCard({
       >
         Start day {plan.id}
       </button>
-    </Card>
-  );
-}
-
-function WeekCard({
-  done,
-  goal,
-  floor,
-  onPlanWeek,
-}: {
-  done: number;
-  goal: number;
-  floor: number;
-  onPlanWeek: () => void;
-}) {
-  const slots = Math.max(goal, done);
-  return (
-    <Card
-      kicker="This week"
-      title={`Workouts ${done}/${goal}`}
-      value={
-        <button onClick={onPlanWeek} className="text-[13px] font-medium text-accent active:opacity-70">
-          Plan week ›
-        </button>
-      }
-      info={`Your target is ${floor} to ${goal} sessions a week, so the last slot is drawn as a bonus: hitting ${floor} already counts as on track.`}
-      footnote={
-        done >= goal
-          ? "Week complete. Anything more is a bonus."
-          : done >= floor
-            ? "On track. One more if you feel fresh."
-            : `${floor - done} to go to stay on track.`
-      }
-    >
-      <div className="flex gap-2">
-        {Array.from({ length: slots }, (_, i) => {
-          const filled = i < done;
-          const bonus = i >= floor;
-          return (
-            <div
-              key={i}
-              aria-label={filled ? "workout done" : bonus ? "bonus slot" : "workout pending"}
-              className={`h-2.5 flex-1 rounded-full ${
-                filled ? "bg-accent" : bonus ? "border border-dashed border-hairline" : "bg-grid"
-              }`}
-            />
-          );
-        })}
-      </div>
     </Card>
   );
 }
@@ -309,11 +243,6 @@ function PlanDetail({ plan, onStart }: { plan: WorkoutPlanRow; onStart: () => vo
 function fmtRest(sec: number, max?: number): string {
   const one = (s: number) => (s % 60 === 0 ? `${s / 60} min` : `${s}s`);
   return max && max !== sec ? `${one(sec)} to ${one(max)}` : one(sec);
-}
-
-function countThisWeek(sessions: WorkoutSessionRow[]): number {
-  const from = isoDate(weekStartOf(new Date()));
-  return sessions.filter((s) => s.date >= from).length;
 }
 
 function lastDoneOf(sessions: WorkoutSessionRow[] | undefined, planId: string): string | null {

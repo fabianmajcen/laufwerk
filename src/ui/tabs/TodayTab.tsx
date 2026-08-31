@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { updateWidgetData } from "../../lib/widget";
 import { ScreenHeader, Card } from "../components/ScreenHeader";
 import { SubScreen } from "../components/SubScreen";
+import { WeekStrip } from "../components/WeekStrip";
 import { DailyMetricDetail, type DailyMetric } from "../screens/DailyMetricDetail";
 import { useBackHandler } from "../../lib/backstack";
 import { useScrollMemory } from "../../lib/scrollMemory";
@@ -16,12 +17,10 @@ import {
   useTrainingWeek,
   useWellnessRange,
 } from "../../lib/hooks";
-import { useSettings } from "../../store/settingsStore";
 import { useSync } from "../../store/syncStore";
 import { useUi } from "../../store/uiStore";
 import { syncNow } from "../../lib/sync/engine";
 import { fmtDay, fmtHoursMin, fmtKm, fmtPace, isoDate, parseGarminLocal, speedToPace } from "../../lib/format";
-import { weekStartOf } from "../../lib/derive/weekly";
 import { useTabHome } from "../../lib/tabHome";
 import { FootprintsIcon, HeartIcon, WavesIcon } from "../components/icons";
 
@@ -91,7 +90,7 @@ export function TodayTab({ onOpenSettings }: { onOpenSettings?: () => void }) {
         )}
       </Card>
 
-      <WeekPlanCard />
+      <WeekStrip />
       <BodyBatteryToday />
       <LastNightMini />
       <DayChips onOpen={setView} />
@@ -114,145 +113,6 @@ function SyncErrorBanner() {
         Retry
       </button>
     </div>
-  );
-}
-
-function WeekPlanCard() {
-  const runs = useRuns();
-  const plan = useSettings((s) => s.plan);
-  const [weeksBack, setWeeksBack] = useState(0);
-  const week = useTrainingWeek(weeksBack);
-  if (!runs || !week) return null;
-
-  const now = new Date();
-  const currentWeekStart = weekStartOf(now);
-  const weekStart = week.weekStart;
-  const km = week.runs.km;
-  const done = week.runs.done;
-  const wDone = week.workouts.done;
-  const wGoal = week.workouts.planned;
-  const wFloor = week.workouts.floor;
-
-  // browse back to the week of the oldest run
-  const oldest = runs.length ? weekStartOf(parseGarminLocal(runs[runs.length - 1].startTimeLocal)) : currentWeekStart;
-  const canGoBack = weekStart > oldest;
-
-  const lastRun = runs.length ? parseGarminLocal(runs[0].startTimeLocal) : null;
-  // calendar days, not elapsed hours: a run yesterday evening is 1 day ago
-  // this morning even if fewer than 24h have passed
-  const daysSince = lastRun
-    ? Math.floor(
-        (new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() -
-          new Date(lastRun.getFullYear(), lastRun.getMonth(), lastRun.getDate()).getTime()) /
-          86400000,
-      )
-    : 99;
-  const footnote =
-    weeksBack === 0
-      ? done >= plan.runsPerWeek
-        ? "Week's plan complete. Bonus runs are optional."
-        : daysSince < 1
-          ? "Ran today. Rest tomorrow, next slot after."
-          : daysSince === 1
-            ? "Ran yesterday. Rest today; tomorrow works."
-            : "A run slot is open. Today works."
-      : done >= plan.runsPerWeek
-        ? "Plan met."
-        : `${plan.runsPerWeek - done} short of plan.`;
-
-  const weekLabel =
-    weeksBack === 0
-      ? "This week"
-      : `Week of ${weekStart.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
-
-  // what is actually planned and still open, so the plan is visible where the
-  // progress is rather than only inside the planner
-  const todayIso = isoDate(now);
-  const openWorkoutSlots = week.days
-    .filter((d) => d.date >= todayIso)
-    .flatMap((d) => d.slots.filter((s) => s.kind === "workout" && !s.fulfilled).map((s) => ({ ...s, date: d.date })));
-  const nextSlot = openWorkoutSlots[0];
-  const upcoming =
-    weeksBack !== 0 || !nextSlot
-      ? null
-      : nextSlot.date === todayIso
-        ? `Day ${nextSlot.planId ?? "?"} planned for today.`
-        : `Day ${nextSlot.planId ?? "?"} planned for ${new Date(nextSlot.date + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long" })}.`;
-
-  return (
-    // one card, because the week pager governs both, but each discipline gets
-    // its own labelled block with a hairline between: stacking two bare pill
-    // rows between the arrows left it ambiguous which label owned which row
-    <Card kicker="Week">
-      <div className="mb-3 flex items-center justify-between">
-        <WeekBtn dir="prev" onClick={canGoBack ? () => setWeeksBack(weeksBack + 1) : undefined} />
-        <span className="text-[14px] font-medium">{weekLabel}</span>
-        <WeekBtn dir="next" onClick={weeksBack > 0 ? () => setWeeksBack(weeksBack - 1) : undefined} />
-      </div>
-
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[14px] font-medium text-ink-2">
-          Runs {done}/{plan.runsPerWeek}
-        </span>
-        <span className="tnum text-[17px] font-semibold">{km.toFixed(1)} km</span>
-      </div>
-      <div className="mt-2 flex gap-2">
-        {Array.from({ length: Math.max(plan.runsPerWeek, done) }, (_, i) => (
-          <div
-            key={i}
-            className={`h-2.5 flex-1 rounded-full ${i < done ? "bg-accent" : "bg-grid"}`}
-            aria-label={i < done ? "run done" : "run pending"}
-          />
-        ))}
-      </div>
-      {/* the hint is about running, so it lives in the runs block rather than
-          floating at the bottom of the card under the workout pills */}
-      <p className="mt-2 text-[12px] text-ink-3">{footnote}</p>
-
-      <div className="my-3 border-t border-hairline" />
-
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[14px] font-medium text-ink-2">
-          Workouts {wDone}/{wGoal}
-        </span>
-        {week.workouts.letters.length > 0 && (
-          <span className="tnum text-[13px] text-ink-3">{week.workouts.letters.join(" · ")}</span>
-        )}
-      </div>
-      {upcoming && <p className="mt-1 text-[12px] text-ink-3">{upcoming}</p>}
-      <div className="mt-2 flex gap-2">
-        {/* the third slot is dashed as a bonus, so a two-workout week reads as
-            on track rather than failed */}
-        {Array.from({ length: Math.max(wGoal, wDone) }, (_, i) => {
-          const filled = i < wDone;
-          const bonus = i >= wFloor;
-          return (
-            <div
-              key={i}
-              aria-label={filled ? "workout done" : bonus ? "bonus workout slot" : "workout pending"}
-              className={`h-2.5 flex-1 rounded-full ${
-                filled ? "bg-[var(--recency-hi)]" : bonus ? "border border-dashed border-hairline" : "bg-grid"
-              }`}
-            />
-          );
-        })}
-      </div>
-    </Card>
-  );
-}
-
-function WeekBtn({ dir, onClick }: { dir: "prev" | "next"; onClick?: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={!onClick}
-      aria-label={dir === "prev" ? "previous week" : "next week"}
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-page text-ink-2 disabled:opacity-25"
-    >
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-        {dir === "prev" ? <path d="M14.5 6l-6 6 6 6" /> : <path d="M9.5 6l6 6-6 6" />}
-      </svg>
-    </button>
   );
 }
 
