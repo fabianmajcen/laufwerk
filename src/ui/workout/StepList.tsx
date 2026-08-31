@@ -8,12 +8,10 @@ export function StepList({
   plan,
   session,
   onJump,
-  onUndo,
 }: {
   plan: WorkoutPlanRow;
   session: WorkoutSessionRow;
   onJump: (i: number) => void;
-  onUndo: () => void;
 }) {
   const cursor = session.cursor ?? 0;
   const currentRef = useRef<HTMLDivElement>(null);
@@ -62,15 +60,6 @@ export function StepList({
                   set {Math.min(done + 1, e.sets)} of {e.sets}
                   {e.perSide && session.halfSet ? " · right side" : ""}
                 </span>
-                {done > 0 && (
-                  <button
-                    onClick={onUndo}
-                    aria-label="Undo last completed set"
-                    className="-my-2 ml-auto px-3 py-2 text-[12px] text-ink-3"
-                  >
-                    undo
-                  </button>
-                )}
               </div>
 
               {e.note && (

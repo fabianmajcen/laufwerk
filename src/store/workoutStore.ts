@@ -102,6 +102,9 @@ export const useWorkout = create<WorkoutState>((set, get) => ({
 
     const done = (session.progress[step.id] ?? 0) + 1;
     const progress = { ...session.progress, [step.id]: done };
+    // doing a set on a skipped exercise un-skips it: recovering from a
+    // mis-tapped skip should just be a matter of doing the work
+    const skipped = (session.skipped ?? []).filter((id) => id !== step.id);
     const lastSet = done >= step.sets;
     const cursor = lastSet ? Math.min((session.cursor ?? 0) + 1, plan.exercises.length) : (session.cursor ?? 0);
     // rest is per exercise; 0 means self-paced, so never invent one
@@ -109,6 +112,7 @@ export const useWorkout = create<WorkoutState>((set, get) => ({
     const next: WorkoutSessionRow = {
       ...session,
       progress,
+      skipped,
       cursor,
       halfSet: false,
       holdStartedAt: null,

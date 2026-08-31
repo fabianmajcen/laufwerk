@@ -22,11 +22,12 @@ export function WorkoutPlayer() {
   const minimize = useWorkout((s) => s.minimize);
   const store = useWorkout;
   const [endOpen, setEndOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const sound = useSettings((s) => s.workouts.restCueSound);
   const setWorkouts = useSettings((s) => s.setWorkouts);
 
   // back closes the sheet first, otherwise minimizes; never destructive
-  useBackHandler(!endOpen, useCallback(() => minimize(), [minimize]));
+  useBackHandler(!endOpen && !moreOpen, useCallback(() => minimize(), [minimize]));
 
   // elapsed ticks once a second; cheap and only while the player is open
   const now = useNow(session != null, 1000);
@@ -80,12 +81,12 @@ export function WorkoutPlayer() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto py-3">
-        <StepList plan={plan} session={session} onJump={store.getState().jumpTo} onUndo={store.getState().undoSet} />
+        <StepList plan={plan} session={session} onJump={store.getState().jumpTo} />
       </div>
 
       <div
         className="shrink-0 border-t border-hairline bg-card px-4 pt-3"
-        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 12px)" }}
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 28px)" }}
       >
         <ActionDock
           step={step}
@@ -94,12 +95,43 @@ export function WorkoutPlayer() {
           onSetDone={store.getState().completeSet}
           onStartHold={store.getState().startHold}
           onStopHold={store.getState().stopHold}
-          onSkipExercise={store.getState().skipExercise}
+          onMore={() => setMoreOpen(true)}
           onAddRest={store.getState().addRest}
           onSkipRest={store.getState().skipRest}
           onFinish={() => void store.getState().finish()}
         />
       </div>
+
+      {moreOpen && (
+        <Sheet
+          title={step?.name ?? "Session"}
+          subtitle="Rare actions live here so they cannot be hit by accident mid-set."
+          onClose={() => setMoreOpen(false)}
+        >
+          {setsDone(session) > 0 && (
+            <SheetButton
+              onClick={() => {
+                store.getState().undoSet();
+                setMoreOpen(false);
+              }}
+            >
+              Undo last set
+            </SheetButton>
+          )}
+          {step && (
+            <SheetButton
+              tone="danger"
+              onClick={() => {
+                store.getState().skipExercise();
+                setMoreOpen(false);
+              }}
+            >
+              Skip {step.name}
+            </SheetButton>
+          )}
+          <SheetButton onClick={() => setMoreOpen(false)}>Back to the set</SheetButton>
+        </Sheet>
+      )}
 
       {endOpen && (
         <Sheet
