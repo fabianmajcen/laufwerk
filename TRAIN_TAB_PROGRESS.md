@@ -119,6 +119,20 @@ audible beep at real media volume and while music plays · vibration · screen s
 awake for a full session and sleeping again afterwards · hardware back minimizing ·
 force-stop and relaunch · the Dexie v2 upgrade over an installed v1 build
 
+## Widget (v0.2.42)
+
+The Mon-Sun grid IS the widget; score + counters are one line under it. Notes:
+- Provider was targetCellHeight=1 (~50dp) with a ~130dp layout, so it clipped on a
+  smaller-celled phone (Flip 8). Now minHeight 80dp / targetCellHeight 2 / resizeMode
+  horizontal|vertical.
+- The grid is FIRST in the layout deliberately: cell sizes vary by device, so the summary
+  line should be what clips, never the calendar.
+- Run glyph is a real vector () drawn tinted, so it matches the
+  app rather than being approximated with a dot.
+- Widget only redraws when the app writes a payload or every 30 min (updatePeriodMillis),
+  so after an APK update: open the app once, then look.
+- Java is invisible to tsc: always run  after touching it.
+
 ## Player design rules (learned from real use, v0.2.41)
 
 1. **Never substitute the working control.** "Finish session" used to REPLACE the dock once
