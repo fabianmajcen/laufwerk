@@ -13,7 +13,12 @@ import { useUi } from "./store/uiStore";
 import { isConnected, bootstrapFromJson } from "./lib/garmin/auth";
 import { getDisplayName } from "./lib/garmin/client";
 import { getKv, getSyncState } from "./lib/db/repo";
-import { ensureWorkoutPlansSeeded } from "./lib/db/workouts";
+import { ensureWorkoutPlansSeeded, reapStaleWorkoutSessions } from "./lib/db/workouts";
+import { useWorkout } from "./store/workoutStore";
+import { WorkoutRuntime } from "./ui/workout/WorkoutRuntime";
+import { WorkoutPlayer } from "./ui/workout/WorkoutPlayer";
+import { WorkoutMiniBar } from "./ui/workout/WorkoutMiniBar";
+import { WorkoutFinishedSheet, StaleSessionSheet } from "./ui/workout/WorkoutSheets";
 import { isMockMode } from "./dev/mockSync";
 import { isSyncRunning, syncNow } from "./lib/sync/engine";
 import { popBack, useBackHandler } from "./lib/backstack";
@@ -35,6 +40,8 @@ export default function App() {
   const setTab = useUi((s) => s.setTab);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const theme = useSettings((s) => s.theme);
+  const workoutSession = useWorkout((s) => s.session);
+  const playerOpen = useWorkout((s) => s.playerOpen);
 
   useBackHandler(
     settingsOpen,
@@ -62,7 +69,11 @@ export default function App() {
     (async () => {
       // his calisthenics plan must exist in production, not just mock mode;
       // idempotent and never overwrites a plan he has edited
-      ensureWorkoutPlansSeeded().catch((e) => console.error("[workouts] seed failed", e));
+      await ensureWorkoutPlansSeeded().catch((e) => console.error("[workouts] seed failed", e));
+      // an "active" row from an earlier day either gets a verdict or is dropped,
+      // then resume anything still live from today
+      await reapStaleWorkoutSessions().catch(() => undefined);
+      await useWorkout.getState().hydrate().catch(() => {});
 
       const sync = useSync.getState();
       const last = await getSyncState<number>("lastSyncAt");
@@ -112,20 +123,34 @@ export default function App() {
       // exact inset where supported, 32px covers WebViews where it reports 0
       style={Capacitor.isNativePlatform() ? { paddingTop: "max(env(safe-area-inset-top, 0px), 32px)" } : undefined}
     >
-      <PullToSync>
-        {settingsOpen ? (
-          <Settings onBack={() => setSettingsOpen(false)} />
-        ) : (
-          <>
-            {tab === "today" && <TodayTab onOpenSettings={() => setSettingsOpen(true)} />}
-            {tab === "training" && <TrainingTab />}
-            {tab === "runs" && <RunsTab />}
-            {tab === "sleep" && <SleepTab />}
-            {tab === "trends" && <TrendsTab />}
-          </>
-        )}
-      </PullToSync>
-      {!settingsOpen && <TabBar active={tab} onChange={setTab} />}
+      {/* headless: owns the rest alarm, cues and wake lock for as long as a
+          session exists, so they keep working while the player is minimized */}
+      {workoutSession && <WorkoutRuntime />}
+
+      {playerOpen && workoutSession ? (
+        // outside PullToSync on purpose: a downward swipe between sets must not
+        // fire a Garmin sync, and the player wants its own scroll container
+        <WorkoutPlayer />
+      ) : (
+        <PullToSync>
+          {settingsOpen ? (
+            <Settings onBack={() => setSettingsOpen(false)} />
+          ) : (
+            <>
+              {tab === "today" && <TodayTab onOpenSettings={() => setSettingsOpen(true)} />}
+              {tab === "training" && <TrainingTab />}
+              {tab === "runs" && <RunsTab />}
+              {tab === "sleep" && <SleepTab />}
+              {tab === "trends" && <TrendsTab />}
+            </>
+          )}
+        </PullToSync>
+      )}
+
+      {workoutSession && !playerOpen && <WorkoutMiniBar />}
+      {!settingsOpen && !playerOpen && <TabBar active={tab} onChange={setTab} />}
+      <WorkoutFinishedSheet />
+      <StaleSessionSheet />
     </div>
   );
 }

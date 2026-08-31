@@ -13,6 +13,7 @@ import {
   useWorkoutSessions,
 } from "../../lib/hooks";
 import { useSettings } from "../../store/settingsStore";
+import { useWorkout } from "../../store/workoutStore";
 import { PROGRESSION_NOTES } from "../../lib/workouts/planSeed";
 import { weekStartOf } from "../../lib/derive/weekly";
 import { isoDate } from "../../lib/format";
@@ -87,12 +88,11 @@ function NextUpCard({ plan, lastDone }: { plan: WorkoutPlanRow | undefined; last
     >
       <p className="mb-3 text-[13px] text-ink-2">{plan.subtitle}</p>
       <button
-        disabled
-        className="h-12 w-full rounded-xl bg-accent text-[15px] font-medium text-white disabled:opacity-40"
+        onClick={() => void useWorkout.getState().start(plan.id)}
+        className="h-12 w-full rounded-xl bg-accent text-[15px] font-medium text-white active:opacity-80"
       >
         Start session
       </button>
-      <p className="mt-2 text-center text-[11px] text-ink-3">The guided player arrives in the next update.</p>
     </Card>
   );
 }

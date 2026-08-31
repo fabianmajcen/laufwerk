@@ -43,15 +43,16 @@ export function TabBar({ active, onChange }: { active: TabId; onChange: (t: TabI
   );
 }
 
-/** Gymnast rings: calisthenics without implying dumbbells, and nothing like
- *  the Trends chart glyph it sits two tabs away from. */
+/** A dumbbell. Rings, a pull-up bar and a kettlebell all collapse into an
+ *  unreadable blob at 22px; this stays legible and unmistakable. */
 function TrainIcon({ active }: { active: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M8 3v6.5" />
-      <path d="M16 3v6.5" />
-      <circle cx="8" cy="15" r="4.2" />
-      <circle cx="16" cy="15" r="4.2" />
+      <path d="M6.5 7.5v9" />
+      <path d="M3.5 10v4" />
+      <path d="M17.5 7.5v9" />
+      <path d="M20.5 10v4" />
+      <path d="M6.5 12h11" />
     </svg>
   );
 }
