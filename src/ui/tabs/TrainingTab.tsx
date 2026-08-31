@@ -23,6 +23,9 @@ type View = "main" | { plan: string };
 
 export function TrainingTab() {
   const [view, setView] = useState<View>("main");
+  /** overrides the rotation suggestion for this visit: the rotation itself is
+   *  history-driven, so picking C now makes A the suggestion afterwards */
+  const [picked, setPicked] = useState<string | null>(null);
   const plans = useWorkoutPlans();
   const sessions = useWorkoutSessions(120);
   const next = useNextPlanInRotation();
@@ -36,7 +39,11 @@ export function TrainingTab() {
     const plan = plans?.find((p) => p.id === view.plan);
     return (
       <SubScreen title={plan ? `Day ${plan.id}` : "Session"} onBack={() => setView("main")}>
-        {plan ? <PlanDetail plan={plan} /> : <EmptyState text="This session is no longer in your plan." />}
+        {plan ? (
+          <PlanDetail plan={plan} onStart={() => setView("main")} />
+        ) : (
+          <EmptyState text="This session is no longer in your plan." />
+        )}
       </SubScreen>
     );
   }
@@ -51,11 +58,19 @@ export function TrainingTab() {
   }
 
   const done = sessions ? countThisWeek(sessions) : 0;
+  const hero = plans.find((p) => p.id === picked) ?? next;
 
   return (
     <div className="pb-4">
       <ScreenHeader title="Train" />
-      <NextUpCard plan={next} lastDone={next ? lastDoneOf(sessions, next.id) : null} />
+      <NextUpCard
+        plan={hero}
+        plans={plans}
+        suggestedId={next?.id}
+        pickedId={picked}
+        onPick={setPicked}
+        lastDone={hero ? lastDoneOf(sessions, hero.id) : null}
+      />
       <WeekCard done={done} goal={goal.workoutsPerWeek} floor={goal.minWorkoutsPerWeek} />
       <Card
         kicker="Your plan"
@@ -77,21 +92,65 @@ export function TrainingTab() {
 
 // ---------- pieces ----------
 
-function NextUpCard({ plan, lastDone }: { plan: WorkoutPlanRow | undefined; lastDone: string | null }) {
+function NextUpCard({
+  plan,
+  plans,
+  suggestedId,
+  pickedId,
+  onPick,
+  lastDone,
+}: {
+  plan: WorkoutPlanRow | undefined;
+  plans: WorkoutPlanRow[];
+  suggestedId: string | undefined;
+  pickedId: string | null;
+  onPick: (id: string | null) => void;
+  lastDone: string | null;
+}) {
   if (!plan) return null;
+  const overridden = pickedId != null && pickedId !== suggestedId;
   return (
     <Card
-      kicker="Next up"
+      kicker={overridden ? "Starting" : "Next up"}
       title={`Day ${plan.id} · ${plan.title}`}
-      info="Suggested from your rotation: the session you did least recently. Nothing is forced, you can start any of the three."
+      info="The suggestion is whichever session you did least recently, so the A to B to C order keeps itself. Pick a different day whenever you like: the rotation follows what you actually did, not a fixed calendar."
       footnote={lastDone ? `Last done ${lastDone}.` : "Not done yet."}
     >
       <p className="mb-3 text-[13px] text-ink-2">{plan.subtitle}</p>
+
+      {/* pick the day: needed the moment your real rotation started outside
+          the app, and useful any time you want to swap the order */}
+      <div className="mb-3 flex gap-1.5" role="tablist" aria-label="Choose session">
+        {plans.map((p) => {
+          const active = p.id === plan.id;
+          return (
+            <button
+              key={p.id}
+              role="tab"
+              aria-selected={active}
+              onClick={() => onPick(p.id === suggestedId ? null : p.id)}
+              className={`flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg text-[13px] font-medium ${
+                active ? "bg-elevated text-ink" : "bg-page text-ink-3"
+              }`}
+            >
+              Day {p.id}
+              {p.id === suggestedId && !active && (
+                <span
+                  className="h-1.5 w-1.5 rounded-full bg-accent"
+                  title="suggested next"
+                  aria-label="suggested next"
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
       <button
         onClick={() => void useWorkout.getState().start(plan.id)}
         className="h-12 w-full rounded-xl bg-accent text-[15px] font-medium text-white active:opacity-80"
       >
-        Start session
+        Start day {plan.id}
       </button>
     </Card>
   );
@@ -159,16 +218,27 @@ function PlanRow({
   );
 }
 
-function PlanDetail({ plan }: { plan: WorkoutPlanRow }) {
+function PlanDetail({ plan, onStart }: { plan: WorkoutPlanRow; onStart: () => void }) {
   const main = plan.exercises.filter((e) => e.block === "main");
   const warm = plan.exercises.filter((e) => e.block === "warmup");
   const cool = plan.exercises.filter((e) => e.block === "cooldown");
   return (
     <>
       <Card kicker={`Day ${plan.id}`} title={plan.title} footnote={plan.subtitle}>
-        <p className="text-[13px] text-ink-2">
+        <p className="mb-3 text-[13px] text-ink-2">
           {main.length} exercises · about {plan.estMinutes} min
         </p>
+        <button
+          onClick={() => {
+            // leave the sub-screen behind, so ending the session returns to the
+            // tab root rather than this list
+            onStart();
+            void useWorkout.getState().start(plan.id);
+          }}
+          className="h-12 w-full rounded-xl bg-accent text-[15px] font-medium text-white active:opacity-80"
+        >
+          Start day {plan.id}
+        </button>
       </Card>
       {[
         { label: "Warm-up", items: warm },
