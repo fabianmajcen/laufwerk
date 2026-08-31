@@ -79,14 +79,17 @@ without re-deriving anything.
   - Gotcha fixed: percentage-height bars need a parent with a definite height (`h-full`
     on the column) or they collapse invisibly.
 
-## The whole feature is shipped (M1-M5). Possible next steps, none committed:
+- [x] **Widget workout pills** (v0.2.40): ReadinessWidget draws two rows (runs blue over
+      cali violet). The slots ImageView had to grow 11dp -> 26dp because it is fitXY and
+      squashed both rows otherwise. A payload without the cali fields still renders one row.
+      NOTE: widget changes need `assembleDebug` to verify; `tsc` cannot catch Java errors.
+
+## The whole feature is shipped (M1-M5 + widget). Possible next steps, none committed:
 
 - Plan editing in-app (the data model already supports it: `userEdited` + `seedVersion`
   null stop the seeder from clobbering edits)
 - Day B's handstand "or" variant as a two-way toggle on that step
 - A "suggest this week" bulk button (`ScheduleSlot.source: "suggested"` already exists)
-- Workout pills in the Android home-screen widget (weekLine already carries
-  `caliDone`/`caliPlanned`; needs Java in ReadinessWidget.drawSlots)
 - Notifications: morning readiness verdict + run/workout reminders (the original
   someday-item, needs a native alarm or WorkManager since there is no background sync)
 
