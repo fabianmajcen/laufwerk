@@ -70,12 +70,25 @@ without re-deriving anything.
       insert Wed => Wed A / Fri B. `nextPlanInRotation` now keys off completed history only.
       `ScheduleSlot.kind` gained "rest" (fulfilled by not training, excluded from
       suggestions, always removable). Week km sits right of the runs counter.
-- [ ] **M5 history + JSON restore** ← NEXT
-  - [ ] session history list (day, plan, sets, partial badge, discarded dimmed)
-  - [ ] consistency view (sessions per week over ~12 weeks)
-  - [ ] `importWorkouts(json)` paste box in Settings — export is currently write-only and
-        workout data is the ONLY non-resyncable data in the app
-  - [ ] optional one-line session note
+- [x] **M5 history + JSON restore** — v0.2.39
+  - [x] history sub-screen: 12-week consistency bars (plain divs, no ECharts) + full log,
+        discarded dimmed, partial badged
+  - [x] per-session sheet with a one-line note and delete
+  - [x] `importWorkouts(json)` + Settings paste box; merges by primary key, files any
+        "active" session as abandoned. Round trip verified (3 plans / 1 session restored)
+  - Gotcha fixed: percentage-height bars need a parent with a definite height (`h-full`
+    on the column) or they collapse invisibly.
+
+## The whole feature is shipped (M1-M5). Possible next steps, none committed:
+
+- Plan editing in-app (the data model already supports it: `userEdited` + `seedVersion`
+  null stop the seeder from clobbering edits)
+- Day B's handstand "or" variant as a two-way toggle on that step
+- A "suggest this week" bulk button (`ScheduleSlot.source: "suggested"` already exists)
+- Workout pills in the Android home-screen widget (weekLine already carries
+  `caliDone`/`caliPlanned`; needs Java in ReadinessWidget.drawSlots)
+- Notifications: morning readiness verdict + run/workout reminders (the original
+  someday-item, needs a native alarm or WorkManager since there is no background sync)
 
 ## Gotchas hit during implementation
 
