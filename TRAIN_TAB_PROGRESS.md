@@ -57,6 +57,12 @@ without re-deriving anything.
   - [x] Today card says "Day B planned for Wednesday"
   - [ ] optional later: a "suggest this week" bulk button writing `source: "suggested"`
         (the field exists; only manual slots are written today)
+- [x] **Week strip** (v0.2.37): Mon-Sun day tiles replacing BOTH the old week card
+      and the PlanWeek screen (deleted). Run glyph + A/B/C letters in their own subtle
+      colours, done solid / planned faded / past-empty = rest dash, today ringed.
+      Tap a day to schedule; pager reaches 4 weeks ahead. Same component on Today and
+      Train. Colours: A violet (--recency-hi), B teal (--hrv), C copper (--elevation).
+- [x] Device check (user): sound, vibration and screen-awake all work.
 - [ ] **M5 history + JSON restore** ← NEXT
   - [ ] session history list (day, plan, sets, partial badge, discarded dimmed)
   - [ ] consistency view (sessions per week over ~12 weeks)
