@@ -166,46 +166,61 @@ function WeekPlanCard() {
       : `Week of ${weekStart.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
 
   return (
-    <Card kicker={weekLabel} title={`Runs ${done}/${plan.runsPerWeek}`} value={`${km.toFixed(1)} km`} footnote={footnote}>
-      <div className="mb-2 flex items-center justify-between">
+    // one card, because the week pager governs both, but each discipline gets
+    // its own labelled block with a hairline between: stacking two bare pill
+    // rows between the arrows left it ambiguous which label owned which row
+    <Card kicker="Week">
+      <div className="mb-3 flex items-center justify-between">
         <WeekBtn dir="prev" onClick={canGoBack ? () => setWeeksBack(weeksBack + 1) : undefined} />
-        <div className="flex flex-1 flex-col gap-2 px-3">
-          <div className="flex gap-2">
-            {Array.from({ length: Math.max(plan.runsPerWeek, done) }, (_, i) => (
-              <div
-                key={i}
-                className={`h-2.5 flex-1 rounded-full ${i < done ? "bg-accent" : "bg-grid"}`}
-                aria-label={i < done ? "run done" : "run pending"}
-              />
-            ))}
-          </div>
-          {/* workouts on their own row: the third slot is drawn as a bonus, so a
-              two-workout week reads as on track rather than failed */}
-          <div className="flex gap-2">
-            {Array.from({ length: Math.max(wGoal, wDone) }, (_, i) => {
-              const filled = i < wDone;
-              const bonus = i >= wFloor;
-              return (
-                <div
-                  key={i}
-                  aria-label={filled ? "workout done" : bonus ? "bonus workout slot" : "workout pending"}
-                  className={`flex h-2.5 flex-1 items-center justify-center rounded-full ${
-                    filled ? "bg-[var(--recency-hi)]" : bonus ? "border border-dashed border-hairline" : "bg-grid"
-                  }`}
-                />
-              );
-            })}
-          </div>
-        </div>
+        <span className="text-[14px] font-medium">{weekLabel}</span>
         <WeekBtn dir="next" onClick={weeksBack > 0 ? () => setWeeksBack(weeksBack - 1) : undefined} />
       </div>
-      <div className="flex items-baseline justify-between">
-        <span className="text-[13px] text-ink-2">
+
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[14px] font-medium text-ink-2">
+          Runs {done}/{plan.runsPerWeek}
+        </span>
+        <span className="tnum text-[17px] font-semibold">{km.toFixed(1)} km</span>
+      </div>
+      <div className="mt-2 flex gap-2">
+        {Array.from({ length: Math.max(plan.runsPerWeek, done) }, (_, i) => (
+          <div
+            key={i}
+            className={`h-2.5 flex-1 rounded-full ${i < done ? "bg-accent" : "bg-grid"}`}
+            aria-label={i < done ? "run done" : "run pending"}
+          />
+        ))}
+      </div>
+      {/* the hint is about running, so it lives in the runs block rather than
+          floating at the bottom of the card under the workout pills */}
+      <p className="mt-2 text-[12px] text-ink-3">{footnote}</p>
+
+      <div className="my-3 border-t border-hairline" />
+
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[14px] font-medium text-ink-2">
           Workouts {wDone}/{wGoal}
         </span>
         {week.workouts.letters.length > 0 && (
-          <span className="tnum text-[11px] text-ink-3">{week.workouts.letters.join(" · ")}</span>
+          <span className="tnum text-[13px] text-ink-3">{week.workouts.letters.join(" · ")}</span>
         )}
+      </div>
+      <div className="mt-2 flex gap-2">
+        {/* the third slot is dashed as a bonus, so a two-workout week reads as
+            on track rather than failed */}
+        {Array.from({ length: Math.max(wGoal, wDone) }, (_, i) => {
+          const filled = i < wDone;
+          const bonus = i >= wFloor;
+          return (
+            <div
+              key={i}
+              aria-label={filled ? "workout done" : bonus ? "bonus workout slot" : "workout pending"}
+              className={`h-2.5 flex-1 rounded-full ${
+                filled ? "bg-[var(--recency-hi)]" : bonus ? "border border-dashed border-hairline" : "bg-grid"
+              }`}
+            />
+          );
+        })}
       </div>
     </Card>
   );
