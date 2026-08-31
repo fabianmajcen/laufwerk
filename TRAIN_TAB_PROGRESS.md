@@ -63,6 +63,13 @@ without re-deriving anything.
       Tap a day to schedule; pager reaches 4 weeks ahead. Same component on Today and
       Train. Colours: A violet (--recency-hi), B teal (--hrv), C copper (--elevation).
 - [x] Device check (user): sound, vibration and screen-awake all work.
+- [x] **Letterless scheduling + rest days + km** (v0.2.38): planned workout slots store
+      `planId: null`; the letter is DERIVED from position via `assignScheduledWorkouts()`
+      (walked globally from today, so sequences hold across week boundaries). Inserting an
+      earlier workout reshuffles later letters automatically — verified Fri=A alone, then
+      insert Wed => Wed A / Fri B. `nextPlanInRotation` now keys off completed history only.
+      `ScheduleSlot.kind` gained "rest" (fulfilled by not training, excluded from
+      suggestions, always removable). Week km sits right of the runs counter.
 - [ ] **M5 history + JSON restore** ← NEXT
   - [ ] session history list (day, plan, sets, partial badge, discarded dimmed)
   - [ ] consistency view (sessions per week over ~12 weeks)
