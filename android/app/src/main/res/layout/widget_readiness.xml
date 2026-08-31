@@ -74,7 +74,7 @@
             <ImageView
                 android:id="@+id/widget_slots"
                 android:layout_width="match_parent"
-                android:layout_height="11dp"
+                android:layout_height="26dp"
                 android:layout_marginTop="10dp"
                 android:scaleType="fitXY"
                 android:contentDescription="@string/widget_description" />

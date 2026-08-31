@@ -26,6 +26,8 @@ public class ReadinessWidget extends AppWidgetProvider {
 
     private static final int TRACK = Color.parseColor("#2C2C2A");
     private static final int SLOT_FILL = Color.parseColor("#3987E5");
+    /** --recency-hi: the same violet the app uses for calisthenics. */
+    private static final int CALI_FILL = Color.parseColor("#A89DF0");
 
     public static void refreshAll(Context context) {
         AppWidgetManager mgr = AppWidgetManager.getInstance(context);
@@ -53,6 +55,8 @@ public class ReadinessWidget extends AppWidgetProvider {
         int verdictColor = Color.WHITE;
         int done = 0;
         int planned = 2;
+        int caliDone = 0;
+        int caliPlanned = 0;
 
         if (raw != null) {
             try {
@@ -60,6 +64,10 @@ public class ReadinessWidget extends AppWidgetProvider {
                 score = data.getInt("score");
                 done = data.optInt("done", 0);
                 planned = Math.max(1, data.optInt("planned", 2));
+                // absent in payloads written before calisthenics existed, so
+                // optInt(0) degrades to the old single-row look
+                caliDone = data.optInt("caliDone", 0);
+                caliPlanned = data.optInt("caliPlanned", 0);
                 try {
                     verdictColor = Color.parseColor(data.getString("color"));
                 } catch (IllegalArgumentException ignored) {
@@ -78,7 +86,7 @@ public class ReadinessWidget extends AppWidgetProvider {
         }
 
         views.setImageViewBitmap(R.id.widget_ring, drawRing(density, score, verdictColor));
-        views.setImageViewBitmap(R.id.widget_slots, drawSlots(density, done, planned));
+        views.setImageViewBitmap(R.id.widget_slots, drawSlots(density, done, planned, caliDone, caliPlanned));
         views.setImageViewBitmap(R.id.widget_watermark, drawWatermark(density));
 
         Intent launch = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
@@ -162,24 +170,36 @@ public class ReadinessWidget extends AppWidgetProvider {
         return bmp;
     }
 
-    /** The week's run slots as rounded pills, filled = done. */
-    private static Bitmap drawSlots(float density, int done, int planned) {
-        int slots = Math.max(planned, done);
-        int h = (int) (10 * density);
-        int gap = (int) (6 * density);
+    /** Two rows of pills: runs on top, calisthenics below, filled = done.
+     *  Mirrors the week card in the app, and matches the "Runs x/y - Cali x/y"
+     *  line the widget already prints above it. */
+    private static Bitmap drawSlots(float density, int done, int planned, int caliDone, int caliPlanned) {
+        int rowH = (int) (10 * density);
+        int rowGap = (int) (6 * density);
         int w = (int) (200 * density);
+        boolean twoRows = caliPlanned > 0 || caliDone > 0;
+        int h = twoRows ? rowH * 2 + rowGap : rowH;
+
         Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(bmp);
-
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        float segW = (w - gap * (slots - 1)) / (float) slots;
-        float r = h / 2f;
 
-        for (int i = 0; i < slots; i++) {
-            float x = i * (segW + gap);
-            p.setColor(i < done ? SLOT_FILL : TRACK);
-            c.drawRoundRect(new RectF(x, 0, x + segW, h), r, r, p);
+        drawRow(c, p, 0, w, rowH, done, Math.max(planned, done), SLOT_FILL);
+        if (twoRows) {
+            drawRow(c, p, rowH + rowGap, w, rowH, caliDone, Math.max(caliPlanned, caliDone), CALI_FILL);
         }
         return bmp;
+    }
+
+    private static void drawRow(Canvas c, Paint p, float top, int w, int rowH, int done, int slots, int fill) {
+        if (slots < 1) return;
+        float gap = rowH * 0.6f;
+        float segW = (w - gap * (slots - 1)) / (float) slots;
+        float r = rowH / 2f;
+        for (int i = 0; i < slots; i++) {
+            float x = i * (segW + gap);
+            p.setColor(i < done ? fill : TRACK);
+            c.drawRoundRect(new RectF(x, top, x + segW, top + rowH), r, r, p);
+        }
     }
 }
