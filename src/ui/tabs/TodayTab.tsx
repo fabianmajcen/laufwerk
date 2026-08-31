@@ -47,13 +47,7 @@ export function TodayTab({ onOpenSettings }: { onOpenSettings?: () => void }) {
   // keep the home-screen widget's snapshot fresh; same week math as the card
   useEffect(() => {
     if (!fab || fab.score == null || !week) return;
-    updateWidgetData(fab, {
-      done: week.runs.done,
-      planned: week.runs.planned,
-      km: week.runs.km,
-      caliDone: week.workouts.done,
-      caliPlanned: week.workouts.planned,
-    });
+    updateWidgetData(fab, week);
   }, [fab, week]);
 
   if (view !== "main") {

@@ -12,9 +12,11 @@ import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.drawable.Drawable;
 import android.graphics.RectF;
 import android.widget.RemoteViews;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
@@ -28,6 +30,8 @@ public class ReadinessWidget extends AppWidgetProvider {
     private static final int SLOT_FILL = Color.parseColor("#3987E5");
     /** --recency-hi: the same violet the app uses for calisthenics. */
     private static final int CALI_FILL = Color.parseColor("#A89DF0");
+    private static final int TILE_BG = Color.parseColor("#1F1F1E");
+    private static final int INK3 = Color.parseColor("#898781");
 
     public static void refreshAll(Context context) {
         AppWidgetManager mgr = AppWidgetManager.getInstance(context);
@@ -57,6 +61,7 @@ public class ReadinessWidget extends AppWidgetProvider {
         int planned = 2;
         int caliDone = 0;
         int caliPlanned = 0;
+        JSONArray days = null;
 
         if (raw != null) {
             try {
@@ -68,26 +73,23 @@ public class ReadinessWidget extends AppWidgetProvider {
                 // optInt(0) degrades to the old single-row look
                 caliDone = data.optInt("caliDone", 0);
                 caliPlanned = data.optInt("caliPlanned", 0);
+                days = data.optJSONArray("days");
                 try {
                     verdictColor = Color.parseColor(data.getString("color"));
                 } catch (IllegalArgumentException ignored) {
                 }
-                views.setTextViewText(R.id.widget_score, String.valueOf(score));
-                views.setTextViewText(R.id.widget_verdict, data.getString("verdict"));
+                views.setTextViewText(R.id.widget_verdict, data.getString("verdict") + "  " + score);
                 views.setTextViewText(R.id.widget_week, data.getString("weekLine"));
                 views.setTextColor(R.id.widget_verdict, verdictColor);
             } catch (Exception e) {
                 views.setTextViewText(R.id.widget_verdict, "Open Laufwerk");
             }
         } else {
-            views.setTextViewText(R.id.widget_score, "—");
             views.setTextViewText(R.id.widget_verdict, "Open Laufwerk");
             views.setTextViewText(R.id.widget_week, "to load readiness");
         }
 
-        views.setImageViewBitmap(R.id.widget_ring, drawRing(density, score, verdictColor));
-        views.setImageViewBitmap(R.id.widget_slots, drawSlots(density, done, planned, caliDone, caliPlanned));
-        views.setImageViewBitmap(R.id.widget_watermark, drawWatermark(density));
+        views.setImageViewBitmap(R.id.widget_days, drawWeek(context, density, days));
 
         Intent launch = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
         if (launch != null) {
@@ -102,104 +104,128 @@ public class ReadinessWidget extends AppWidgetProvider {
 
     /** The app's hero gauge: 270° track from 135°, score sweep in verdict
      *  color with a soft glow underneath. */
-    private static Bitmap drawRing(float density, int score, int color) {
-        int size = (int) (80 * density);
-        float stroke = 8f * density;
-        Bitmap bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(bmp);
+    /** The week, Mon to Sun: the widget main content. Mirrors the app week strip
+     *  - done marks solid, planned faded, a dash for rest, today ringed. */
+    private static final String[] WEEKDAYS = {"Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"};
 
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(stroke);
-        p.setStrokeCap(Paint.Cap.ROUND);
-
-        float half = stroke / 2f + 4 * density;
-        RectF box = new RectF(half, half, size - half, size - half);
-
-        p.setColor(TRACK);
-        c.drawArc(box, 135f, 270f, false, p);
-
-        if (score >= 0) {
-            float sweep = 270f * Math.min(score, 100) / 100f;
-
-            // glow pass
-            Paint glow = new Paint(p);
-            glow.setColor(color);
-            glow.setAlpha(110);
-            glow.setMaskFilter(new BlurMaskFilter(5 * density, BlurMaskFilter.Blur.NORMAL));
-            c.drawArc(box, 135f, sweep, false, glow);
-
-            p.setColor(color);
-            c.drawArc(box, 135f, sweep, false, p);
-        }
-        return bmp;
-    }
-
-    /** Faint brand watermark: the app icon's arc-and-dot motif. */
-    private static Bitmap drawWatermark(float density) {
-        int size = (int) (92 * density);
-        Bitmap bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(bmp);
-
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setStyle(Paint.Style.STROKE);
-        p.setStrokeCap(Paint.Cap.ROUND);
-
-        float cx = size * 0.62f;
-        float cy = size / 2f;
-        float rOuter = size * 0.40f;
-        float rInner = size * 0.22f;
-
-        // violet platter arc
-        p.setStrokeWidth(6.5f * density);
-        p.setColor(Color.parseColor("#7A6BD8"));
-        p.setAlpha(34);
-        c.drawArc(new RectF(cx - rOuter, cy - rOuter, cx + rOuter, cy + rOuter), -75f, 300f, false, p);
-
-        // inner track
-        p.setStrokeWidth(2.5f * density);
-        p.setAlpha(22);
-        c.drawArc(new RectF(cx - rInner, cy - rInner, cx + rInner, cy + rInner), 0f, 360f, false, p);
-
-        // start dot
-        p.setStyle(Paint.Style.FILL);
-        p.setColor(Color.parseColor("#2CA02C"));
-        p.setAlpha(40);
-        c.drawCircle(cx, cy - rOuter, 4.5f * density, p);
-
-        return bmp;
-    }
-
-    /** Two rows of pills: runs on top, calisthenics below, filled = done.
-     *  Mirrors the week card in the app, and matches the "Runs x/y - Cali x/y"
-     *  line the widget already prints above it. */
-    private static Bitmap drawSlots(float density, int done, int planned, int caliDone, int caliPlanned) {
-        int rowH = (int) (10 * density);
-        int rowGap = (int) (6 * density);
-        int w = (int) (200 * density);
-        boolean twoRows = caliPlanned > 0 || caliDone > 0;
-        int h = twoRows ? rowH * 2 + rowGap : rowH;
+    private static Bitmap drawWeek(Context ctx, float density, JSONArray days) {
+        int cols = 7;
+        int labelH = (int) (12 * density);
+        int gapY = (int) (3 * density);
+        int tileH = (int) (31 * density);
+        int gapX = (int) (5 * density);
+        int w = (int) (320 * density);
+        int h = labelH + gapY + tileH;
 
         Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(bmp);
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        Paint t = new Paint(Paint.ANTI_ALIAS_FLAG);
+        t.setTextAlign(Paint.Align.CENTER);
 
-        drawRow(c, p, 0, w, rowH, done, Math.max(planned, done), SLOT_FILL);
-        if (twoRows) {
-            drawRow(c, p, rowH + rowGap, w, rowH, caliDone, Math.max(caliPlanned, caliDone), CALI_FILL);
+        float tileW = (w - gapX * (cols - 1)) / (float) cols;
+        float r = 8 * density;
+
+        for (int i = 0; i < cols; i++) {
+            JSONObject d = days != null ? days.optJSONObject(i) : null;
+            float x = i * (tileW + gapX);
+            float cx = x + tileW / 2f;
+            boolean today = d != null && d.optBoolean("t", false);
+
+            t.setColor(today ? Color.WHITE : INK3);
+            t.setTextSize(10 * density);
+            t.setFakeBoldText(today);
+            // fall back to static labels: a payload written before the week
+            // grid existed has no days, and blank tiles would look broken
+            String label = d != null ? d.optString("l", WEEKDAYS[i]) : WEEKDAYS[i];
+            c.drawText(label, cx, labelH - 2 * density, t);
+
+            float top = labelH + gapY;
+            p.setStyle(Paint.Style.FILL);
+            p.setColor(TILE_BG);
+            c.drawRoundRect(new RectF(x, top, x + tileW, top + tileH), r, r, p);
+            if (today) {
+                p.setStyle(Paint.Style.STROKE);
+                p.setStrokeWidth(1.5f * density);
+                p.setColor(SLOT_FILL);
+                c.drawRoundRect(new RectF(x, top, x + tileW, top + tileH), r, r, p);
+                p.setStyle(Paint.Style.FILL);
+            }
+            if (d == null) continue;
+
+            drawDayMarks(ctx, c, t, p, d, cx, top + tileH / 2f, density);
         }
         return bmp;
     }
 
-    private static void drawRow(Canvas c, Paint p, float top, int w, int rowH, int done, int slots, int fill) {
-        if (slots < 1) return;
-        float gap = rowH * 0.6f;
-        float segW = (w - gap * (slots - 1)) / (float) slots;
-        float r = rowH / 2f;
-        for (int i = 0; i < slots; i++) {
-            float x = i * (segW + gap);
-            p.setColor(i < done ? fill : TRACK);
-            c.drawRoundRect(new RectF(x, top, x + segW, top + rowH), r, r, p);
+    /** Up to a few marks per tile, stacked and vertically centred. */
+    private static void drawDayMarks(Context ctx, Canvas c, Paint t, Paint p, JSONObject d,
+                                     float cx, float cy, float density) {
+        JSONArray done = d.optJSONArray("w");
+        JSONArray planned = d.optJSONArray("pw");
+        boolean run = d.optBoolean("run", false);
+        boolean plannedRun = d.optBoolean("pr", false);
+        boolean rest = d.optBoolean("rest", false);
+
+        int nDone = done != null ? done.length() : 0;
+        int nPlanned = planned != null ? planned.length() : 0;
+        int total = nDone + nPlanned + (run ? 1 : 0) + (plannedRun ? 1 : 0);
+
+        if (total == 0) {
+            if (rest) {
+                p.setColor(d.optBoolean("restPlanned", false) ? INK3 : TRACK);
+                float halfW = 6 * density;
+                c.drawRoundRect(new RectF(cx - halfW, cy - density, cx + halfW, cy + density),
+                        density, density, p);
+            }
+            return;
         }
+
+        float rowH = 15 * density;
+        float startY = cy - (total - 1) * rowH / 2f;
+        int idx = 0;
+
+        for (int i = 0; i < nDone; i++, idx++) {
+            drawLetter(c, t, done.optString(i, "?"), cx, startY + idx * rowH, density, 255);
+        }
+        if (run) {
+            drawRunGlyph(ctx, c, cx, startY + idx * rowH, density, 255);
+            idx++;
+        }
+        for (int i = 0; i < nPlanned; i++, idx++) {
+            drawLetter(c, t, planned.optString(i, "?"), cx, startY + idx * rowH, density, 105);
+        }
+        if (plannedRun) {
+            drawRunGlyph(ctx, c, cx, startY + idx * rowH, density, 105);
+        }
+    }
+
+    private static void drawLetter(Canvas c, Paint t, String id, float cx, float cy, float density, int alpha) {
+        t.setColor(planColor(id));
+        t.setAlpha(alpha);
+        t.setTextSize(13 * density);
+        t.setFakeBoldText(true);
+        // centre on the glyph middle rather than the baseline
+        Paint.FontMetrics fm = t.getFontMetrics();
+        c.drawText(id, cx, cy - (fm.ascent + fm.descent) / 2f, t);
+        t.setAlpha(255);
+    }
+
+    private static void drawRunGlyph(Context ctx, Canvas c, float cx, float cy, float density, int alpha) {
+        Drawable run = androidx.core.content.ContextCompat.getDrawable(ctx, R.drawable.ic_run);
+        if (run == null) return;
+        int size = (int) (15 * density);
+        run.setBounds((int) (cx - size / 2f), (int) (cy - size / 2f),
+                (int) (cx + size / 2f), (int) (cy + size / 2f));
+        run.setTint(SLOT_FILL);
+        run.setAlpha(alpha);
+        run.draw(c);
+    }
+
+    private static int planColor(String id) {
+        if ("A".equals(id)) return CALI_FILL;
+        if ("B".equals(id)) return Color.parseColor("#199E70");
+        if ("C".equals(id)) return Color.parseColor("#B5773F");
+        return Color.parseColor("#C3C2B7");
     }
 }
