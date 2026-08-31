@@ -119,19 +119,33 @@ audible beep at real media volume and while music plays · vibration · screen s
 awake for a full session and sleeping again afterwards · hardware back minimizing ·
 force-stop and relaunch · the Dexie v2 upgrade over an installed v1 build
 
-## Widget (v0.2.42)
+## Widget (v0.2.43)
 
-The Mon-Sun grid IS the widget; score + counters are one line under it. Notes:
-- Provider was targetCellHeight=1 (~50dp) with a ~130dp layout, so it clipped on a
-  smaller-celled phone (Flip 8). Now minHeight 80dp / targetCellHeight 2 / resizeMode
-  horizontal|vertical.
-- The grid is FIRST in the layout deliberately: cell sizes vary by device, so the summary
-  line should be what clips, never the calendar.
-- Run glyph is a real vector (`res/drawable/ic_run.xml`) drawn tinted, so it matches the
-  app rather than being approximated with a dot.
+The Mon-Sun grid IS the widget, and now it is the ONLY thing on it at one cell.
+Rejected twice before this; the fixes that mattered:
+
+- **Draw one bitmap at the widget's REAL pixel size.** `AppWidgetManager.getAppWidgetOptions`
+  gives `OPTION_APPWIDGET_MIN_WIDTH/MIN_HEIGHT` in dp; `onAppWidgetOptionsChanged` redraws on
+  resize. A fixed-size bitmap under `fitXY` either distorted or wasted a whole cell, and
+  RemoteViews cannot measure anything for us. The layout is now a single full-bleed ImageView.
+- **Contrast**: tiles were `#1F1F1E` against a `#232322 -> #161615` gradient, i.e. invisible.
+  Now `TILE_BG #332F2C` / `TILE_BG_TODAY #3D3833`, labels `INK2` (white bold for today),
+  planned alpha 150 not 105, brighter plan colours A `#B4A9FF` B `#2FBF8F` C `#D68B4A`.
+- **Every metric scales with the measured size.** Fixed dp constants each looked right at one
+  size and broke at another: at half width the weekday labels grew wider than their own tiles,
+  at the 48dp minimum height the tiles ran off the bottom edge. padX/padY, labelH, gapX/gapY,
+  the label text size and the tile-height floor are all proportional now.
+- **Score and verdict are gone.** Counters (runs, cali, km) draw only when `hDp >= 92`, in three
+  separated groups, so a one-cell widget spends all its space on the calendar.
+- Run glyph is a real vector (`res/drawable/ic_run.xml`) drawn tinted, matching the app.
+- Provider: `minHeight 48dp`, `targetCellHeight 1`, `resizeMode horizontal|vertical`.
 - Widget only redraws when the app writes a payload or every 30 min (updatePeriodMillis),
-  so after an APK update: open the app once, then look.
-- Java is invisible to tsc: always run `assembleDebug` after touching it.
+  so after an APK update: open the app once, then look. A size change may need re-adding it.
+- Java is invisible to tsc: always run `assembleDebug` after touching it. Set
+  `$env:JAVA_HOME = "$env:LOCALAPPDATA\Java\jdk-21"` first (release.ps1 does this itself).
+- **Verifying widget rendering without a device**: replicate the draw math on an HTML canvas at
+  the real dp sizes and screenshot it. Not the Java, but it catches fit, contrast and text size,
+  which is exactly what the two rejected versions got wrong.
 
 ## Player design rules (learned from real use, v0.2.41)
 

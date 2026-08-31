@@ -37,6 +37,8 @@ export interface WidgetData {
   planned: number;
   caliDone: number;
   caliPlanned: number;
+  /** pre-formatted, so the widget never does unit maths */
+  km: string;
   days: WidgetDay[];
   updatedAt: number;
 }
@@ -85,6 +87,7 @@ export async function updateWidgetData(fab: FabResult, week: TrainingWeek): Prom
     planned: week.runs.planned,
     caliDone: week.workouts.done,
     caliPlanned: week.workouts.planned,
+    km: week.runs.km.toFixed(1) + ' km',
     days: toWidgetDays(week),
     updatedAt: Date.now(),
   };

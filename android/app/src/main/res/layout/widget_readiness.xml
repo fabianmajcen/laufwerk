@@ -1,59 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- One image, drawn at the widget's real pixel size in ReadinessWidget.draw().
+     No nested layout: RemoteViews cannot measure or adapt, and every fixed dp
+     here is another way to clip on a device with different cell sizes. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_bg">
 
-    <LinearLayout
+    <ImageView
+        android:id="@+id/widget_days"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:gravity="center_vertical"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp">
-
-        <!-- The week comes FIRST on purpose: home-screen cells vary by device,
-             so if anything gets clipped it should be the summary line, never
-             the calendar. -->
-        <ImageView
-            android:id="@+id/widget_days"
-            android:layout_width="match_parent"
-            android:layout_height="46dp"
-            android:scaleType="fitXY"
-            android:contentDescription="@string/widget_description" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="7dp"
-            android:baselineAligned="true">
-
-            <TextView
-                android:id="@+id/widget_verdict"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Open Laufwerk"
-                android:textColor="#FFFFFF"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:maxLines="1" />
-
-            <TextView
-                android:id="@+id/widget_week"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:gravity="end"
-                android:text=""
-                android:textColor="#898781"
-                android:textSize="12sp"
-                android:maxLines="1"
-                android:ellipsize="end" />
-        </LinearLayout>
-    </LinearLayout>
+        android:scaleType="fitXY"
+        android:contentDescription="@string/widget_description" />
 </FrameLayout>
