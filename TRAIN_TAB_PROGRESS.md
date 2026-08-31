@@ -127,11 +127,11 @@ The Mon-Sun grid IS the widget; score + counters are one line under it. Notes:
   horizontal|vertical.
 - The grid is FIRST in the layout deliberately: cell sizes vary by device, so the summary
   line should be what clips, never the calendar.
-- Run glyph is a real vector () drawn tinted, so it matches the
+- Run glyph is a real vector (`res/drawable/ic_run.xml`) drawn tinted, so it matches the
   app rather than being approximated with a dot.
 - Widget only redraws when the app writes a payload or every 30 min (updatePeriodMillis),
   so after an APK update: open the app once, then look.
-- Java is invisible to tsc: always run  after touching it.
+- Java is invisible to tsc: always run `assembleDebug` after touching it.
 
 ## Player design rules (learned from real use, v0.2.41)
 
