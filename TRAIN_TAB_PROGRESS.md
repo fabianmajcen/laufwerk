@@ -119,6 +119,20 @@ audible beep at real media volume and while music plays · vibration · screen s
 awake for a full session and sleeping again afterwards · hardware back minimizing ·
 force-stop and relaunch · the Dexie v2 upgrade over an installed v1 build
 
+## Player design rules (learned from real use, v0.2.41)
+
+1. **Never substitute the working control.** "Finish session" used to REPLACE the dock once
+   every main exercise had one set, which locked him out of remaining sets AND the whole
+   cooldown. It is now an additive secondary button; it only becomes primary when the cursor
+   is past the last exercise.
+2. **Skip and undo live behind the "..." button.** Both are rare and destructive; neither
+   belongs next to the control pressed ~25 times a session. He mis-tapped both in one
+   session.
+3. **Logging a set un-skips that exercise**, so a mis-tapped skip self-heals.
+4. **Bottom padding floor is 28px**, not 12: `env(safe-area-inset-bottom)` reports 0 in this
+   WebView (same reason App.tsx uses a 32px floor at the top) and the gesture bar clipped
+   the dock's secondary row.
+
 ## Hazards (do not rediscover)
 
 1. **Never add `version:` to settings `persist` without `migrate`** — it discards all his
