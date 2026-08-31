@@ -5,11 +5,14 @@ import { getActivityData, getAllRuns, getRuns, getWellnessRange } from "./db/rep
 import {
   getActiveWorkoutSession,
   getRecentWorkoutSessions,
+  getScheduleRange,
   getWorkoutPlan,
   getWorkoutPlans,
   getWorkoutSessions,
   nextPlanInRotation,
 } from "./db/workouts";
+import { buildTrainingWeek, weekRange, type TrainingWeek } from "./derive/trainingWeek";
+import { useSettings } from "../store/settingsStore";
 import type { ActivityData, RangeMetric, WellnessMetric, WellnessRow } from "./garmin/types";
 import { isoDate, parseGarminLocal } from "./format";
 import { toRunPoints } from "./derive/series";
@@ -50,6 +53,33 @@ export function useRecentWorkoutSessions(limit?: number): WorkoutSessionRow[] | 
 
 export function useNextPlanInRotation(): WorkoutPlanRow | undefined {
   return useLiveQuery(nextPlanInRotation, []);
+}
+
+/** Runs, workouts and the schedule for one week: the single source for the
+ *  Today card, the widget snapshot and (later) the week planner. */
+export function useTrainingWeek(weeksBack = 0): TrainingWeek | undefined {
+  // select primitives, never a fresh object: zustand compares selector results
+  // by identity, so returning a new object here re-renders forever
+  const runsPerWeek = useSettings((s) => s.plan.runsPerWeek);
+  const workoutsPerWeek = useSettings((s) => s.workouts.workoutsPerWeek);
+  const minWorkoutsPerWeek = useSettings((s) => s.workouts.minWorkoutsPerWeek);
+  return useLiveQuery(async () => {
+    const { start, end } = weekRange(weeksBack);
+    const from = isoDate(start);
+    const to = isoDate(new Date(end.getTime() - 86400000));
+    const [runs, sessions, schedule] = await Promise.all([
+      getRuns(),
+      getWorkoutSessions(from, to),
+      getScheduleRange(from, to),
+    ]);
+    return buildTrainingWeek({
+      weeksBack,
+      runs,
+      sessions,
+      schedule,
+      goals: { runsPerWeek, workoutsPerWeek, minWorkoutsPerWeek },
+    });
+  }, [weeksBack, runsPerWeek, workoutsPerWeek, minWorkoutsPerWeek]);
 }
 
 /** Counted sessions over the last `days`, oldest first. */

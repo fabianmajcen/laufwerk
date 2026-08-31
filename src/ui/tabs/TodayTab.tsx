@@ -13,6 +13,7 @@ import {
   useFabScore,
   useLatestWellness,
   useRuns,
+  useTrainingWeek,
   useWellnessRange,
 } from "../../lib/hooks";
 import { useSettings } from "../../store/settingsStore";
@@ -35,8 +36,7 @@ const METRIC_TITLES: Record<DailyMetric, string> = {
 export function TodayTab({ onOpenSettings }: { onOpenSettings?: () => void }) {
   const { fab } = useFabScore();
   const [view, setView] = useState<View>("main");
-  const runs = useRuns();
-  const plan = useSettings((s) => s.plan);
+  const week = useTrainingWeek(0);
 
   useBackHandler(
     view !== "main",
@@ -45,17 +45,17 @@ export function TodayTab({ onOpenSettings }: { onOpenSettings?: () => void }) {
   useTabHome(useCallback(() => setView("main"), []));
   useScrollMemory(`today:${view}`);
 
-  // keep the home-screen widget's snapshot fresh
+  // keep the home-screen widget's snapshot fresh; same week math as the card
   useEffect(() => {
-    if (!fab || fab.score == null || !runs) return;
-    const weekStart = weekStartOf(new Date());
-    const thisWeek = runs.filter((r) => parseGarminLocal(r.startTimeLocal) >= weekStart);
+    if (!fab || fab.score == null || !week) return;
     updateWidgetData(fab, {
-      done: thisWeek.length,
-      planned: plan.runsPerWeek,
-      km: thisWeek.reduce((s, r) => s + (r.distance ?? 0) / 1000, 0),
+      done: week.runs.done,
+      planned: week.runs.planned,
+      km: week.runs.km,
+      caliDone: week.workouts.done,
+      caliPlanned: week.workouts.planned,
     });
-  }, [fab, runs, plan.runsPerWeek]);
+  }, [fab, week]);
 
   if (view !== "main") {
     return (
@@ -121,21 +121,17 @@ function WeekPlanCard() {
   const runs = useRuns();
   const plan = useSettings((s) => s.plan);
   const [weeksBack, setWeeksBack] = useState(0);
-  if (!runs) return null;
+  const week = useTrainingWeek(weeksBack);
+  if (!runs || !week) return null;
 
   const now = new Date();
   const currentWeekStart = weekStartOf(now);
-  const weekStart = new Date(currentWeekStart);
-  weekStart.setDate(weekStart.getDate() - weeksBack * 7);
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekEnd.getDate() + 7);
-
-  const inWeek = runs.filter((r) => {
-    const d = parseGarminLocal(r.startTimeLocal);
-    return d >= weekStart && d < weekEnd;
-  });
-  const km = inWeek.reduce((s, r) => s + (r.distance ?? 0) / 1000, 0);
-  const done = inWeek.length;
+  const weekStart = week.weekStart;
+  const km = week.runs.km;
+  const done = week.runs.done;
+  const wDone = week.workouts.done;
+  const wGoal = week.workouts.planned;
+  const wFloor = week.workouts.floor;
 
   // browse back to the week of the oldest run
   const oldest = runs.length ? weekStartOf(parseGarminLocal(runs[runs.length - 1].startTimeLocal)) : currentWeekStart;
@@ -173,16 +169,43 @@ function WeekPlanCard() {
     <Card kicker={weekLabel} title={`Runs ${done}/${plan.runsPerWeek}`} value={`${km.toFixed(1)} km`} footnote={footnote}>
       <div className="mb-2 flex items-center justify-between">
         <WeekBtn dir="prev" onClick={canGoBack ? () => setWeeksBack(weeksBack + 1) : undefined} />
-        <div className="flex flex-1 gap-2 px-3">
-          {Array.from({ length: Math.max(plan.runsPerWeek, done) }, (_, i) => (
-            <div
-              key={i}
-              className={`h-2.5 flex-1 rounded-full ${i < done ? "bg-accent" : "bg-grid"}`}
-              aria-label={i < done ? "run done" : "run pending"}
-            />
-          ))}
+        <div className="flex flex-1 flex-col gap-2 px-3">
+          <div className="flex gap-2">
+            {Array.from({ length: Math.max(plan.runsPerWeek, done) }, (_, i) => (
+              <div
+                key={i}
+                className={`h-2.5 flex-1 rounded-full ${i < done ? "bg-accent" : "bg-grid"}`}
+                aria-label={i < done ? "run done" : "run pending"}
+              />
+            ))}
+          </div>
+          {/* workouts on their own row: the third slot is drawn as a bonus, so a
+              two-workout week reads as on track rather than failed */}
+          <div className="flex gap-2">
+            {Array.from({ length: Math.max(wGoal, wDone) }, (_, i) => {
+              const filled = i < wDone;
+              const bonus = i >= wFloor;
+              return (
+                <div
+                  key={i}
+                  aria-label={filled ? "workout done" : bonus ? "bonus workout slot" : "workout pending"}
+                  className={`flex h-2.5 flex-1 items-center justify-center rounded-full ${
+                    filled ? "bg-[var(--recency-hi)]" : bonus ? "border border-dashed border-hairline" : "bg-grid"
+                  }`}
+                />
+              );
+            })}
+          </div>
         </div>
         <WeekBtn dir="next" onClick={weeksBack > 0 ? () => setWeeksBack(weeksBack - 1) : undefined} />
+      </div>
+      <div className="flex items-baseline justify-between">
+        <span className="text-[13px] text-ink-2">
+          Workouts {wDone}/{wGoal}
+        </span>
+        {week.workouts.letters.length > 0 && (
+          <span className="tnum text-[11px] text-ink-3">{week.workouts.letters.join(" · ")}</span>
+        )}
       </div>
     </Card>
   );
