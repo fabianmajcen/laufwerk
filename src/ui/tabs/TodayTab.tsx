@@ -165,6 +165,20 @@ function WeekPlanCard() {
       ? "This week"
       : `Week of ${weekStart.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
 
+  // what is actually planned and still open, so the plan is visible where the
+  // progress is rather than only inside the planner
+  const todayIso = isoDate(now);
+  const openWorkoutSlots = week.days
+    .filter((d) => d.date >= todayIso)
+    .flatMap((d) => d.slots.filter((s) => s.kind === "workout" && !s.fulfilled).map((s) => ({ ...s, date: d.date })));
+  const nextSlot = openWorkoutSlots[0];
+  const upcoming =
+    weeksBack !== 0 || !nextSlot
+      ? null
+      : nextSlot.date === todayIso
+        ? `Day ${nextSlot.planId ?? "?"} planned for today.`
+        : `Day ${nextSlot.planId ?? "?"} planned for ${new Date(nextSlot.date + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long" })}.`;
+
   return (
     // one card, because the week pager governs both, but each discipline gets
     // its own labelled block with a hairline between: stacking two bare pill
@@ -205,6 +219,7 @@ function WeekPlanCard() {
           <span className="tnum text-[13px] text-ink-3">{week.workouts.letters.join(" · ")}</span>
         )}
       </div>
+      {upcoming && <p className="mt-1 text-[12px] text-ink-3">{upcoming}</p>}
       <div className="mt-2 flex gap-2">
         {/* the third slot is dashed as a bonus, so a two-workout week reads as
             on track rather than failed */}

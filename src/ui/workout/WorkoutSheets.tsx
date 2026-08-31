@@ -1,25 +1,63 @@
 // Two app-level sheets: the finish acknowledgement, and the verdict prompt for a
 // session that was left running (app killed, or he forgot to end it yesterday).
+import { useLiveQuery } from "dexie-react-hooks";
 import { useWorkout } from "../../store/workoutStore";
+import { useSettings } from "../../store/settingsStore";
 import { setsDone } from "../../lib/derive/workout";
+import { addScheduleSlot, hasFutureSlot, nextPlanInRotation, suggestNextWorkoutDates } from "../../lib/db/workouts";
 import { fmtDuration } from "../../lib/format";
 import { Sheet, SheetButton } from "../components/Sheet";
 
 /** Finishing logs silently — no questions — but after 45 minutes of work the
- *  acknowledgement is the point, so this is a summary and not a question. */
+ *  acknowledgement is the point, so this is a summary and not a question.
+ *  It then offers to schedule the next session, but only when nothing is
+ *  already scheduled ahead: that condition is what keeps it from nagging. */
 export function WorkoutFinishedSheet() {
   const finished = useWorkout((s) => s.finished);
   const dismiss = useWorkout((s) => s.dismissFinished);
+  const ask = useSettings((s) => s.workouts.askToScheduleNext);
+  const restDays = useSettings((s) => s.workouts.minRestDaysBetweenWorkouts);
+
+  const offer = useLiveQuery(async () => {
+    if (!finished || !ask) return null;
+    if (await hasFutureSlot("workout")) return null; // already planned ahead
+    const [next, dates] = await Promise.all([
+      nextPlanInRotation(),
+      suggestNextWorkoutDates(restDays, 3),
+    ]);
+    return next && dates.length ? { next, dates } : null;
+  }, [finished?.id, ask, restDays]);
+
   if (!finished) return null;
   const mins = Math.round(((finished.endedAt ?? Date.now()) - finished.startedAt) / 60000);
   return (
     <Sheet
       title={`Day ${finished.planId} done`}
-      subtitle={`${mins} min · ${setsDone(finished)} sets${finished.status === "partial" ? " · counted as partial" : ""}`}
+      subtitle={`${mins < 1 ? "under a minute" : `${mins} min`} · ${setsDone(finished)} sets${
+        finished.status === "partial" ? " · counted as partial" : ""
+      }`}
       onClose={dismiss}
     >
+      {offer && (
+        <>
+          <p className="text-[13px] text-ink-2">
+            Nothing scheduled yet. Put day {offer.next.id} in the calendar?
+          </p>
+          {offer.dates.map((d) => (
+            <SheetButton
+              key={d}
+              onClick={() => {
+                void addScheduleSlot(d, { kind: "workout", planId: offer.next.id, source: "manual" });
+                dismiss();
+              }}
+            >
+              {new Date(d + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" })}
+            </SheetButton>
+          ))}
+        </>
+      )}
       <SheetButton tone="primary" onClick={dismiss}>
-        Done
+        {offer ? "Not now" : "Done"}
       </SheetButton>
     </Sheet>
   );

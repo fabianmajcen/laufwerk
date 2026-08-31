@@ -198,3 +198,40 @@ export async function hasFutureSlot(kind: "workout" | "run", today = isoDate(new
   const days = await db.schedule.where("date").above(today).toArray();
   return days.some((d) => d.slots.some((s) => s.kind === kind));
 }
+
+/** Candidate dates for the next workout, earliest first: start after the rest
+ *  gap, skip days that already hold a workout or a done session, and prefer
+ *  run-free days (2 runs + 3 workouts in 7 days means doubling up happens, it
+ *  just should not be the first suggestion). */
+export async function suggestNextWorkoutDates(
+  restDays: number,
+  count = 3,
+  now = new Date(),
+): Promise<string[]> {
+  const from = isoDate(now);
+  const horizon = isoDate(new Date(now.getTime() + 21 * 86400000));
+  const [schedule, sessions, runs] = await Promise.all([
+    getScheduleRange(from, horizon),
+    db.workoutSessions.where("date").between(from, horizon, true, true).toArray(),
+    db.activities.where("startTimeLocal").aboveOrEqual(from).toArray(),
+  ]);
+
+  const hasWorkout = new Set<string>();
+  const hasRun = new Set<string>();
+  for (const day of schedule) {
+    for (const s of day.slots) (s.kind === "workout" ? hasWorkout : hasRun).add(day.date);
+  }
+  for (const s of sessions) if (countsTowardWeek(s)) hasWorkout.add(s.date);
+  for (const r of runs) {
+    if (r.typeKey.toLowerCase().includes("run")) hasRun.add(r.startTimeLocal.slice(0, 10));
+  }
+
+  const free: string[] = [];
+  const busyWithRun: string[] = [];
+  for (let i = restDays + 1; i <= 14 && free.length < count; i++) {
+    const iso = isoDate(new Date(now.getTime() + i * 86400000));
+    if (hasWorkout.has(iso)) continue;
+    (hasRun.has(iso) ? busyWithRun : free).push(iso);
+  }
+  return [...free, ...busyWithRun].slice(0, count);
+}
