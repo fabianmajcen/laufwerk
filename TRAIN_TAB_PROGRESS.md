@@ -8,19 +8,35 @@ without re-deriving anything.
 
 ## Status
 
-- [ ] **M1 — data layer, Train tab, plan viewer**
-  - [ ] `src/lib/db/schema.ts` — v2 tables + row interfaces
-  - [ ] `src/lib/db/repo.ts` — extend `exportAll()` (same commit as tables)
-  - [ ] `src/lib/workouts/planSeed.ts` — A/B/C seed + `PROGRESSION_NOTES`
-  - [ ] `src/lib/db/workouts.ts` — plans/sessions/schedule accessors + seeder + reaper
-  - [ ] `src/lib/derive/workout.ts` — pure predicates
-  - [ ] `src/lib/hooks.ts` — workout hooks
-  - [ ] `src/store/settingsStore.ts` — top-level `workouts` group + `merge` fix (NO `version`)
-  - [ ] `src/store/uiStore.ts` + `TabBar.tsx` + `App.tsx` — 5th tab at index 1
-  - [ ] `src/ui/tabs/TrainingTab.tsx` — hero, week card, A/B/C rows, plan detail sub-screen
-  - [ ] `src/ui/screens/Settings.tsx` — calisthenics card, clear-data copy, delete-history button
-  - [ ] `src/dev/mockSync.ts` — SEED_VERSION 4→5 + demo sessions
-- [ ] **M2 — guided player** (see plan; runtime/cues/timer/wakeLock/player/minibar/sheet)
+- [x] **M1 — data layer, Train tab, plan viewer** — commit `9cf2fb9`, NOT yet released
+  - [x] `schema.ts` v2 (workoutPlans, workoutSessions, schedule) + row interfaces
+  - [x] `repo.ts` `exportAll()` covers the three new tables
+  - [x] `workouts/planSeed.ts` — A/B/C transcribed + `PROGRESSION_NOTES`
+  - [x] `db/workouts.ts` — accessors, `ensureWorkoutPlansSeeded`, `reapStaleWorkoutSessions`,
+        `nextPlanInRotation`, `hasFutureSlot`
+  - [x] `derive/workout.ts` — pure predicates
+  - [x] `hooks.ts` — `useWorkoutPlans/Plan/ActiveWorkoutSession/RecentWorkoutSessions/
+        NextPlanInRotation/WorkoutSessions`
+  - [x] `settingsStore.ts` — top-level `workouts` group + persist `merge` fix
+  - [x] 5th tab "Train" at index 1 (rings icon); verified 5×72px at 360px, no wrap
+  - [x] `TrainingTab.tsx` — Next-up hero (Start **disabled** pending M2), week card
+        (3 slots, 3rd dashed), A/B/C rows, plan-detail sub-screen
+  - [x] `Settings.tsx` — calisthenics card + toggles, "Clear synced Garmin data"
+        reworded, separate "Delete workout history"
+  - [ ] `src/dev/mockSync.ts` — demo sessions for dev (optional; seeding already works
+        in mock because it runs on the production boot path)
+- [ ] **M2 — guided player** ← NEXT. Ship M1+M2 together as release 1.
+  - [ ] `src/lib/timer.ts` — `useNow(active)` gated, `useDeadlineAlarm` (3 triggers)
+  - [ ] `src/lib/workouts/cues.ts` — WebAudio beep + `primeAudio()`
+  - [ ] `src/lib/workouts/screenAwake.ts` — refcounted wake lock
+  - [ ] `src/lib/haptics.ts` — `restOverBuzz`, `successBuzz`
+  - [ ] `src/store/workoutStore.ts` — live session machine, write-through, `hydrate()`
+  - [ ] `src/ui/workout/` — `WorkoutRuntime` (headless), `WorkoutPlayer`, `StepList`,
+        `ActionDock`, `WorkoutMiniBar`
+  - [ ] `src/ui/components/Sheet.tsx` — bottom sheet for quit prompt
+  - [ ] `App.tsx` — player outside `PullToSync`, mini-bar, hydrate on boot
+  - [ ] enable the Start button in `TrainingTab.tsx` (remove the disabled state and
+        the "arrives in the next update" note)
 - [ ] M3 Today integration · M4 scheduling · M5 history+restore
 
 ## Hazards (do not rediscover)
