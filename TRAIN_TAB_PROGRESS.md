@@ -282,6 +282,25 @@ centred in the tile, and the band-to-calendar gap widened from 2 to 3 gapY. Two 
 - the word sits at `ringD * 0.9`, not `ringD`: the arc has a 100 degree gap at the
   bottom, so the ring's VISIBLE bottom is well above its bounding box.
 
+## Widget top line, final geometry (v0.2.52)
+
+- The ring is centred in a column as wide as the WIDER of the ring and the verdict
+  word. Centring the word on the ring let "Easy only" hang off the left edge past
+  the padding, and this column is also what shifts the ring right of the raw margin.
+- Ring cap 58 -> 68dp.
+- Bars are CAPPED at 132dp rather than stretched to fill; a 150dp hairline reads as
+  a divider, not a gauge. Leftover width becomes the gutter between the two groups.
+- Bars align to the RING, not to the band: label level with the top of the arc,
+  track level with its visible bottom (`ringVisibleH`). Spanning the whole band put
+  the track below the verdict word, so far from its own label that the two stopped
+  reading as one thing.
+- Bar text/glyph `min(20dp, rowH * 0.34)`, bar height `min(8dp, max(4.5dp, rowH * 0.11))`.
+
+NOTE on the preview harness: it had been patched so many times that a `s.index("  if(twoLine){")`
+matched the layout-maths line instead of the drawing block and silently deleted the
+day loop. It is rewritten from scratch to mirror the Java in the same order. If a
+patch to it starts needing unique-enough anchors, rewrite the file instead.
+
 ## Edge-to-edge insets (v0.2.46) - the real fix for "cut off at the bottom"
 
 `targetSdk 36` means Android lays the activity out **behind** the status and

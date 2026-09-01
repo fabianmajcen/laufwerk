@@ -349,42 +349,59 @@ public class ReadinessWidget extends AppWidgetProvider {
                                     String km, int score, String verdict, int verdictColor) {
         float barsX = x;
         float barsW = innerW;
+        // bars default to the whole band; with a ring present they align to it
+        float barsY = y;
+        float barsH = topH;
 
         if (score >= 0) {
             float wordH = Math.min(13 * d, topH * 0.22f);
-            float ringD = Math.max(18 * d, Math.min(topH - wordH - 2 * d, 58 * d));
-            // ring and word travel together and are centred in the band: pinning
-            // the word to the band's bottom edge stranded it far below the ring
-            // as soon as the ring hit its 58dp cap
+            float ringD = Math.max(18 * d, Math.min(topH - wordH - 2 * d, 68 * d));
+
+            t.setTextAlign(Paint.Align.CENTER);
+            t.setFakeBoldText(false);
+            t.setTextSize(wordH);
+            float wordW = verdict != null && verdict.length() > 0 ? t.measureText(verdict) : 0;
+
+            // The ring is centred in a column as wide as the WIDER of the ring and
+            // the verdict word. Centring the word on the ring instead let a long
+            // verdict ("Easy only") hang off the left edge past the padding, and
+            // this is also what shifts the ring right of the raw left margin.
+            float colW = Math.max(ringD, wordW);
+            float ringX = x + (colW - ringD) / 2f;
+
             // 0.9, not 1.0: the arc has a 100 degree gap at the bottom, so the
             // ring's visible bottom sits well above its box and a word placed
             // under the box reads as detached
             float ringVisibleH = ringD * 0.9f;
             float groupH = ringVisibleH + wordH;
             float groupY = y + Math.max(0, (topH - groupH) / 2f);
-            drawRing(c, t, p, x, groupY, ringD, d, score, verdictColor);
+            drawRing(c, t, p, ringX, groupY, ringD, d, score, verdictColor);
 
-            float leftW = ringD;
-            if (verdict != null && verdict.length() > 0) {
+            if (wordW > 0) {
                 t.setTextAlign(Paint.Align.CENTER);
                 t.setFakeBoldText(false);
                 t.setTextSize(wordH);
                 t.setColor(INK2);
-                c.drawText(verdict, x + ringD / 2f, groupY + ringVisibleH + wordH * 0.82f, t);
-                leftW = Math.max(leftW, t.measureText(verdict));
+                c.drawText(verdict, x + colW / 2f, groupY + ringVisibleH + wordH * 0.82f, t);
             }
-            float used = Math.min(leftW + 12 * d, innerW * 0.40f);
+            float used = Math.min(colW + 16 * d, innerW * 0.44f);
             barsX = x + used;
             barsW = innerW - used;
+            // Align the bars to the RING, not to the band: label level with the
+            // top of the arc, track level with its visible bottom. Spanning the
+            // whole band instead put the track below the verdict word, so far
+            // from its own label that the two stopped reading as one thing.
+            barsY = groupY;
+            barsH = ringVisibleH;
         }
 
-        // wide enough that the whitespace itself separates the two groups
-        float gap = 18 * d;
-        float half = (barsW - gap) / 2f;
-        float barRowH = Math.min(38 * d, topH * 0.72f);
-        float barY = y + (topH - barRowH) / 2f;
-        drawBar(ctx, c, t, p, barsX, barY, half, barRowH, d, true, runsDone, runsPlanned, km, RUN_FILL);
-        drawBar(ctx, c, t, p, barsX + half + gap, barY, half, barRowH, d, false,
+        // Bars are capped rather than stretched to fill: a 150dp hairline reads as
+        // a divider, not a gauge. Whatever width is left over becomes the gutter
+        // between the two groups, so they sit evenly in the space available.
+        float bw = Math.min((barsW - 18 * d) / 2f, 132 * d);
+        float gutter = Math.max(18 * d, barsW - bw * 2);
+        drawBar(ctx, c, t, p, barsX, barsY, bw, barsH, d, true, runsDone, runsPlanned, km, RUN_FILL);
+        drawBar(ctx, c, t, p, barsX + bw + gutter, barsY, bw, barsH, d, false,
                 caliDone, caliPlanned, null, CALI_FILL);
     }
 
@@ -417,15 +434,16 @@ public class ReadinessWidget extends AppWidgetProvider {
         c.drawText(String.valueOf(score), x + dia / 2f, y + dia / 2f - (fm.ascent + fm.descent) / 2f, t);
     }
 
-    /** One labelled progress bar: glyph, count, optional right-aligned extra,
-     *  and the track underneath. */
+    /** One labelled progress bar, spanning the full band height: the label sits
+     *  at the top and the track at the bottom, so the group fills the band
+     *  instead of floating in the middle of it with dead space above. */
     private static void drawBar(Context ctx, Canvas c, Paint t, Paint p, float x, float y,
                                 float w, float rowH, float d, boolean isRun,
                                 int done, int planned, String extra, int color) {
-        float glyph = Math.min(16 * d, rowH * 0.46f);
-        float textSize = Math.min(16 * d, rowH * 0.44f);
-        float barH = Math.max(4 * d, rowH * 0.24f);
-        float textCy = y + (rowH - barH - 3 * d) / 2f;
+        float glyph = Math.min(20 * d, rowH * 0.34f);
+        float textSize = Math.min(20 * d, rowH * 0.34f);
+        float barH = Math.min(8 * d, Math.max(4.5f * d, rowH * 0.11f));
+        float textCy = y + Math.max(glyph, textSize) * 0.62f;
 
         t.setTextAlign(Paint.Align.LEFT);
         t.setTextSize(textSize);
@@ -438,13 +456,13 @@ public class ReadinessWidget extends AppWidgetProvider {
 
         t.setColor(INK);
         String count = done + "/" + planned;
-        c.drawText(count, x + glyph + 5 * d, baseline, t);
+        c.drawText(count, x + glyph + 6 * d, baseline, t);
 
         // Grouped hard left, NOT right-aligned in this half. Right-aligned, the km
         // landed closer to the next bar's glyph than to its own count, and the two
         // bars read as one segmented bar with a run-on label.
         if (extra != null && extra.length() > 0) {
-            float after = x + glyph + 5 * d + t.measureText(count) + 7 * d;
+            float after = x + glyph + 6 * d + t.measureText(count) + 7 * d;
             t.setFakeBoldText(false);
             t.setColor(INK2);
             c.drawText(extra, after, baseline, t);
