@@ -162,8 +162,13 @@ achievement. Now:
 - Marks grew and the tile went h-11 -> h-14. `chipSizes()` steps the disc down as a
   day fills (32 / 24 / 17 px for 1 / 2 / 3+ marks) so one mark fills its tile and
   three still fit.
-- The widget still uses the older alpha encoding. Mirroring fill-vs-dash there is
-  open, but dashed strokes on a ~20px canvas disc are unverifiable without a device.
+- **The widget uses the same encoding** (v0.2.45), ported to Canvas: filled circle
+  with the glyph knocked out in `STAMP_INK #14130F` for done, `DashPathEffect` ring
+  for planned. Two things the canvas preview caught that guessing would not have:
+  dashes fragment into visual noise below ~16dp, so the ring goes solid under that
+  size (fill-vs-outline is the encoding; the dash is only texture), and a single
+  stamp at `slotH * 0.94` collided with the today ring, so discs are
+  `min(tileW*0.90, slotH*0.86, 34dp)`.
 
 ## Player design rules (learned from real use, v0.2.41)
 

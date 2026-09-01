@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.DashPathEffect;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
@@ -42,8 +43,8 @@ public class ReadinessWidget extends AppWidgetProvider {
     private static final int RUN_FILL = Color.parseColor("#4E96EE");
 
     private static final String[] WEEKDAYS = {"Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"};
-    /** planned marks: clearly present, clearly not done */
-    private static final int PLANNED_ALPHA = 150;
+    /** knocked out of a done stamp, so the mark colour carries the identity */
+    private static final int STAMP_INK = Color.parseColor("#14130F");
 
     public static void refreshAll(Context context) {
         AppWidgetManager mgr = AppWidgetManager.getInstance(context);
@@ -174,7 +175,7 @@ public class ReadinessWidget extends AppWidgetProvider {
                 c.drawRoundRect(tile, r, r, p);
                 p.setStyle(Paint.Style.FILL);
             }
-            if (day != null) drawDayMarks(ctx, c, t, p, day, cx, top + tileH / 2f, tileH, d);
+            if (day != null) drawDayMarks(ctx, c, t, p, day, cx, top + tileH / 2f, tileW, tileH, d);
         }
 
         if (withCounters) {
@@ -184,10 +185,12 @@ public class ReadinessWidget extends AppWidgetProvider {
         return bmp;
     }
 
-    /** Marks for one day, stacked and centred: letters for sessions, the run
-     *  glyph for runs, a dash for rest. Done is solid, planned is faded. */
+    /** Marks for one day, stacked and centred. Done is a FILLED stamp with the
+     *  letter or run glyph knocked out of it; planned is the same disc as an
+     *  outline. Fill versus outline is a shape difference, so unlike the alpha
+     *  step it used to be it survives being 30dp wide on a bright screen. */
     private static void drawDayMarks(Context ctx, Canvas c, Paint t, Paint p, JSONObject day,
-                                     float cx, float cy, float tileH, float d) {
+                                     float cx, float cy, float tileW, float tileH, float d) {
         JSONArray done = day.optJSONArray("w");
         JSONArray planned = day.optJSONArray("pw");
         boolean run = day.optBoolean("run", false);
@@ -207,49 +210,73 @@ public class ReadinessWidget extends AppWidgetProvider {
             return;
         }
 
-        // shrink the marks when a day carries more than one, so two never
-        // overflow the tile
-        float glyph = total > 1 ? Math.min(16 * d, tileH * 0.42f) : Math.min(22 * d, tileH * 0.62f);
-        float rowH = glyph + 1 * d;
-        float startY = cy - (total - 1) * rowH / 2f;
+        float slotH = tileH / total;
+        float disc = Math.min(Math.min(tileW * 0.90f, slotH * 0.86f), 34 * d);
+        float startY = cy - (total - 1) * slotH / 2f;
         int idx = 0;
 
         for (int i = 0; i < nDone; i++, idx++) {
-            drawLetter(c, t, done.optString(i, "?"), cx, startY + idx * rowH, glyph, 255);
+            stamp(ctx, c, t, p, planColor(done.optString(i, "?")), done.optString(i, "?"),
+                    cx, startY + idx * slotH, disc, true, d);
         }
         if (run) {
-            drawRunGlyph(ctx, c, cx, startY + idx * rowH, glyph, 255);
+            stamp(ctx, c, t, p, RUN_FILL, null, cx, startY + idx * slotH, disc, true, d);
             idx++;
         }
         for (int i = 0; i < nPlanned; i++, idx++) {
-            drawLetter(c, t, planned.optString(i, "?"), cx, startY + idx * rowH, glyph, PLANNED_ALPHA);
+            stamp(ctx, c, t, p, planColor(planned.optString(i, "?")), planned.optString(i, "?"),
+                    cx, startY + idx * slotH, disc, false, d);
         }
         if (plannedRun) {
-            drawRunGlyph(ctx, c, cx, startY + idx * rowH, glyph, PLANNED_ALPHA);
+            stamp(ctx, c, t, p, RUN_FILL, null, cx, startY + idx * slotH, disc, false, d);
         }
     }
 
-    private static void drawLetter(Canvas c, Paint t, String id, float cx, float cy, float size, int alpha) {
-        t.setColor(planColor(id));
-        t.setAlpha(alpha);
-        t.setTextSize(size);
-        t.setFakeBoldText(true);
-        Paint.FontMetrics fm = t.getFontMetrics();
-        c.drawText(id, cx, cy - (fm.ascent + fm.descent) / 2f, t);
-        t.setAlpha(255);
+    /** One mark. `letter` null means draw the run glyph instead. */
+    private static void stamp(Context ctx, Canvas c, Paint t, Paint p, int color, String letter,
+                              float cx, float cy, float disc, boolean isDone, float d) {
+        if (isDone) {
+            p.setStyle(Paint.Style.FILL);
+            p.setColor(color);
+            c.drawCircle(cx, cy, disc / 2f, p);
+        } else {
+            float stroke = Math.max(1.2f * d, disc * 0.075f);
+            p.setStyle(Paint.Style.STROKE);
+            p.setStrokeWidth(stroke);
+            p.setColor(color);
+            // dashes fragment into noise on a small disc, and the encoding is
+            // fill versus outline; below that size keep the ring, drop the dash
+            if (disc >= 16 * d) {
+                float dash = (float) (Math.PI * disc / 14.0);
+                p.setPathEffect(new DashPathEffect(new float[]{dash, dash}, 0));
+            }
+            c.drawCircle(cx, cy, disc / 2f - stroke / 2f, p);
+            p.setPathEffect(null);
+            p.setStyle(Paint.Style.FILL);
+        }
+
+        int ink = isDone ? STAMP_INK : color;
+        if (letter != null) {
+            t.setColor(ink);
+            t.setTextSize(disc * 0.60f);
+            t.setFakeBoldText(true);
+            Paint.FontMetrics fm = t.getFontMetrics();
+            c.drawText(letter, cx, cy - (fm.ascent + fm.descent) / 2f, t);
+        } else {
+            drawRunGlyph(ctx, c, cx, cy, disc * 0.62f, ink);
+        }
     }
 
-    private static void drawRunGlyph(Context ctx, Canvas c, float cx, float cy, float size, int alpha) {
+    private static void drawRunGlyph(Context ctx, Canvas c, float cx, float cy, float size, int color) {
         Drawable run = androidx.core.content.ContextCompat.getDrawable(ctx, R.drawable.ic_run);
         if (run == null) return;
-        int s = (int) size;
-        run.setBounds((int) (cx - s / 2f), (int) (cy - s / 2f), (int) (cx + s / 2f), (int) (cy + s / 2f));
-        run.setTint(RUN_FILL);
-        run.setAlpha(alpha);
+        int sz = (int) size;
+        run.setBounds((int) (cx - sz / 2f), (int) (cy - sz / 2f), (int) (cx + sz / 2f), (int) (cy + sz / 2f));
+        run.setTint(color);
+        run.setAlpha(255);
         run.draw(c);
     }
 
-    /** Two clearly separated groups rather than one run-on line. */
     private static void drawCounters(Context ctx, Canvas c, Paint t, Paint p, float x, float y,
                                      float innerW, float rowH, float d,
                                      int runsDone, int runsPlanned, int caliDone, int caliPlanned, String km) {
@@ -262,7 +289,7 @@ public class ReadinessWidget extends AppWidgetProvider {
         float baseline = cy - (fm.ascent + fm.descent) / 2f;
 
         // runs on the left
-        drawRunGlyph(ctx, c, x + glyph / 2f, cy, glyph, 255);
+        drawRunGlyph(ctx, c, x + glyph / 2f, cy, glyph, RUN_FILL);
         t.setColor(INK);
         String runs = runsDone + "/" + runsPlanned;
         c.drawText(runs, x + glyph + 5 * d, baseline, t);
