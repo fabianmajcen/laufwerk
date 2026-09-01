@@ -50,6 +50,9 @@ public class ReadinessWidget extends AppWidgetProvider {
     private static final String[] WEEKDAYS = {"Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"};
     /** knocked out of a done stamp, so the mark colour carries the identity */
     private static final int STAMP_INK = Color.parseColor("#14130F");
+    /** the run figure is narrower in its viewBox than the dumbbell, so it needs
+     *  to be drawn larger to look the same weight beside it */
+    private static final float RUN_GLYPH_BOOST = 1.34f;
 
     /** Both providers, since one payload feeds both. */
     public static void refreshAll(Context context) {
@@ -367,7 +370,9 @@ public class ReadinessWidget extends AppWidgetProvider {
             // verdict ("Easy only") hang off the left edge past the padding, and
             // this is also what shifts the ring right of the raw left margin.
             float colW = Math.max(ringD, wordW);
-            float ringX = x + (colW - ringD) / 2f;
+            // a small inset so the block is not flush against the widget margin
+            float colX = x + 6 * d;
+            float ringX = colX + (colW - ringD) / 2f;
 
             // 0.9, not 1.0: the arc has a 100 degree gap at the bottom, so the
             // ring's visible bottom sits well above its box and a word placed
@@ -382,9 +387,9 @@ public class ReadinessWidget extends AppWidgetProvider {
                 t.setFakeBoldText(false);
                 t.setTextSize(wordH);
                 t.setColor(INK2);
-                c.drawText(verdict, x + colW / 2f, groupY + ringVisibleH + wordH * 0.82f, t);
+                c.drawText(verdict, colX + colW / 2f, groupY + ringVisibleH + wordH * 0.82f, t);
             }
-            float used = Math.min(colW + 16 * d, innerW * 0.44f);
+            float used = Math.min(6 * d + colW + 16 * d, innerW * 0.46f);
             barsX = x + used;
             barsW = innerW - used;
             // Align the bars to the RING, not to the band: label level with the
@@ -442,7 +447,7 @@ public class ReadinessWidget extends AppWidgetProvider {
                                 int done, int planned, String extra, int color) {
         float glyph = Math.min(20 * d, rowH * 0.34f);
         float textSize = Math.min(20 * d, rowH * 0.34f);
-        float barH = Math.min(8 * d, Math.max(4.5f * d, rowH * 0.11f));
+        float barH = Math.min(11 * d, Math.max(6 * d, rowH * 0.15f));
         float textCy = y + Math.max(glyph, textSize) * 0.62f;
 
         t.setTextAlign(Paint.Align.LEFT);
@@ -451,18 +456,22 @@ public class ReadinessWidget extends AppWidgetProvider {
         Paint.FontMetrics fm = t.getFontMetrics();
         float baseline = textCy - (fm.ascent + fm.descent) / 2f;
 
-        if (isRun) drawRunGlyph(ctx, c, x + glyph / 2f, textCy, glyph, color);
-        else drawDumbbell(c, p, x + glyph / 2f, textCy, glyph, d, color);
+        // The Material run path fills about 60% of its viewBox width while the
+        // dumbbell fills nearly all of it, so drawing both at one size makes the
+        // runner look shrunken. Reserve one slot and oversize the runner inside it.
+        float slot = glyph * RUN_GLYPH_BOOST;
+        if (isRun) drawRunGlyph(ctx, c, x + slot / 2f, textCy, slot, color);
+        else drawDumbbell(c, p, x + slot / 2f, textCy, glyph, d, color);
 
         t.setColor(INK);
         String count = done + "/" + planned;
-        c.drawText(count, x + glyph + 6 * d, baseline, t);
+        c.drawText(count, x + slot + 6 * d, baseline, t);
 
         // Grouped hard left, NOT right-aligned in this half. Right-aligned, the km
         // landed closer to the next bar's glyph than to its own count, and the two
         // bars read as one segmented bar with a run-on label.
         if (extra != null && extra.length() > 0) {
-            float after = x + glyph + 6 * d + t.measureText(count) + 7 * d;
+            float after = x + slot + 6 * d + t.measureText(count) + 7 * d;
             t.setFakeBoldText(false);
             t.setColor(INK2);
             c.drawText(extra, after, baseline, t);
@@ -493,11 +502,12 @@ public class ReadinessWidget extends AppWidgetProvider {
         float baseline = cy - (fm.ascent + fm.descent) / 2f;
 
         // runs on the left
-        drawRunGlyph(ctx, c, x + glyph / 2f, cy, glyph, RUN_FILL);
+        float slot = glyph * RUN_GLYPH_BOOST;
+        drawRunGlyph(ctx, c, x + slot / 2f, cy, slot, RUN_FILL);
         t.setColor(INK);
         String runs = runsDone + "/" + runsPlanned;
-        c.drawText(runs, x + glyph + 5 * d, baseline, t);
-        float used = glyph + 5 * d + t.measureText(runs);
+        c.drawText(runs, x + slot + 5 * d, baseline, t);
+        float used = slot + 5 * d + t.measureText(runs);
 
         // workouts, pushed well clear of the runs group
         float cx2 = x + used + 22 * d;

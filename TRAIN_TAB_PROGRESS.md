@@ -296,6 +296,18 @@ centred in the tile, and the band-to-calendar gap widened from 2 to 3 gapY. Two 
   reading as one thing.
 - Bar text/glyph `min(20dp, rowH * 0.34)`, bar height `min(8dp, max(4.5dp, rowH * 0.11))`.
 
+### Glyph weight (v0.2.53)
+
+`RUN_GLYPH_BOOST = 1.34`. The Material `directions_run` path fills roughly 60% of
+its 24-unit viewBox width; the dumbbell fills nearly all of it. Drawn at one size
+the runner looks shrunken beside it, which is exactly what the tab bar avoids. Both
+glyphs share one reserved slot of `glyph * BOOST`, the runner drawn at slot size and
+the dumbbell at the base size, so the text offset is the same either way. The app's
+week counters do the same with `RunGlyph size={17}` against `DumbbellGlyph size={13}`.
+
+Also v0.2.53: readiness column inset 6dp from the margin, bar height
+`min(11dp, max(6dp, rowH * 0.15))`.
+
 NOTE on the preview harness: it had been patched so many times that a `s.index("  if(twoLine){")`
 matched the layout-maths line instead of the drawing block and silently deleted the
 day loop. It is rewritten from scratch to mirror the Java in the same order. If a

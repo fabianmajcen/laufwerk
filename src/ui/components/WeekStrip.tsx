@@ -107,8 +107,10 @@ export function WeekStrip() {
         </div>
 
         <div className="mt-3 flex gap-3">
+          {/* the run glyph is larger than the dumbbell on purpose: the run figure
+              fills far less of its viewBox, so equal sizes make it look shrunken */}
           <Counter
-            icon={<RunGlyph size={13} />}
+            icon={<RunGlyph size={17} />}
             color="var(--accent)"
             done={runs.done}
             goal={runs.planned}
