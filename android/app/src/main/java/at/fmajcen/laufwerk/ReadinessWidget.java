@@ -7,6 +7,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.DashPathEffect;
@@ -111,10 +112,25 @@ public class ReadinessWidget extends AppWidgetProvider {
             }
         }
 
-        // the widget's real size, in dp
+        // The widget's real size, in dp. The four OPTION_* values are a RANGE, not
+        // a size: portrait shows the narrow-but-tall end (MIN_WIDTH, MAX_HEIGHT)
+        // and landscape the wide-but-short end. Reading MIN_HEIGHT in portrait
+        // gave a bitmap far shorter than the view, which is what left a third of
+        // the widget as dead space under the calendar.
         Bundle opts = mgr.getAppWidgetOptions(id);
-        int wDp = clamp(opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 250), 120, 640);
-        int hDp = clamp(opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, twoLine ? 110 : 56), 40, 400);
+        boolean portrait =
+                context.getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE;
+        int wRaw = opts.getInt(portrait
+                ? AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH
+                : AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, 0);
+        int hRaw = opts.getInt(portrait
+                ? AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT
+                : AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0);
+        // a launcher that reports only the other end of the range still works
+        if (wRaw <= 0) wRaw = opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, 250);
+        if (hRaw <= 0) hRaw = opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, twoLine ? 110 : 56);
+        int wDp = clamp(wRaw, 120, 640);
+        int hDp = clamp(hRaw, 40, 400);
 
         views.setImageViewBitmap(
                 R.id.widget_days,
@@ -169,11 +185,19 @@ public class ReadinessWidget extends AppWidgetProvider {
                 - labelH - gapY - countersH - (withCounters ? 6 * d : 0);
         // clamp the FLOOR against what is actually available, so a short widget
         // shrinks its tiles instead of overflowing
-        float tileH = Math.min(Math.max(avail, Math.min(avail, 18 * d)), 60 * d);
+        float tileH = Math.min(Math.max(avail, Math.min(avail, 18 * d)), 68 * d);
 
         float gapX = Math.min(5 * d, innerW * 0.022f);
         float tileW = (innerW - gapX * 6) / 7f;
-        float gridTop = padY + (twoLine ? topH + gapY * 2 : 0);
+        // a tile taller than ~1.6x its width stops reading as a tile and starts
+        // reading as a stretched pill; the leftover is centred, not dumped below
+        tileH = Math.min(tileH, tileW * 1.6f);
+        // Whatever is left over after the caps (tileH stops at 68dp) is split
+        // above and below instead of all piling up under the calendar.
+        float contentH = topH + (twoLine ? gapY * 2 : 0) + labelH + gapY + tileH
+                + (withCounters ? 6 * d + countersH : 0);
+        float originY = Math.max(padY, (h - contentH) / 2f);
+        float gridTop = originY + (twoLine ? topH + gapY * 2 : 0);
         float top = gridTop + labelH + gapY;
         float r = Math.min(10 * d, tileW / 3f);
         // the label must fit its own tile, not just look right at one width
@@ -206,11 +230,11 @@ public class ReadinessWidget extends AppWidgetProvider {
         }
 
         if (withCounters) {
-            drawCounters(ctx, c, t, p, padX, h - padY - countersH, innerW, countersH, d,
+            drawCounters(ctx, c, t, p, padX, top + tileH + 6 * d, innerW, countersH, d,
                     runsDone, runsPlanned, caliDone, caliPlanned, km);
         }
         if (twoLine) {
-            drawTopLine(ctx, c, t, p, padX, padY, innerW, topH, d,
+            drawTopLine(ctx, c, t, p, padX, originY, innerW, topH, d,
                     runsDone, runsPlanned, caliDone, caliPlanned, km, score, verdict, verdictColor);
         }
         return bmp;

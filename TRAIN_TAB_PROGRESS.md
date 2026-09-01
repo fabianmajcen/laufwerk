@@ -204,6 +204,23 @@ cells, with the marks inside unreadable. The band is capped at
 `min(36dp, h * 0.32)`, which keeps tiles in the mid 30s there. The tile cap also
 went 52 -> 60dp so a taller widget fills instead of leaving dead space at the bottom.
 
+### The size options are a RANGE, not a size (v0.2.48)
+
+`getAppWidgetOptions` returns four numbers describing the range the widget may be
+shown at, **not** its current size. Portrait shows the narrow-and-tall end
+(`MIN_WIDTH`, `MAX_HEIGHT`); landscape the wide-and-short end (`MAX_WIDTH`,
+`MIN_HEIGHT`). Reading `MIN_HEIGHT` in portrait produced a bitmap far shorter than
+the view, which is what left a third of the widget empty under the calendar on the
+device. Pick the pair by `Configuration.orientation`, and fall back to the other end
+if a launcher reports only one.
+
+Two supporting rules, both from looking at the real screenshot:
+- the content block is **vertically centred** (`originY = max(padY, (h - contentH)/2)`),
+  so leftover after the caps is split above and below instead of piling up at the
+  bottom. The counters row moved inside that block rather than being pinned to `h`.
+- `tileH` is capped at `tileW * 1.6`: a taller tile stops reading as a tile and
+  starts reading as a stretched pill.
+
 The score, verdict and colour were already in the payload (only the drawing was
 removed in v0.2.43), so no JS change was needed for this.
 
