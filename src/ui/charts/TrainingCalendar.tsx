@@ -1,9 +1,10 @@
 // W7 — calendar heatmap: cell = sleep score (Garmin readiness is empty for
-// this device), ring = run day. The train-recover rhythm at a glance.
+// this device), ring = run day, copper dot = calisthenics session. The
+// train-recover rhythm at a glance.
 import { useMemo } from "react";
 import { EChart } from "./EChart";
 import { mixHex, tokens, tooltipDefaults } from "./theme";
-import { toSleepView, useRuns, useWellnessRange } from "../../lib/hooks";
+import { toSleepView, useRuns, useWellnessRange, useWorkoutSessions } from "../../lib/hooks";
 import { Card } from "../components/ScreenHeader";
 import { Legend } from "../components/Legend";
 import { useSettings } from "../../store/settingsStore";
@@ -14,6 +15,7 @@ const MONTHS = 3;
 export function TrainingCalendar({ onOpenDay }: { onOpenDay?: (date: string) => void }) {
   const rows = useWellnessRange("sleep", MONTHS * 31);
   const runs = useRuns();
+  const sessions = useWorkoutSessions(MONTHS * 31);
   const theme = useSettings((s) => s.theme);
 
   const option = useMemo(() => {
@@ -25,6 +27,13 @@ export function TrainingCalendar({ onOpenDay }: { onOpenDay?: (date: string) => 
         .map((v) => [v.date, v.score as number]),
     );
     const runDates = new Set((runs ?? []).map((r) => isoDate(parseGarminLocal(r.startTimeLocal))));
+    // which session letters landed on each day, so the tooltip can name them
+    const workoutsByDate = new Map<string, string[]>();
+    for (const sess of sessions ?? []) {
+      const list = workoutsByDate.get(sess.date) ?? [];
+      list.push(sess.planId);
+      workoutsByDate.set(sess.date, list);
+    }
 
     const end = new Date();
     const start = new Date(end.getFullYear(), end.getMonth() - MONTHS + 1, 1);
@@ -37,6 +46,9 @@ export function TrainingCalendar({ onOpenDay }: { onOpenDay?: (date: string) => 
       if (score != null) cells.push([ds, score]);
     }
     const runCells = [...runDates].filter((d) => d >= range[0] && d <= range[1]).map((d) => [d, 1] as [string, number]);
+    const workoutCells = [...workoutsByDate.keys()]
+      .filter((d) => d >= range[0] && d <= range[1])
+      .map((d) => [d, 1] as [string, number]);
 
     return {
       tooltip: {
@@ -47,7 +59,9 @@ export function TrainingCalendar({ onOpenDay }: { onOpenDay?: (date: string) => 
           const score = sleepByDate.get(d);
           return `<b>${new Date(d + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}</b><br/>${
             score != null ? `sleep ${score}` : "no sleep data"
-          }${runDates.has(d) ? " · 🏃 run" : ""}<br/><span style="opacity:.7">tap for day summary</span>`;
+          }${runDates.has(d) ? " · run" : ""}${
+            workoutsByDate.has(d) ? ` · day ${workoutsByDate.get(d)!.join(" + ")}` : ""
+          }<br/><span style="opacity:.7">tap for day summary</span>`;
         },
       },
       calendar: {
@@ -83,16 +97,28 @@ export function TrainingCalendar({ onOpenDay }: { onOpenDay?: (date: string) => 
           silent: true,
           z: 3,
         },
+        {
+          type: "scatter",
+          coordinateSystem: "calendar",
+          data: workoutCells,
+          symbol: "circle",
+          symbolSize: 7,
+          // the card-coloured hairline keeps it separate from the cell beneath,
+          // whatever the sleep score painted there
+          itemStyle: { color: t.elevation, borderColor: t.card, borderWidth: 1 },
+          silent: true,
+          z: 4,
+        },
       ],
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, runs, theme]);
+  }, [rows, runs, sessions, theme]);
 
   return (
     <Card
       kicker="Rhythm"
       title="Last 3 months"
-      info="Cells show the sleep score, brighter is better. Green rings mark run days: the train-recover rhythm at a glance. Tap a day for its summary."
+      info="Cells show the sleep score, brighter is better. Green rings mark run days and copper dots mark calisthenics sessions, so the whole training rhythm sits on one grid. Tap a day for its summary."
     >
       <EChart
         option={option}
@@ -111,7 +137,8 @@ export function TrainingCalendar({ onOpenDay }: { onOpenDay?: (date: string) => 
       <Legend
         items={[
           { swatch: "gradient", gradient: "linear-gradient(to right, color-mix(in srgb, var(--recency-lo) 45%, var(--card)), var(--recency-lo), var(--recency-hi))", label: "sleep low → high" },
-          { swatch: "ring", color: "var(--status-good)", label: "run day" },
+          { swatch: "ring", color: "var(--status-good)", label: "run" },
+          { swatch: "dot", color: "var(--elevation)", label: "workout" },
         ]}
       />
     </Card>

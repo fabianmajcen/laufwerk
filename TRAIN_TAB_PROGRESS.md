@@ -184,6 +184,37 @@ achievement. Now:
    WebView (same reason App.tsx uses a 32px floor at the top) and the gesture bar clipped
    the dock's secondary row.
 
+## Two widgets (v0.2.47)
+
+The launcher picker now offers two sizes, because one provider class can only be
+one picker entry:
+
+- `ReadinessWidget` - the compact one-cell week (unchanged).
+- `WeekWidget` - two lines: readiness score + verdict on the left, the runs and
+  workouts progress bars on the right, the Mon-Sun week underneath.
+
+`WeekWidget` is a thin provider that calls `ReadinessWidget.render(ctx, mgr, id, true)`.
+ALL drawing stays in `ReadinessWidget` behind a `twoLine` flag so the two cannot
+drift apart, and `refreshAll` walks both `ComponentName`s or one of them silently
+stops updating. Both share `widget_readiness.xml`, since it is a single full-bleed
+ImageView either way.
+
+Tuning the preview caught: a 42% top band left the tiles at 26dp at exactly two
+cells, with the marks inside unreadable. The band is capped at
+`min(36dp, h * 0.32)`, which keeps tiles in the mid 30s there. The tile cap also
+went 52 -> 60dp so a taller widget fills instead of leaving dead space at the bottom.
+
+The score, verdict and colour were already in the payload (only the drawing was
+removed in v0.2.43), so no JS change was needed for this.
+
+## Trends calendar (v0.2.47)
+
+The 3-month heatmap gained a third series: a copper filled dot per counted
+calisthenics session, inside the green run ring so a day with both still reads.
+Copper, not the app's usual workout violet, because the cell fill itself ramps to
+`--recency-hi` and a violet dot vanishes on a good-sleep day. The dot carries a
+1px `--card` hairline so it separates from whatever the sleep score painted.
+
 ## Edge-to-edge insets (v0.2.46) - the real fix for "cut off at the bottom"
 
 `targetSdk 36` means Android lays the activity out **behind** the status and

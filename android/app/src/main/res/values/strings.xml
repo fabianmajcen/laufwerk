@@ -4,5 +4,6 @@
     <string name="title_activity_main">Laufwerk</string>
     <string name="package_name">at.fmajcen.laufwerk</string>
     <string name="custom_url_scheme">at.fmajcen.laufwerk</string>
-    <string name="widget_description">Readiness score, verdict and week progress at a glance.</string>
+    <string name="widget_description">Your training week, Monday to Sunday.</string>
+    <string name="week_widget_description">Readiness and weekly progress, with the training week underneath.</string>
 </resources>

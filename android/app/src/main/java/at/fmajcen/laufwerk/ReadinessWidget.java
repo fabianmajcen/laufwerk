@@ -41,33 +41,42 @@ public class ReadinessWidget extends AppWidgetProvider {
     private static final int REST_PLANNED = Color.parseColor("#9C9A93");
     private static final int REST_IMPLIED = Color.parseColor("#57544E");
     private static final int RUN_FILL = Color.parseColor("#4E96EE");
+    /** workouts, matching the violet the app uses for calisthenics */
+    private static final int CALI_FILL = Color.parseColor("#A89DF0");
+    /** unfilled part of a progress bar */
+    private static final int TRACK = Color.parseColor("#3A3733");
 
     private static final String[] WEEKDAYS = {"Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"};
     /** knocked out of a done stamp, so the mark colour carries the identity */
     private static final int STAMP_INK = Color.parseColor("#14130F");
 
+    /** Both providers, since one payload feeds both. */
     public static void refreshAll(Context context) {
         AppWidgetManager mgr = AppWidgetManager.getInstance(context);
-        int[] ids = mgr.getAppWidgetIds(new ComponentName(context, ReadinessWidget.class));
-        for (int id : ids) {
-            update(context, mgr, id);
+        for (int id : mgr.getAppWidgetIds(new ComponentName(context, ReadinessWidget.class))) {
+            render(context, mgr, id, false);
+        }
+        for (int id : mgr.getAppWidgetIds(new ComponentName(context, WeekWidget.class))) {
+            render(context, mgr, id, true);
         }
     }
 
     @Override
     public void onUpdate(Context context, AppWidgetManager mgr, int[] ids) {
         for (int id : ids) {
-            update(context, mgr, id);
+            render(context, mgr, id, false);
         }
     }
 
     /** Resizing changes what fits, so redraw at the new size. */
     @Override
     public void onAppWidgetOptionsChanged(Context context, AppWidgetManager mgr, int id, Bundle newOptions) {
-        update(context, mgr, id);
+        render(context, mgr, id, false);
     }
 
-    private static void update(Context context, AppWidgetManager mgr, int id) {
+    /** @param twoLine the taller variant: readiness and progress bars on top,
+     *                 the week underneath. False is the one-cell week-only one. */
+    static void render(Context context, AppWidgetManager mgr, int id, boolean twoLine) {
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_readiness);
         float density = context.getResources().getDisplayMetrics().density;
 
@@ -77,6 +86,9 @@ public class ReadinessWidget extends AppWidgetProvider {
         JSONArray days = null;
         int runsDone = 0, runsPlanned = 2, caliDone = 0, caliPlanned = 3;
         String km = null;
+        int score = -1;
+        String verdict = null;
+        int verdictColor = INK2;
 
         if (raw != null) {
             try {
@@ -87,6 +99,13 @@ public class ReadinessWidget extends AppWidgetProvider {
                 caliDone = data.optInt("caliDone", 0);
                 caliPlanned = Math.max(1, data.optInt("caliPlanned", 3));
                 km = data.optString("km", null);
+                score = data.optInt("score", -1);
+                verdict = data.optString("verdict", null);
+                try {
+                    verdictColor = Color.parseColor(data.optString("color", "#C3C2B7"));
+                } catch (Exception ignored2) {
+                    verdictColor = INK2;
+                }
             } catch (Exception ignored) {
                 // fall through and draw an empty week rather than nothing
             }
@@ -95,11 +114,12 @@ public class ReadinessWidget extends AppWidgetProvider {
         // the widget's real size, in dp
         Bundle opts = mgr.getAppWidgetOptions(id);
         int wDp = clamp(opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 250), 120, 640);
-        int hDp = clamp(opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 56), 40, 400);
+        int hDp = clamp(opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, twoLine ? 110 : 56), 40, 400);
 
         views.setImageViewBitmap(
                 R.id.widget_days,
-                draw(context, density, wDp, hDp, days, runsDone, runsPlanned, caliDone, caliPlanned, km));
+                draw(context, density, wDp, hDp, days, runsDone, runsPlanned, caliDone, caliPlanned, km,
+                        twoLine, score, verdict, verdictColor));
 
         Intent launch = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
         if (launch != null) {
@@ -116,7 +136,8 @@ public class ReadinessWidget extends AppWidgetProvider {
     }
 
     private static Bitmap draw(Context ctx, float d, int wDp, int hDp, JSONArray days,
-                               int runsDone, int runsPlanned, int caliDone, int caliPlanned, String km) {
+                               int runsDone, int runsPlanned, int caliDone, int caliPlanned, String km,
+                               boolean twoLine, int score, String verdict, int verdictColor) {
         int w = (int) (wDp * d);
         int h = (int) (hDp * d);
         Bitmap bmp = Bitmap.createBitmap(Math.max(w, 1), Math.max(h, 1), Bitmap.Config.ARGB_8888);
@@ -136,18 +157,24 @@ public class ReadinessWidget extends AppWidgetProvider {
         float labelH = Math.min(12 * d, h * 0.22f);
         float gapY = Math.min(3 * d, h * 0.05f);
 
-        // counters only earn their space on a taller widget; at one cell the
-        // calendar gets everything
-        boolean withCounters = hDp >= 92;
+        // The two-line variant spends its first line on readiness plus the two
+        // progress bars, so it does not also want the compact counters row.
+        // Capped hard: at two cells a 42% band left the tiles at 26dp and the
+        // marks inside them unreadable, and the week is the point of the widget.
+        // 32% keeps the top line legible while the tiles stay in the mid 30s.
+        float topH = twoLine ? Math.min(36 * d, h * 0.32f) : 0;
+        boolean withCounters = !twoLine && hDp >= 92;
         float countersH = withCounters ? 18 * d : 0;
-        float avail = h - padY * 2 - labelH - gapY - countersH - (withCounters ? 6 * d : 0);
+        float avail = h - padY * 2 - topH - (twoLine ? gapY * 2 : 0)
+                - labelH - gapY - countersH - (withCounters ? 6 * d : 0);
         // clamp the FLOOR against what is actually available, so a short widget
         // shrinks its tiles instead of overflowing
-        float tileH = Math.min(Math.max(avail, Math.min(avail, 18 * d)), 52 * d);
+        float tileH = Math.min(Math.max(avail, Math.min(avail, 18 * d)), 60 * d);
 
         float gapX = Math.min(5 * d, innerW * 0.022f);
         float tileW = (innerW - gapX * 6) / 7f;
-        float top = padY + labelH + gapY;
+        float gridTop = padY + (twoLine ? topH + gapY * 2 : 0);
+        float top = gridTop + labelH + gapY;
         float r = Math.min(10 * d, tileW / 3f);
         // the label must fit its own tile, not just look right at one width
         float labelSize = Math.min(Math.min(11 * d, tileW * 0.52f), labelH * 0.92f);
@@ -162,7 +189,7 @@ public class ReadinessWidget extends AppWidgetProvider {
             t.setTextSize(labelSize);
             t.setFakeBoldText(today);
             String label = day != null ? day.optString("l", WEEKDAYS[i]) : WEEKDAYS[i];
-            c.drawText(label, cx, padY + labelH - labelH * 0.16f, t);
+            c.drawText(label, cx, gridTop + labelH - labelH * 0.16f, t);
 
             RectF tile = new RectF(x, top, x + tileW, top + tileH);
             p.setStyle(Paint.Style.FILL);
@@ -181,6 +208,10 @@ public class ReadinessWidget extends AppWidgetProvider {
         if (withCounters) {
             drawCounters(ctx, c, t, p, padX, h - padY - countersH, innerW, countersH, d,
                     runsDone, runsPlanned, caliDone, caliPlanned, km);
+        }
+        if (twoLine) {
+            drawTopLine(ctx, c, t, p, padX, padY, innerW, topH, d,
+                    runsDone, runsPlanned, caliDone, caliPlanned, km, score, verdict, verdictColor);
         }
         return bmp;
     }
@@ -275,6 +306,86 @@ public class ReadinessWidget extends AppWidgetProvider {
         run.setTint(color);
         run.setAlpha(255);
         run.draw(c);
+    }
+
+    /** The two-line variant's first line: readiness on the left, then the two
+     *  weekly progress bars, mirroring the counters in the app's week card. */
+    private static void drawTopLine(Context ctx, Canvas c, Paint t, Paint p, float x, float y,
+                                    float innerW, float topH, float d,
+                                    int runsDone, int runsPlanned, int caliDone, int caliPlanned,
+                                    String km, int score, String verdict, int verdictColor) {
+        float barsX = x;
+        float barsW = innerW;
+
+        if (score >= 0) {
+            // score big, verdict word under it: the number is the glanceable part
+            float numSize = Math.min(30 * d, topH * 0.60f);
+            t.setTextAlign(Paint.Align.LEFT);
+            t.setFakeBoldText(true);
+            t.setTextSize(numSize);
+            t.setColor(verdictColor);
+            String num = String.valueOf(score);
+            c.drawText(num, x, y + numSize * 0.82f, t);
+
+            float wordSize = Math.min(11 * d, topH * 0.24f);
+            t.setFakeBoldText(false);
+            t.setTextSize(wordSize);
+            t.setColor(INK2);
+            String word = verdict != null ? verdict : "";
+            c.drawText(word, x, y + topH - wordSize * 0.15f, t);
+
+            float blockW = Math.max(t.measureText(word), numSize * 1.35f);
+            float used = Math.min(blockW + 14 * d, innerW * 0.42f);
+            barsX = x + used;
+            barsW = innerW - used;
+        }
+
+        float rowH = topH / 2f;
+        drawBar(ctx, c, t, p, barsX, y, barsW, rowH, d, true, runsDone, runsPlanned, km, RUN_FILL);
+        drawBar(ctx, c, t, p, barsX, y + rowH, barsW, rowH, d, false, caliDone, caliPlanned, null, CALI_FILL);
+    }
+
+    /** One labelled progress bar: glyph, count, optional right-aligned extra,
+     *  and the track underneath. */
+    private static void drawBar(Context ctx, Canvas c, Paint t, Paint p, float x, float y,
+                                float w, float rowH, float d, boolean isRun,
+                                int done, int planned, String extra, int color) {
+        float glyph = Math.min(12 * d, rowH * 0.52f);
+        float textSize = Math.min(12 * d, rowH * 0.50f);
+        float barH = Math.max(2.5f * d, rowH * 0.16f);
+        float textCy = y + (rowH - barH - 2 * d) / 2f;
+
+        t.setTextAlign(Paint.Align.LEFT);
+        t.setTextSize(textSize);
+        t.setFakeBoldText(true);
+        Paint.FontMetrics fm = t.getFontMetrics();
+        float baseline = textCy - (fm.ascent + fm.descent) / 2f;
+
+        if (isRun) drawRunGlyph(ctx, c, x + glyph / 2f, textCy, glyph, color);
+        else drawDumbbell(c, p, x + glyph / 2f, textCy, glyph, d, color);
+
+        t.setColor(INK);
+        String count = done + "/" + planned;
+        c.drawText(count, x + glyph + 5 * d, baseline, t);
+
+        if (extra != null && extra.length() > 0) {
+            t.setTextAlign(Paint.Align.RIGHT);
+            t.setFakeBoldText(false);
+            t.setColor(INK2);
+            c.drawText(extra, x + w, baseline, t);
+        }
+        t.setTextAlign(Paint.Align.CENTER);
+
+        float barTop = y + rowH - barH - 1 * d;
+        float r = barH / 2f;
+        p.setStyle(Paint.Style.FILL);
+        p.setColor(TRACK);
+        c.drawRoundRect(new RectF(x, barTop, x + w, barTop + barH), r, r, p);
+        if (planned > 0 && done > 0) {
+            float frac = Math.min(1f, done / (float) planned);
+            p.setColor(color);
+            c.drawRoundRect(new RectF(x, barTop, x + Math.max(barH, w * frac), barTop + barH), r, r, p);
+        }
     }
 
     private static void drawCounters(Context ctx, Canvas c, Paint t, Paint p, float x, float y,
