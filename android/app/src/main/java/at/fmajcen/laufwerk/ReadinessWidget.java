@@ -173,25 +173,32 @@ public class ReadinessWidget extends AppWidgetProvider {
         float labelH = Math.min(12 * d, h * 0.22f);
         float gapY = Math.min(3 * d, h * 0.05f);
 
-        // The two-line variant spends its first line on readiness plus the two
-        // progress bars, so it does not also want the compact counters row.
-        // Capped hard: at two cells a 42% band left the tiles at 26dp and the
-        // marks inside them unreadable, and the week is the point of the widget.
-        // 32% keeps the top line legible while the tiles stay in the mid 30s.
-        float topH = twoLine ? Math.min(46 * d, h * 0.30f) : 0;
+        // Tile geometry first: the calendar is the point of the widget, so it
+        // takes what it needs and the top line gets the REST. Sizing the band as
+        // a fixed share of the height instead starved the ring and the bars
+        // while 50dp of the widget sat empty above and below them.
+        float gapX = Math.min(5 * d, innerW * 0.022f);
+        float tileW = (innerW - gapX * 6) / 7f;
+        // a tile taller than ~1.25x its width stops reading as a tile and starts
+        // reading as a stretched pill
+        float maxTile = Math.min(tileW * 1.25f, 60 * d);
+
+        // the two-line variant has the bars, so it does not want the compact
+        // counters row as well
         boolean withCounters = !twoLine && hDp >= 92;
         float countersH = withCounters ? 18 * d : 0;
+
+        float topH = 0;
+        if (twoLine) {
+            topH = h - padY * 2 - gapY * 3 - labelH - maxTile;
+            topH = Math.max(30 * d, Math.min(topH, 76 * d));
+        }
+
         float avail = h - padY * 2 - topH - (twoLine ? gapY * 2 : 0)
                 - labelH - gapY - countersH - (withCounters ? 6 * d : 0);
         // clamp the FLOOR against what is actually available, so a short widget
         // shrinks its tiles instead of overflowing
-        float tileH = Math.min(Math.max(avail, Math.min(avail, 18 * d)), 68 * d);
-
-        float gapX = Math.min(5 * d, innerW * 0.022f);
-        float tileW = (innerW - gapX * 6) / 7f;
-        // a tile taller than ~1.6x its width stops reading as a tile and starts
-        // reading as a stretched pill; the leftover is centred, not dumped below
-        tileH = Math.min(tileH, tileW * 1.25f);
+        float tileH = Math.min(Math.max(avail, Math.min(avail, 18 * d)), maxTile);
         // Whatever is left over after the caps (tileH stops at 68dp) is split
         // above and below instead of all piling up under the calendar.
         float contentH = topH + (twoLine ? gapY * 2 : 0) + labelH + gapY + tileH
@@ -344,9 +351,18 @@ public class ReadinessWidget extends AppWidgetProvider {
         float barsW = innerW;
 
         if (score >= 0) {
-            float wordH = Math.min(11 * d, topH * 0.26f);
-            float ringD = Math.max(18 * d, topH - wordH - 2 * d);
-            drawRing(c, t, p, x, y, ringD, d, score, verdictColor);
+            float wordH = Math.min(13 * d, topH * 0.22f);
+            float ringD = Math.max(18 * d, Math.min(topH - wordH - 2 * d, 58 * d));
+            // ring and word travel together and are centred in the band: pinning
+            // the word to the band's bottom edge stranded it far below the ring
+            // as soon as the ring hit its 58dp cap
+            // 0.9, not 1.0: the arc has a 100 degree gap at the bottom, so the
+            // ring's visible bottom sits well above its box and a word placed
+            // under the box reads as detached
+            float ringVisibleH = ringD * 0.9f;
+            float groupH = ringVisibleH + wordH;
+            float groupY = y + Math.max(0, (topH - groupH) / 2f);
+            drawRing(c, t, p, x, groupY, ringD, d, score, verdictColor);
 
             float leftW = ringD;
             if (verdict != null && verdict.length() > 0) {
@@ -354,7 +370,7 @@ public class ReadinessWidget extends AppWidgetProvider {
                 t.setFakeBoldText(false);
                 t.setTextSize(wordH);
                 t.setColor(INK2);
-                c.drawText(verdict, x + ringD / 2f, y + topH - wordH * 0.14f, t);
+                c.drawText(verdict, x + ringD / 2f, groupY + ringVisibleH + wordH * 0.82f, t);
                 leftW = Math.max(leftW, t.measureText(verdict));
             }
             float used = Math.min(leftW + 12 * d, innerW * 0.40f);
@@ -365,7 +381,7 @@ public class ReadinessWidget extends AppWidgetProvider {
         // wide enough that the whitespace itself separates the two groups
         float gap = 18 * d;
         float half = (barsW - gap) / 2f;
-        float barRowH = Math.min(30 * d, topH * 0.68f);
+        float barRowH = Math.min(38 * d, topH * 0.72f);
         float barY = y + (topH - barRowH) / 2f;
         drawBar(ctx, c, t, p, barsX, barY, half, barRowH, d, true, runsDone, runsPlanned, km, RUN_FILL);
         drawBar(ctx, c, t, p, barsX + half + gap, barY, half, barRowH, d, false,
@@ -406,9 +422,9 @@ public class ReadinessWidget extends AppWidgetProvider {
     private static void drawBar(Context ctx, Canvas c, Paint t, Paint p, float x, float y,
                                 float w, float rowH, float d, boolean isRun,
                                 int done, int planned, String extra, int color) {
-        float glyph = Math.min(13 * d, rowH * 0.46f);
-        float textSize = Math.min(13 * d, rowH * 0.44f);
-        float barH = Math.max(3 * d, rowH * 0.17f);
+        float glyph = Math.min(16 * d, rowH * 0.46f);
+        float textSize = Math.min(16 * d, rowH * 0.44f);
+        float barH = Math.max(3 * d, rowH * 0.19f);
         float textCy = y + (rowH - barH - 3 * d) / 2f;
 
         t.setTextAlign(Paint.Align.LEFT);

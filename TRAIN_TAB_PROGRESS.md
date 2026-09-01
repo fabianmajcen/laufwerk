@@ -260,6 +260,25 @@ two-mark days overflowing their tile). The tile is **31px wide at a 320px viewpo
   `drawArc(box, 140, 260)` because Android angles run CLOCKWISE from 3 o'clock.
   Verdict colour on a `TRACK` arc, score centred, verdict word beneath.
 
+## Widget height allocation (v0.2.50)
+
+Sizing the top band as a share of the height (`min(46dp, h * 0.30)`) starved it: on
+the real device the ring came out ~23dp and the bars hairline-thin while ~50dp of the
+widget sat empty above and below the centred block. Inverted now:
+
+1. tile geometry first, since the calendar is the point of the widget:
+   `maxTile = min(tileW * 1.25, 60dp)`
+2. the top band takes the REST: `h - padY*2 - gapY*3 - labelH - maxTile`,
+   clamped to 30..76dp
+3. tiles then take what is left, capped at `maxTile`; any residual is still centred
+
+Ring grows to 58dp, bar row to 38dp, bar text/glyph to 16dp, bar height to 19% of
+the row. Two placement details that only show up once the ring is big:
+- the ring and the verdict word are centred **as a group**; pinning the word to the
+  band's bottom edge stranded it once the ring hit its cap.
+- the word sits at `ringD * 0.9`, not `ringD`: the arc has a 100 degree gap at the
+  bottom, so the ring's VISIBLE bottom is well above its bounding box.
+
 ## Edge-to-edge insets (v0.2.46) - the real fix for "cut off at the bottom"
 
 `targetSdk 36` means Android lays the activity out **behind** the status and
