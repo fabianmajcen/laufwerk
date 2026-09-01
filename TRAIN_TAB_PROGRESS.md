@@ -232,6 +232,34 @@ Copper, not the app's usual workout violet, because the cell fill itself ramps t
 `--recency-hi` and a violet dot vanishes on a good-sleep day. The dot carries a
 1px `--card` hairline so it separates from whatever the sleep score painted.
 
+## Stamp and tile sizing, done properly (v0.2.49)
+
+Two rounds of guessing pixel sizes produced two bugs (stretched pill tiles, then
+two-mark days overflowing their tile). The tile is **31px wide at a 320px viewport,
+37px at 360 and 45px at 412**, so no fixed number can be right everywhere.
+
+- App: the tile is `aspect-[7/8]` (ratio 1.14, near square) and carries
+  `containerType: "size"`. Stamp sizes are `cqmin` fractions of the tile
+  (78 / 50 / 33 for 1 / 2 / 3 marks, text 42 / 27 / 18), so they scale with the
+  column. Verified with `measure2.mjs`: no vertical or horizontal overflow at 320,
+  360 or 412, with one, two and three marks present.
+- `RunGlyph` gained an optional `className`, which suppresses its width/height
+  attributes so a caller can scale it off its container (`h-[62%] w-[62%]`).
+- Widget: tiles capped at `tileW * 1.25` for the same reason.
+
+## Widget two-line layout (v0.2.49)
+
+- The two progress bars are **side by side**, as in the app's week card. Stacked,
+  they forced a tall top band and squeezed the calendar into stretched pills.
+- Each bar's labels are grouped hard LEFT (glyph, count, then km). Right-aligning
+  km put it closer to the next bar's glyph than to its own count, and the two bars
+  read as one segmented bar with a run-on label. The gap between halves is 18dp so
+  the whitespace does the separating.
+- Readiness is the real gauge now, not a bare number: `drawRing` mirrors the app's
+  ReadinessRing geometry. ECharts' `startAngle 220, endAngle -40` becomes Android's
+  `drawArc(box, 140, 260)` because Android angles run CLOCKWISE from 3 o'clock.
+  Verdict colour on a `TRACK` arc, score centred, verdict word beneath.
+
 ## Edge-to-edge insets (v0.2.46) - the real fix for "cut off at the bottom"
 
 `targetSdk 36` means Android lays the activity out **behind** the status and

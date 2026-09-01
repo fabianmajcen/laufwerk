@@ -206,13 +206,15 @@ interface Mark {
   letter?: string;
 }
 
-/** Chip size steps down as a day fills up, so one mark fills its tile and
- *  three still fit. Sizes are in px because they drive both the circle and
- *  the glyph inside it. */
-function chipSizes(count: number) {
-  if (count <= 1) return { chip: 32, text: 17, glyph: 19 };
-  if (count === 2) return { chip: 24, text: 13, glyph: 14 };
-  return { chip: 17, text: 10, glyph: 11 };
+/** Stamp size as a fraction of the tile, not in pixels. Pixels meant guessing
+ *  the tile size, and the tile is 31px wide at 320px viewport and 45px at 412px,
+ *  so any fixed number either overflowed the small case or floated in the large
+ *  one. cqmin is the tile's shorter side, so these hold at every width:
+ *  two 50s clear a 114%-tall tile, and so do three 33s. */
+function stampSize(count: number) {
+  if (count <= 1) return { chip: "78cqmin", text: "42cqmin" };
+  if (count === 2) return { chip: "50cqmin", text: "27cqmin" };
+  return { chip: "33cqmin", text: "18cqmin" };
 }
 
 function DayCell({ day, weekday, onClick }: { day: TrainingDay; weekday: string; onClick: () => void }) {
@@ -228,7 +230,7 @@ function DayCell({ day, weekday, onClick }: { day: TrainingDay; weekday: string;
   // a past day with nothing on it reads as rest too, just more faintly than one
   // you deliberately planned
   const impliedRest = !marks.length && !plannedRest && day.isPast;
-  const size = chipSizes(marks.length);
+  const size = stampSize(marks.length);
 
   return (
     <button
@@ -237,8 +239,14 @@ function DayCell({ day, weekday, onClick }: { day: TrainingDay; weekday: string;
       className="flex flex-1 flex-col items-center gap-1 active:opacity-70"
     >
       <span className={`text-[10px] ${day.isToday ? "font-semibold text-ink" : "text-ink-3"}`}>{weekday}</span>
+      {/* aspect, not a fixed height: at h-14 the tile was 42x56 on a 360px
+          screen, tall enough to read as a stretched pill rather than a tile,
+          and it stayed 56 on every screen width. 7/8 keeps it near square and
+          scales with the column. */}
       <span
-        className={`flex h-14 w-full flex-col items-center justify-center gap-0.5 rounded-lg bg-page ${
+        // containerType makes cqmin below resolve against this tile
+        style={{ containerType: "size" }}
+        className={`flex aspect-[7/8] w-full flex-col items-center justify-center gap-0.5 rounded-lg bg-page ${
           day.isToday ? "ring-1 ring-accent" : ""
         }`}
       >
@@ -263,7 +271,7 @@ function DayCell({ day, weekday, onClick }: { day: TrainingDay; weekday: string;
             {m.letter ? (
               <span style={{ fontSize: size.text }}>{m.letter}</span>
             ) : (
-              <RunGlyph size={size.glyph} />
+              <RunGlyph className="h-[62%] w-[62%]" />
             )}
           </span>
         ))}

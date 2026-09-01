@@ -178,7 +178,7 @@ public class ReadinessWidget extends AppWidgetProvider {
         // Capped hard: at two cells a 42% band left the tiles at 26dp and the
         // marks inside them unreadable, and the week is the point of the widget.
         // 32% keeps the top line legible while the tiles stay in the mid 30s.
-        float topH = twoLine ? Math.min(36 * d, h * 0.32f) : 0;
+        float topH = twoLine ? Math.min(46 * d, h * 0.30f) : 0;
         boolean withCounters = !twoLine && hDp >= 92;
         float countersH = withCounters ? 18 * d : 0;
         float avail = h - padY * 2 - topH - (twoLine ? gapY * 2 : 0)
@@ -191,7 +191,7 @@ public class ReadinessWidget extends AppWidgetProvider {
         float tileW = (innerW - gapX * 6) / 7f;
         // a tile taller than ~1.6x its width stops reading as a tile and starts
         // reading as a stretched pill; the leftover is centred, not dumped below
-        tileH = Math.min(tileH, tileW * 1.6f);
+        tileH = Math.min(tileH, tileW * 1.25f);
         // Whatever is left over after the caps (tileH stops at 68dp) is split
         // above and below instead of all piling up under the calendar.
         float contentH = topH + (twoLine ? gapY * 2 : 0) + labelH + gapY + tileH
@@ -332,8 +332,10 @@ public class ReadinessWidget extends AppWidgetProvider {
         run.draw(c);
     }
 
-    /** The two-line variant's first line: readiness on the left, then the two
-     *  weekly progress bars, mirroring the counters in the app's week card. */
+    /** The two-line variant's first line: the readiness ring on the left, then
+     *  the two weekly progress bars SIDE BY SIDE, exactly as the app's week card
+     *  arranges them. Stacking them was what forced a tall band and left the
+     *  calendar squeezed into stretched pills underneath. */
     private static void drawTopLine(Context ctx, Canvas c, Paint t, Paint p, float x, float y,
                                     float innerW, float topH, float d,
                                     int runsDone, int runsPlanned, int caliDone, int caliPlanned,
@@ -342,31 +344,61 @@ public class ReadinessWidget extends AppWidgetProvider {
         float barsW = innerW;
 
         if (score >= 0) {
-            // score big, verdict word under it: the number is the glanceable part
-            float numSize = Math.min(30 * d, topH * 0.60f);
-            t.setTextAlign(Paint.Align.LEFT);
-            t.setFakeBoldText(true);
-            t.setTextSize(numSize);
-            t.setColor(verdictColor);
-            String num = String.valueOf(score);
-            c.drawText(num, x, y + numSize * 0.82f, t);
+            float wordH = Math.min(11 * d, topH * 0.26f);
+            float ringD = Math.max(18 * d, topH - wordH - 2 * d);
+            drawRing(c, t, p, x, y, ringD, d, score, verdictColor);
 
-            float wordSize = Math.min(11 * d, topH * 0.24f);
-            t.setFakeBoldText(false);
-            t.setTextSize(wordSize);
-            t.setColor(INK2);
-            String word = verdict != null ? verdict : "";
-            c.drawText(word, x, y + topH - wordSize * 0.15f, t);
-
-            float blockW = Math.max(t.measureText(word), numSize * 1.35f);
-            float used = Math.min(blockW + 14 * d, innerW * 0.42f);
+            float leftW = ringD;
+            if (verdict != null && verdict.length() > 0) {
+                t.setTextAlign(Paint.Align.CENTER);
+                t.setFakeBoldText(false);
+                t.setTextSize(wordH);
+                t.setColor(INK2);
+                c.drawText(verdict, x + ringD / 2f, y + topH - wordH * 0.14f, t);
+                leftW = Math.max(leftW, t.measureText(verdict));
+            }
+            float used = Math.min(leftW + 12 * d, innerW * 0.40f);
             barsX = x + used;
             barsW = innerW - used;
         }
 
-        float rowH = topH / 2f;
-        drawBar(ctx, c, t, p, barsX, y, barsW, rowH, d, true, runsDone, runsPlanned, km, RUN_FILL);
-        drawBar(ctx, c, t, p, barsX, y + rowH, barsW, rowH, d, false, caliDone, caliPlanned, null, CALI_FILL);
+        // wide enough that the whitespace itself separates the two groups
+        float gap = 18 * d;
+        float half = (barsW - gap) / 2f;
+        float barRowH = Math.min(30 * d, topH * 0.68f);
+        float barY = y + (topH - barRowH) / 2f;
+        drawBar(ctx, c, t, p, barsX, barY, half, barRowH, d, true, runsDone, runsPlanned, km, RUN_FILL);
+        drawBar(ctx, c, t, p, barsX + half + gap, barY, half, barRowH, d, false,
+                caliDone, caliPlanned, null, CALI_FILL);
+    }
+
+    /** The readiness gauge, same geometry as the app's ReadinessRing: a 260 degree
+     *  sweep with the gap at the bottom, verdict colour over a neutral track, the
+     *  score in the middle. Android arc angles run clockwise from 3 o'clock, so
+     *  the app's ECharts 220..-40 becomes start 140 sweep 260. */
+    private static void drawRing(Canvas c, Paint t, Paint p, float x, float y, float dia,
+                                 float d, int score, int color) {
+        float stroke = Math.max(2.5f * d, dia * 0.13f);
+        RectF box = new RectF(x + stroke / 2f, y + stroke / 2f, x + dia - stroke / 2f, y + dia - stroke / 2f);
+
+        p.setStyle(Paint.Style.STROKE);
+        p.setStrokeWidth(stroke);
+        p.setStrokeCap(Paint.Cap.ROUND);
+        p.setColor(TRACK);
+        c.drawArc(box, 140, 260, false, p);
+        if (score > 0) {
+            p.setColor(color);
+            c.drawArc(box, 140, 260 * Math.min(100, score) / 100f, false, p);
+        }
+        p.setStyle(Paint.Style.FILL);
+        p.setStrokeCap(Paint.Cap.BUTT);
+
+        t.setTextAlign(Paint.Align.CENTER);
+        t.setFakeBoldText(true);
+        t.setTextSize(dia * 0.42f);
+        t.setColor(INK);
+        Paint.FontMetrics fm = t.getFontMetrics();
+        c.drawText(String.valueOf(score), x + dia / 2f, y + dia / 2f - (fm.ascent + fm.descent) / 2f, t);
     }
 
     /** One labelled progress bar: glyph, count, optional right-aligned extra,
@@ -374,10 +406,10 @@ public class ReadinessWidget extends AppWidgetProvider {
     private static void drawBar(Context ctx, Canvas c, Paint t, Paint p, float x, float y,
                                 float w, float rowH, float d, boolean isRun,
                                 int done, int planned, String extra, int color) {
-        float glyph = Math.min(12 * d, rowH * 0.52f);
-        float textSize = Math.min(12 * d, rowH * 0.50f);
-        float barH = Math.max(2.5f * d, rowH * 0.16f);
-        float textCy = y + (rowH - barH - 2 * d) / 2f;
+        float glyph = Math.min(13 * d, rowH * 0.46f);
+        float textSize = Math.min(13 * d, rowH * 0.44f);
+        float barH = Math.max(3 * d, rowH * 0.17f);
+        float textCy = y + (rowH - barH - 3 * d) / 2f;
 
         t.setTextAlign(Paint.Align.LEFT);
         t.setTextSize(textSize);
@@ -392,15 +424,18 @@ public class ReadinessWidget extends AppWidgetProvider {
         String count = done + "/" + planned;
         c.drawText(count, x + glyph + 5 * d, baseline, t);
 
+        // Grouped hard left, NOT right-aligned in this half. Right-aligned, the km
+        // landed closer to the next bar's glyph than to its own count, and the two
+        // bars read as one segmented bar with a run-on label.
         if (extra != null && extra.length() > 0) {
-            t.setTextAlign(Paint.Align.RIGHT);
+            float after = x + glyph + 5 * d + t.measureText(count) + 7 * d;
             t.setFakeBoldText(false);
             t.setColor(INK2);
-            c.drawText(extra, x + w, baseline, t);
+            c.drawText(extra, after, baseline, t);
         }
         t.setTextAlign(Paint.Align.CENTER);
 
-        float barTop = y + rowH - barH - 1 * d;
+        float barTop = y + rowH - barH;
         float r = barH / 2f;
         p.setStyle(Paint.Style.FILL);
         p.setColor(TRACK);
