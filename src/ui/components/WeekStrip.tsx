@@ -165,16 +165,37 @@ export function WeekStrip() {
   );
 }
 
+/** One mark inside a day tile: a session letter or a run. */
+interface Mark {
+  color: string;
+  done: boolean;
+  /** the session letter; absent means this is a run */
+  letter?: string;
+}
+
+/** Chip size steps down as a day fills up, so one mark fills its tile and
+ *  three still fit. Sizes are in px because they drive both the circle and
+ *  the glyph inside it. */
+function chipSizes(count: number) {
+  if (count <= 1) return { chip: 32, text: 17, glyph: 19 };
+  if (count === 2) return { chip: 24, text: 13, glyph: 14 };
+  return { chip: 17, text: 10, glyph: 11 };
+}
+
 function DayCell({ day, weekday, onClick }: { day: TrainingDay; weekday: string; onClick: () => void }) {
-  const doneLetters = day.sessions.map((s) => s.planId);
-  const didRun = day.runs.length > 0;
-  const plannedWorkouts = day.slots.filter((s) => s.kind === "workout" && !s.fulfilled);
-  const plannedRun = day.slots.some((s) => s.kind === "run" && !s.fulfilled);
   const plannedRest = day.slots.some((s) => s.kind === "rest");
-  const empty = !didRun && !doneLetters.length && !plannedWorkouts.length && !plannedRun && !plannedRest;
+  const marks: Mark[] = [
+    ...day.sessions.map((sess) => ({ color: planColor(sess.planId), done: true, letter: sess.planId ?? "?" })),
+    ...(day.runs.length > 0 ? [{ color: "var(--accent)", done: true }] : []),
+    ...day.slots
+      .filter((s) => s.kind === "workout" && !s.fulfilled)
+      .map((s) => ({ color: planColor(s.planId), done: false, letter: s.planId ?? "?" })),
+    ...(day.slots.some((s) => s.kind === "run" && !s.fulfilled) ? [{ color: "var(--accent)", done: false }] : []),
+  ];
   // a past day with nothing on it reads as rest too, just more faintly than one
   // you deliberately planned
-  const impliedRest = empty && day.isPast;
+  const impliedRest = !marks.length && !plannedRest && day.isPast;
+  const size = chipSizes(marks.length);
 
   return (
     <button
@@ -182,41 +203,41 @@ function DayCell({ day, weekday, onClick }: { day: TrainingDay; weekday: string;
       aria-label={`${day.date}: ${describeDay(day)}. Tap to plan.`}
       className="flex flex-1 flex-col items-center gap-1 active:opacity-70"
     >
-      <span className={`text-[10px] ${day.isToday ? "text-ink" : "text-ink-3"}`}>{weekday}</span>
+      <span className={`text-[10px] ${day.isToday ? "font-semibold text-ink" : "text-ink-3"}`}>{weekday}</span>
       <span
-        className={`flex h-11 w-full flex-col items-center justify-center gap-0.5 rounded-lg bg-page ${
+        className={`flex h-14 w-full flex-col items-center justify-center gap-0.5 rounded-lg bg-page ${
           day.isToday ? "ring-1 ring-accent" : ""
         }`}
       >
-        {doneLetters.map((id, i) => (
-          <span key={`d${i}`} className="text-[13px] font-semibold leading-none" style={{ color: planColor(id) }}>
-            {id}
-          </span>
-        ))}
-        {didRun && (
-          <span style={{ color: "var(--accent)" }} className="leading-none">
-            <RunGlyph size={15} />
-          </span>
-        )}
-        {/* planned but not done: same mark, faded, so it reads as an intention */}
-        {plannedWorkouts.map((s, i) => (
+        {/* Done is a filled stamp, planned is a dashed outline. Opacity alone
+            was the previous encoding and it did not read: a finished session
+            has to look like an achievement, not a dimmer intention. */}
+        {marks.map((m, i) => (
           <span
-            key={`p${i}`}
-            className="text-[13px] font-semibold leading-none opacity-40"
-            style={{ color: planColor(s.planId) }}
+            key={i}
+            className={`flex items-center justify-center rounded-full font-bold leading-none ${
+              m.done ? "" : "border-[1.5px] border-dashed"
+            }`}
+            style={{
+              width: size.chip,
+              height: size.chip,
+              background: m.done ? m.color : "transparent",
+              borderColor: m.done ? undefined : m.color,
+              color: m.done ? "var(--page)" : m.color,
+              opacity: m.done ? 1 : 0.75,
+            }}
           >
-            {s.planId ?? "?"}
+            {m.letter ? (
+              <span style={{ fontSize: size.text }}>{m.letter}</span>
+            ) : (
+              <RunGlyph size={size.glyph} />
+            )}
           </span>
         ))}
-        {plannedRun && (
-          <span style={{ color: "var(--accent)" }} className="leading-none opacity-40">
-            <RunGlyph size={15} />
-          </span>
-        )}
         {/* a deliberate rest day is a visible dash; an unplanned empty past day
             gets the same shape, fainter */}
-        {plannedRest && <span className="h-0.5 w-3.5 rounded-full bg-[var(--ink-3)]" />}
-        {impliedRest && <span className="h-0.5 w-3.5 rounded-full bg-grid" />}
+        {plannedRest && !marks.length && <span className="h-[3px] w-4 rounded-full bg-[var(--ink-3)]" />}
+        {impliedRest && <span className="h-[3px] w-4 rounded-full bg-grid" />}
       </span>
     </button>
   );

@@ -147,6 +147,24 @@ Rejected twice before this; the fixes that mattered:
   the real dp sizes and screenshot it. Not the Java, but it catches fit, contrast and text size,
   which is exactly what the two rejected versions got wrong.
 
+## Week strip encoding (v0.2.44)
+
+Done vs planned was opacity alone (100% vs 40%) and it did not read as an
+achievement. Now:
+
+- **done = a filled stamp**: a solid disc in the mark's colour with the letter or
+  run glyph knocked out in `var(--page)`. That token inverts with the theme, so the
+  ink is dark on a light disc in dark mode and light on a dark disc in light mode,
+  with no per-theme branching.
+- **planned = a dashed outline**: same disc, 1.5px dashed border in the colour, no
+  fill, glyph in the colour at 75%. Fill-vs-outline is a shape difference, not a
+  brightness one, so it survives glare and colourblindness.
+- Marks grew and the tile went h-11 -> h-14. `chipSizes()` steps the disc down as a
+  day fills (32 / 24 / 17 px for 1 / 2 / 3+ marks) so one mark fills its tile and
+  three still fit.
+- The widget still uses the older alpha encoding. Mirroring fill-vs-dash there is
+  open, but dashed strokes on a ~20px canvas disc are unverifiable without a device.
+
 ## Player design rules (learned from real use, v0.2.41)
 
 1. **Never substitute the working control.** "Finish session" used to REPLACE the dock once
