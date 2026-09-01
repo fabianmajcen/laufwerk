@@ -184,6 +184,41 @@ achievement. Now:
    WebView (same reason App.tsx uses a 32px floor at the top) and the gesture bar clipped
    the dock's secondary row.
 
+## Edge-to-edge insets (v0.2.46) - the real fix for "cut off at the bottom"
+
+`targetSdk 36` means Android lays the activity out **behind** the status and
+navigation bars, and this WebView reports `env(safe-area-inset-*)` as **0**. So CSS
+could not know how tall the nav bar was, and everything pinned to the bottom of the
+`h-dvh` shell (tab bar, player dock, bottom sheet) sat underneath it. The 12px ->
+28px floor bumps were papering over this; on a 48dp three-button nav bar 28px is
+still short.
+
+`MainActivity` now publishes the measured insets as CSS custom properties:
+
+- `setOnApplyWindowInsetsListener` on `android.R.id.content`, `systemBars()` insets
+  divided by density, injected with `evaluateJavascript` as `--safe-top` /
+  `--safe-bottom`.
+- The first inset pass can land before the page exists, so `onResume()` calls
+  `requestApplyInsets` and re-publishes the cached values.
+- Every consumer keeps its old hardcoded floor as the fallback, so a browser, mock
+  mode, or a failed injection all behave exactly as before. Verified:
+  no var -> 28px sheet padding (identical to v0.2.45), `--safe-bottom: 48px` -> 64px
+  sheet / 48px tab bar, `24px` -> 40px / 24px.
+
+Do NOT "fix" bottom clipping with another magic number. Read `--safe-bottom`.
+
+## Schedule slot exclusivity (v0.2.46)
+
+A day holds **at most one workout and at most one run**, and **rest excludes both**.
+Enforced in `addScheduleSlot` itself, not only in the picker, so the post-session
+prompt and any future bulk suggest cannot write a contradiction: a rest slot replaces
+everything, and a workout/run slot drops any rest slot plus any existing slot of the
+same kind. All 11 combinations are covered by `combos.mjs` in the scratchpad.
+
+The picker only offers what makes sense: no second workout or run, no rest day on a
+day already trained, and where an action replaces something the label says "instead"
+so the removal is not a surprise.
+
 ## Hazards (do not rediscover)
 
 1. **Never add `version:` to settings `persist` without `migrate`** — it discards all his

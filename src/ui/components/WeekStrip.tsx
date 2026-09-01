@@ -43,6 +43,27 @@ export function WeekStrip() {
           : `Week of ${week.weekStart.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
 
   const pickedDay = picking ? week.days.find((d) => d.date === picking) : undefined;
+  // What is already true of that day, kept apart from what is merely planned:
+  // a done run blocks offering another run, but it is not something a rest day
+  // would "replace", so the two drive different things below.
+  const did = {
+    session: !!pickedDay && pickedDay.sessions.length > 0,
+    run: !!pickedDay && pickedDay.runs.length > 0,
+  };
+  const slot = {
+    workout: !!pickedDay && pickedDay.slots.some((s) => s.kind === "workout"),
+    run: !!pickedDay && pickedDay.slots.some((s) => s.kind === "run"),
+    rest: !!pickedDay && pickedDay.slots.some((s) => s.kind === "rest"),
+  };
+  // one workout and one run per day at most; rest excludes both, and a day you
+  // already trained can no longer become a rest day
+  const offer = {
+    workout: !slot.workout && !did.session,
+    run: !slot.run && !did.run,
+    rest: !slot.rest && !did.session && !did.run,
+  };
+  const removable = pickedDay ? pickedDay.slots.filter((s) => s.kind === "rest" || !s.fulfilled).length : 0;
+  const nothingToDo = !offer.workout && !offer.run && !offer.rest && removable === 0;
 
   // what is actually next: the readiness card above already gives the run
   // advice, so this stays factual about the plan rather than repeating it
@@ -132,33 +153,45 @@ export function WeekStrip() {
               </SheetButton>
             ),
           )}
-          {/* no letter to choose: which session it becomes follows from where
-              it lands in the order, and inserting an earlier one reshuffles
-              the rest automatically */}
-          <SheetButton
-            onClick={() => {
-              void addScheduleSlot(picking, { kind: "workout", planId: null, source: "manual" });
-              setPicking(null);
-            }}
-          >
-            Plan a workout
-          </SheetButton>
-          <SheetButton
-            onClick={() => {
-              void addScheduleSlot(picking, { kind: "run", source: "manual" });
-              setPicking(null);
-            }}
-          >
-            Plan a run
-          </SheetButton>
-          <SheetButton
-            onClick={() => {
-              void addScheduleSlot(picking, { kind: "rest", source: "manual" });
-              setPicking(null);
-            }}
-          >
-            Plan a rest day
-          </SheetButton>
+          {/* Only the combinations that mean something: one workout and one run
+              per day at most, and rest is exclusive with both. Where an action
+              replaces something, the label says "instead" so the removal is
+              not a surprise. */}
+          {offer.workout && (
+            <SheetButton
+              onClick={() => {
+                void addScheduleSlot(picking, { kind: "workout", planId: null, source: "manual" });
+                setPicking(null);
+              }}
+            >
+              {slot.rest ? "Plan a workout instead" : "Plan a workout"}
+            </SheetButton>
+          )}
+          {offer.run && (
+            <SheetButton
+              onClick={() => {
+                void addScheduleSlot(picking, { kind: "run", source: "manual" });
+                setPicking(null);
+              }}
+            >
+              {slot.rest ? "Plan a run instead" : "Plan a run"}
+            </SheetButton>
+          )}
+          {offer.rest && (
+            <SheetButton
+              onClick={() => {
+                void addScheduleSlot(picking, { kind: "rest", source: "manual" });
+                setPicking(null);
+              }}
+            >
+              {slot.workout || slot.run ? "Plan a rest day instead" : "Plan a rest day"}
+            </SheetButton>
+          )}
+          {nothingToDo && (
+            <p className="py-2 text-center text-[13px] text-ink-3">
+              This day is done. Nothing left to plan.
+            </p>
+          )}
         </Sheet>
       )}
     </>

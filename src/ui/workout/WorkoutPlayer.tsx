@@ -86,7 +86,11 @@ export function WorkoutPlayer() {
 
       <div
         className="shrink-0 border-t border-hairline bg-card px-4 pt-3"
-        style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 28px)" }}
+        style={{
+          // real nav-bar height from MainActivity; the 12px floor plus the 16px
+          // gap keeps the previous 28px when the var is absent (browser, mock)
+          paddingBottom: "calc(max(var(--safe-bottom, 0px), env(safe-area-inset-bottom, 0px), 12px) + 16px)",
+        }}
       >
         <ActionDock
           step={step}

@@ -19,13 +19,22 @@ export function Sheet({
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end" role="dialog" aria-modal="true" aria-label={title}>
       <button aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/50" />
+      {/* --safe-bottom is the REAL nav-bar height, published by MainActivity,
+          because this WebView reports env(safe-area-inset-bottom) as 0 while
+          Android lays us out behind the bar. 12px floor + a 16px design gap
+          reproduces the old 28px if the var never arrives. The panel is also
+          capped and its body scrolls, so a long sheet cannot push its own
+          actions off screen either. */}
       <div
-        className="relative rounded-t-2xl bg-card px-4 pt-4"
-        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 16px)" }}
+        className="relative flex max-h-[85vh] flex-col rounded-t-2xl bg-card px-4 pt-4"
+        style={{
+          paddingBottom:
+            "calc(max(var(--safe-bottom, 0px), env(safe-area-inset-bottom, 0px), 12px) + 16px)",
+        }}
       >
-        <h2 className="text-[17px] font-semibold">{title}</h2>
-        {subtitle && <p className="mt-1 text-[13px] text-ink-2">{subtitle}</p>}
-        <div className="mt-4 flex flex-col gap-2">{children}</div>
+        <h2 className="shrink-0 text-[17px] font-semibold">{title}</h2>
+        {subtitle && <p className="mt-1 shrink-0 text-[13px] text-ink-2">{subtitle}</p>}
+        <div className="mt-4 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain">{children}</div>
       </div>
     </div>
   );

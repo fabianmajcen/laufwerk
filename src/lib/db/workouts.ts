@@ -192,9 +192,18 @@ export async function setScheduleSlots(date: string, slots: ScheduleSlot[]): Pro
   else await db.schedule.put({ date, slots, updatedAt: Date.now() });
 }
 
+/** A day holds at most one workout and at most one run, and a rest day excludes
+ *  both: resting means not training, so the combination is never a plan, it is a
+ *  mistake. Enforced here rather than only in the picker so no caller (the
+ *  post-session prompt, a future bulk suggest) can write a contradiction. */
 export async function addScheduleSlot(date: string, slot: ScheduleSlot): Promise<void> {
   const day = await db.schedule.get(date);
-  await setScheduleSlots(date, [...(day?.slots ?? []), slot]);
+  const existing = day?.slots ?? [];
+  const kept =
+    slot.kind === "rest"
+      ? [] // rest replaces whatever was planned
+      : existing.filter((s) => s.kind !== "rest" && s.kind !== slot.kind);
+  await setScheduleSlots(date, [...kept, slot]);
 }
 
 export async function removeScheduleSlot(date: string, index: number): Promise<void> {

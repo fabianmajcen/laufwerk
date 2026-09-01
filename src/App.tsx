@@ -119,9 +119,14 @@ export default function App() {
   return (
     <div
       className="flex h-dvh flex-col bg-page text-ink"
-      // Android 15 draws edge-to-edge under the status bar; env() gives the
-      // exact inset where supported, 32px covers WebViews where it reports 0
-      style={Capacitor.isNativePlatform() ? { paddingTop: "max(env(safe-area-inset-top, 0px), 32px)" } : undefined}
+      // Android 15 draws edge-to-edge under the status bar. --safe-top is the
+      // measured inset from MainActivity; env() and the 32px guess remain as
+      // fallbacks for the case where neither is available.
+      style={
+        Capacitor.isNativePlatform()
+          ? { paddingTop: "max(var(--safe-top, 0px), env(safe-area-inset-top, 0px), 32px)" }
+          : undefined
+      }
     >
       {/* headless: owns the rest alarm, cues and wake lock for as long as a
           session exists, so they keep working while the player is minimized */}

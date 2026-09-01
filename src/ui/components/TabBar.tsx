@@ -16,7 +16,9 @@ export function TabBar({ active, onChange }: { active: TabId; onChange: (t: TabI
   return (
     <nav
       className="flex shrink-0 border-t border-hairline bg-card"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      // bottom of the h-dvh shell, so the nav bar overlaps it under
+      // edge-to-edge. No floor here: with no inset this is exactly as before.
+      style={{ paddingBottom: "max(var(--safe-bottom, 0px), env(safe-area-inset-bottom, 0px))" }}
     >
       {TABS.map((t) => {
         const isActive = t.id === active;
