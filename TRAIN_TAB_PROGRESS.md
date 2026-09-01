@@ -272,8 +272,11 @@ widget sat empty above and below the centred block. Inverted now:
    clamped to 30..76dp
 3. tiles then take what is left, capped at `maxTile`; any residual is still centred
 
-Ring grows to 58dp, bar row to 38dp, bar text/glyph to 16dp, bar height to 19% of
-the row. Two placement details that only show up once the ring is big:
+Ring grows to 58dp, bar row to 38dp, bar text/glyph to 16dp, bar height to 24% of
+the row (v0.2.51). Also in v0.2.51: discs `min(tileW*0.94, slotH*0.88, 38dp)` with the
+letter at 0.66 and the run glyph at 0.70 of the disc, marks centred at `tileH * 0.47`
+so they sit optically centred under the weekday label rather than geometrically
+centred in the tile, and the band-to-calendar gap widened from 2 to 3 gapY. Two placement details that only show up once the ring is big:
 - the ring and the verdict word are centred **as a group**; pinning the word to the
   band's bottom edge stranded it once the ring hit its cap.
 - the word sits at `ringD * 0.9`, not `ringD`: the arc has a 100 degree gap at the

@@ -190,21 +190,21 @@ public class ReadinessWidget extends AppWidgetProvider {
 
         float topH = 0;
         if (twoLine) {
-            topH = h - padY * 2 - gapY * 3 - labelH - maxTile;
+            topH = h - padY * 2 - gapY * 4 - labelH - maxTile;
             topH = Math.max(30 * d, Math.min(topH, 76 * d));
         }
 
-        float avail = h - padY * 2 - topH - (twoLine ? gapY * 2 : 0)
+        float avail = h - padY * 2 - topH - (twoLine ? gapY * 3 : 0)
                 - labelH - gapY - countersH - (withCounters ? 6 * d : 0);
         // clamp the FLOOR against what is actually available, so a short widget
         // shrinks its tiles instead of overflowing
         float tileH = Math.min(Math.max(avail, Math.min(avail, 18 * d)), maxTile);
         // Whatever is left over after the caps (tileH stops at 68dp) is split
         // above and below instead of all piling up under the calendar.
-        float contentH = topH + (twoLine ? gapY * 2 : 0) + labelH + gapY + tileH
+        float contentH = topH + (twoLine ? gapY * 3 : 0) + labelH + gapY + tileH
                 + (withCounters ? 6 * d + countersH : 0);
         float originY = Math.max(padY, (h - contentH) / 2f);
-        float gridTop = originY + (twoLine ? topH + gapY * 2 : 0);
+        float gridTop = originY + (twoLine ? topH + gapY * 3 : 0);
         float top = gridTop + labelH + gapY;
         float r = Math.min(10 * d, tileW / 3f);
         // the label must fit its own tile, not just look right at one width
@@ -233,7 +233,7 @@ public class ReadinessWidget extends AppWidgetProvider {
                 c.drawRoundRect(tile, r, r, p);
                 p.setStyle(Paint.Style.FILL);
             }
-            if (day != null) drawDayMarks(ctx, c, t, p, day, cx, top + tileH / 2f, tileW, tileH, d);
+            if (day != null) drawDayMarks(ctx, c, t, p, day, cx, top + tileH * 0.47f, tileW, tileH, d);
         }
 
         if (withCounters) {
@@ -273,7 +273,7 @@ public class ReadinessWidget extends AppWidgetProvider {
         }
 
         float slotH = tileH / total;
-        float disc = Math.min(Math.min(tileW * 0.90f, slotH * 0.86f), 34 * d);
+        float disc = Math.min(Math.min(tileW * 0.94f, slotH * 0.88f), 38 * d);
         float startY = cy - (total - 1) * slotH / 2f;
         int idx = 0;
 
@@ -320,12 +320,12 @@ public class ReadinessWidget extends AppWidgetProvider {
         int ink = isDone ? STAMP_INK : color;
         if (letter != null) {
             t.setColor(ink);
-            t.setTextSize(disc * 0.60f);
+            t.setTextSize(disc * 0.66f);
             t.setFakeBoldText(true);
             Paint.FontMetrics fm = t.getFontMetrics();
             c.drawText(letter, cx, cy - (fm.ascent + fm.descent) / 2f, t);
         } else {
-            drawRunGlyph(ctx, c, cx, cy, disc * 0.62f, ink);
+            drawRunGlyph(ctx, c, cx, cy, disc * 0.70f, ink);
         }
     }
 
@@ -424,7 +424,7 @@ public class ReadinessWidget extends AppWidgetProvider {
                                 int done, int planned, String extra, int color) {
         float glyph = Math.min(16 * d, rowH * 0.46f);
         float textSize = Math.min(16 * d, rowH * 0.44f);
-        float barH = Math.max(3 * d, rowH * 0.19f);
+        float barH = Math.max(4 * d, rowH * 0.24f);
         float textCy = y + (rowH - barH - 3 * d) / 2f;
 
         t.setTextAlign(Paint.Align.LEFT);
