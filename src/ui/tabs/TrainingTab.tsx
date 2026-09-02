@@ -14,7 +14,6 @@ import {
 } from "../../lib/hooks";
 import { useWorkout } from "../../store/workoutStore";
 import { PROGRESSION_NOTES } from "../../lib/workouts/planSeed";
-import { WeekStrip } from "../components/WeekStrip";
 import { WorkoutHistory } from "../screens/WorkoutHistory";
 import { ExploreRow } from "../components/SubScreen";
 import { ClockIcon } from "../components/icons";
@@ -79,7 +78,8 @@ export function TrainingTab() {
         onPick={setPicked}
         lastDone={hero ? lastDoneOf(sessions, hero.id) : null}
       />
-      <WeekStrip />
+      {/* The week strip lives on Today only: it was the same component here,
+          and scheduling by tapping a day works from there. */}
       <Card
         kicker="Your plan"
         title="Sessions"

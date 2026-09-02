@@ -60,8 +60,8 @@ without re-deriving anything.
 - [x] **Week strip** (v0.2.37): Mon-Sun day tiles replacing BOTH the old week card
       and the PlanWeek screen (deleted). Run glyph + A/B/C letters in their own subtle
       colours, done solid / planned faded / past-empty = rest dash, today ringed.
-      Tap a day to schedule; pager reaches 4 weeks ahead. Same component on Today and
-      Train. Colours: A violet (--recency-hi), B teal (--hrv), C copper (--elevation).
+      Tap a day to schedule; pager reaches 4 weeks ahead. **Today only** since v0.2.54:
+      it was the identical component on both tabs, and scheduling works from Today. Colours: A violet (--recency-hi), B teal (--hrv), C copper (--elevation).
 - [x] Device check (user): sound, vibration and screen-awake all work.
 - [x] **Letterless scheduling + rest days + km** (v0.2.38): planned workout slots store
       `planId: null`; the letter is DERIVED from position via `assignScheduledWorkouts()`
